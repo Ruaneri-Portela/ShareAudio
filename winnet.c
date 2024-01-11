@@ -13,13 +13,22 @@ typedef struct connectParam
 	char* host;
 } connectParam;
 
-size_t runNet = 1;
-
 static connectParam* parm = NULL;
 
 static char data[1028];
 static int dataSize = 0;
 static const char confirmConn[] = { 0xFF, '\0' };
+
+HANDLE closeThread = NULL;
+
+static void closeApplication()
+{
+	getchar();
+	stopStream(globalStream);
+	HANDLE local = closeThread;
+	closeThread = NULL;
+	CloseHandle((HANDLE*)closeThread);
+}
 
 static void inetSrv()
 {
@@ -70,18 +79,9 @@ static void inetSrv()
 	{
 		logCat("Listen ok", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
 	}
-	dh = malloc(sizeof(dataHandshake));
-	memset(dh, 0, sizeof(dataHandshake));
-	if (dh != NULL) {
-		dh->header = NULLHEADER;
-	}
-	else
-	{
-		logCat("Malloc failed!", LOG_NET, LOG_CLASS_ERROR, logOutputMethod);
-	}
 	int connectSession = 1;
 	int serverSession = 1;
-	while (runNet)
+	while (closeThread != NULL)
 	{
 		connectSession = 1;
 		logCat("Waiting for client...", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
@@ -90,10 +90,10 @@ static void inetSrv()
 		{
 			clientSocket = accept(srvSocket, NULL, NULL);
 		}
-		logCat("Client connected!", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
-		while (connectSession && runNet)
+		logCat("Client connected! (1/3)", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
+		while (connectSession && closeThread != NULL)
 		{
-			while (connectSession && runNet)
+			while (connectSession && closeThread != NULL)
 			{
 				iResult = recv(clientSocket, (char*)dh, sizeof(dataHandshake), 0);
 				if (iResult == SOCKET_ERROR)
@@ -104,11 +104,8 @@ static void inetSrv()
 				}
 				else
 				{
-					logCat("Recv ok", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
+					logCat("Recived 'hello' code (2/3)", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
 					dh->header = HANDSHAKE;
-					dh->channel = 2;
-					dh->sampleRate = 44100;
-					dh->waveSize = 1028;
 					iResult = send(clientSocket, (char*)dh, sizeof(dataHandshake), 0);
 					if (iResult == SOCKET_ERROR)
 					{
@@ -129,7 +126,7 @@ static void inetSrv()
 						{
 							if (strcmp(data, confirmConn))
 							{
-								logCat("Handshake ok!", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
+								logCat("Handshake complet (3/3)", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
 							}
 							break;
 						}
@@ -142,8 +139,16 @@ static void inetSrv()
 			dataSize = (int)(sizeof(dataHeader) + sizeof(size_t) + ((sizeof(float) * dh->waveSize) * dh->channel) * dh->channel);
 			logCat("Audio connection stablished", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
 			size_t delay = (size_t)(((((float)dh->waveSize * (float)dh->channel) / (float)dh->sampleRate) / 4.0) * 1000);
-			while (connectSession && runNet)
+			int tolerance = 0;
+			while (connectSession)
 			{
+				if (closeThread == NULL)
+				{
+					audioDataFrame = createDataFrame(NULL, dh->waveSize);
+					dataHeader* header = (dataHeader*)audioDataFrame;
+					*header = END;
+					connectSession = 0;
+				}
 				if (audioDataFrame != NULL)
 				{
 					iResult = send(clientSocket, (char*)audioDataFrame, dataSize, 0);
@@ -151,7 +156,13 @@ static void inetSrv()
 					{
 						logCat("Send failed!", LOG_NET, LOG_CLASS_WARNING, logOutputMethod);
 						connectSession = 0;
-						break;
+						tolerance++;
+						if (tolerance > 10)
+							break;
+					}
+					else
+					{
+						tolerance = 0;
 					}
 					free(audioDataFrame);
 					audioDataFrame = NULL;
@@ -210,13 +221,11 @@ connect:
 	}
 	else
 	{
-		logCat("Host connected, sending 'hello' (1/3)", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
-		dh = malloc(sizeof(dataHandshake));
-		memset(dh, 0, sizeof(dataHandshake));
+		logCat("Host connected, sending 'hello' code (1/3)", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
 		dh->header = NULLHEADER;
 		size_t err = 0;
 		startStream(globalStream);
-		while (runNet)
+		while (closeThread != NULL)
 		{
 			if (dh->header == NULLHEADER)
 			{
@@ -264,7 +273,6 @@ connect:
 					{
 						logCat("Close connection", LOG_NET, LOG_CLASS_WARNING, logOutputMethod);
 						closesocket(remoteSocket);
-						free(dh);
 						stopStream(globalStream);
 						goto connect;
 					}
@@ -301,6 +309,13 @@ connect:
 							}
 						}
 						break;
+					case END:
+						logCat("Connection closed", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
+						closesocket(remoteSocket);
+						stopStream(globalStream);
+						goto connect;
+					case AUTH:
+						break;
 					case HANDSHAKE:
 						break;
 					}
@@ -322,6 +337,13 @@ connect:
 
 HANDLE initNet(int port, char addr[], char* host, size_t asClient)
 {
+	closeThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)closeApplication, NULL, 0, NULL);
+	if (closeThread == NULL)
+	{
+		printf("Failed to create thread\n");
+		return NULL;
+	}
+
 	HANDLE hThread;
 	parm = malloc(sizeof(connectParam));
 	parm->host = host;
@@ -342,12 +364,13 @@ HANDLE initNet(int port, char addr[], char* host, size_t asClient)
 		printf("Failed to create thread\n");
 		return NULL;
 	}
+
+
 	return hThread;
 }
 
 void closeNet(void* hThread)
 {
-	runNet = 0;
 	WaitForSingleObject((HANDLE*)hThread, INFINITE);
 	CloseHandle((HANDLE*)hThread);
 	free(parm);

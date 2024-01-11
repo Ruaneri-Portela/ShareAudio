@@ -23,9 +23,13 @@ void server(int device)
 	logCat("Server", LOG_MAIN, LOG_CLASS_INFO, logOutputMethod);
 	PaStream* srv = setupStream(device, 2, SAMPLE_RATE, FRAMES_PER_BUFFER, 1);
 	void* nThread = initNet(port, ip, NULL, 0);
+	if (nThread == NULL)
+	{
+		logCat("Failed to init net", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
+		return;
+	}
 	startStream(srv);
-	Sleep(100);
-	while (runNet)
+	while (closeThread != NULL)
 	{
 		Sleep(1000);
 	}
@@ -38,8 +42,12 @@ void client(int device)
 	logCat("Client", LOG_MAIN, LOG_CLASS_INFO, logOutputMethod);
 	PaStream* cli = setupStream(device, 2, SAMPLE_RATE, FRAMES_PER_BUFFER, 0);
 	void* nThread = initNet(9950, ip, NULL, 1);
-	Sleep(500);
-	while (runNet)
+	if (nThread == NULL)
+	{
+		logCat("Failed to init net", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
+		return;
+	}
+	while (closeThread != NULL)
 	{
 		Sleep(1000);
 	}
@@ -154,7 +162,7 @@ int main(int argc, char* argv[])
 	dh = malloc(sizeof(dataHandshake));
 	if (dh != NULL)
 	{
-		dh->header = HANDSHAKE;
+		dh->header = NULLHEADER;
 		dh->channel = 2;
 		dh->sampleRate = SAMPLE_RATE;
 		dh->waveSize = FRAMES_PER_BUFFER;

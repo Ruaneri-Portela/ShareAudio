@@ -24,6 +24,27 @@ typedef struct dataHandshake
 
 dataHandshake* dh = NULL;
 
+void copyInto(float* in, float* out, size_t size, size_t volMod, size_t testMode) {
+	switch (testMode)
+	{
+	case 0:
+		for (size_t i = 0; i < size; i++)
+		{
+			out[i] = in[i] * volMod;
+		}
+		break;
+	case 1:
+		for (size_t i = 0; i < size; i++)
+		{
+			out[i] = (float)((float)rand() / RAND_MAX * 2.0 - 1.0);
+		}
+		break;
+	default:
+		break;
+	}
+
+}
+
 char* createDataFrame(const float* data, size_t waveSize)
 {
 	size_t memorySize = sizeof(dataHeader) + sizeof(size_t) + sizeof(float) * waveSize;
@@ -43,13 +64,8 @@ char* createDataFrame(const float* data, size_t waveSize)
 	*sizeWave = waveSize;
 
 	float* waveFrame = (float*)(sizeWave + 1);
-	for (size_t i = 0; i < waveSize; i++)
-	{
-		if (data != NULL)
-			waveFrame[i] = data[i];
-		else
-			waveFrame[i] = (float)((float)rand() / RAND_MAX * 2.0 - 1.0);
-	}
+
+	data == NULL ? copyInto(NULL, waveFrame, waveSize, 1, 1) : copyInto((float*)data, waveFrame, waveSize, 1, 0);
 	return dataFrame;
 }
 

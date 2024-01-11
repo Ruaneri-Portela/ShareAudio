@@ -15,7 +15,7 @@ void* audioDataFrame = NULL;
 
 audioBuffer* head = NULL;
 
-PaStream* globalStream;
+PaStream* globalStream = NULL;
 
 static PaError err;
 
@@ -52,7 +52,6 @@ static void drawBar(float* data, unsigned long framesPerBuffer)
 		return;
 	}
 	int dispSize = 100;
-	printf("\r");
 	float volL = 0;
 	float volR = 0;
 	for (unsigned long i = 0; i < framesPerBuffer * 2; i += 2)
@@ -60,6 +59,7 @@ static void drawBar(float* data, unsigned long framesPerBuffer)
 		volL = maxLocal(volL, absLocal(data[i]));
 		volR = maxLocal(volR, absLocal(data[i + 1]));
 	}
+	printf("\033[G");
 	for (int i = 0; i < dispSize; i++)
 	{
 		float barProportion = i / (float)dispSize;
@@ -93,10 +93,7 @@ int clientCallback(
 	{
 		audioBuffer* temp = head;
 		float* data = getWaveFrame(temp->data);
-		for (int i = 0; i < framesPerBuffer * dh->channel; i++)
-		{
-			((float*)outputBuffer)[i] = (data[i] * volMod);
-		}
+		copyInto(data, (float*)outputBuffer, framesPerBuffer * channel, volMod, testMode);
 		head = temp->next;
 		free(temp->data);
 		free(temp);
@@ -222,6 +219,9 @@ PaStream* setupStream(int device, int lchannel, double sampleRate, int waveSize,
 		checkErr(err);
 	}
 	globalStream = stream;
+	if (barMode) {
+		printf("\033[2J");
+	}
 	return stream;
 }
 
