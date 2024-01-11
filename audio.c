@@ -17,6 +17,8 @@ audioBuffer* head = NULL;
 
 PaStream* globalStream = NULL;
 
+int deviceAudio = 0;
+
 static PaError err;
 
 static size_t channel;

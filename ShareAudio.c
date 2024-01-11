@@ -13,7 +13,6 @@
 #define FRAMES_PER_BUFFER 2048
 #define VERSION "0.1.0 Experimental"
 
-int device = 0;
 char ip[32];
 int port = 0;
 int mode = 0;
@@ -37,10 +36,9 @@ void server(int device)
 	closeNet(nThread);
 }
 
-void client(int device)
+void client()
 {
 	logCat("Client", LOG_MAIN, LOG_CLASS_INFO, logOutputMethod);
-	PaStream* cli = setupStream(device, 2, SAMPLE_RATE, FRAMES_PER_BUFFER, 0);
 	void* nThread = initNet(9950, ip, NULL, 1);
 	if (nThread == NULL)
 	{
@@ -51,7 +49,6 @@ void client(int device)
 	{
 		Sleep(1000);
 	}
-	shutdownStream(cli);
 	closeNet(nThread);
 }
 
@@ -75,7 +72,7 @@ int main(int argc, char* argv[])
 			}
 			else if (strcmp(argv[i], "-d") == 0)
 			{
-				device = atoi(argv[i + 1]);
+				deviceAudio = atoi(argv[i + 1]);
 				i++;
 			}
 			else if (strcmp(argv[i], "-a") == 0)
@@ -173,10 +170,10 @@ int main(int argc, char* argv[])
 	switch (mode)
 	{
 	case 1:
-		server(device);
+		server(deviceAudio);
 		break;
 	case 2:
-		client(device);
+		client();
 		break;
 	default:
 		break;

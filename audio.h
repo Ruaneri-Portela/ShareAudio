@@ -12,6 +12,8 @@ extern audioBuffer *head;
 
 extern PaStream* globalStream;
 
+extern int deviceAudio;
+
 extern int testMode;
 
 extern int barMode;
