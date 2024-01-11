@@ -210,7 +210,7 @@ connect:
 	}
 	else
 	{
-		logCat("Connect ok", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
+		logCat("Host connected, sending 'hello' (1/3)", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
 		dh = malloc(sizeof(dataHandshake));
 		memset(dh, 0, sizeof(dataHandshake));
 		dh->header = NULLHEADER;
@@ -227,7 +227,7 @@ connect:
 				}
 				else
 				{
-					logCat("Send ok", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
+					logCat("Hello send... Wait Handshake (2/3)", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
 					iResult = recv(remoteSocket, (char*)dh, sizeof(dataHandshake), 0);
 					if (iResult == SOCKET_ERROR)
 					{
@@ -243,7 +243,7 @@ connect:
 						else
 						{
 							dataHandshake* test = dh;
-							logCat("Handshake ok!", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
+							logCat("Handshake completed (3/3)", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
 							dataSize = (int)(sizeof(dataHeader) + sizeof(size_t) + ((sizeof(float) * dh->waveSize) * dh->channel) * dh->channel);
 						}
 					}
@@ -257,11 +257,12 @@ connect:
 				if (iResult == SOCKET_ERROR)
 				{
 					err++;
-					logCat("Recv failed!", LOG_NET, LOG_CLASS_WARNING, logOutputMethod);
+					logCat("Client cannot recive data", LOG_NET, LOG_CLASS_WARNING, logOutputMethod);
 					free(localData);
 					head = NULL;
 					if (err > 10)
 					{
+						logCat("Close connection", LOG_NET, LOG_CLASS_WARNING, logOutputMethod);
 						closesocket(remoteSocket);
 						free(dh);
 						stopStream(globalStream);

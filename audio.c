@@ -95,7 +95,7 @@ int clientCallback(
 		float* data = getWaveFrame(temp->data);
 		for (int i = 0; i < framesPerBuffer * dh->channel; i++)
 		{
-			((float*)outputBuffer)[i] = (data[i]*volMod);
+			((float*)outputBuffer)[i] = (data[i] * volMod);
 		}
 		head = temp->next;
 		free(temp->data);
@@ -163,7 +163,7 @@ void listAudioDevices()
 	}
 	else if (numDevices == 0)
 	{
-		printf("There are no available audio devices on this machine.\n");
+		logCat("No devices found", LOG_AUDIO, LOG_CLASS_ERROR, logOutputMethod);
 		exit(EXIT_SUCCESS);
 	}
 	const PaDeviceInfo* deviceInfo;
@@ -191,10 +191,10 @@ PaStream* setupStream(int device, int lchannel, double sampleRate, int waveSize,
 	parms.suggestedLatency = Pa_GetDeviceInfo(device)->defaultLowInputLatency;
 	channel = lchannel;
 	PaStream* stream;
-	printf_s("Using device [%d]:\n\tname:%s\nIt's a server: %d\n-----------------------------\n\n",
+	printf_s("Using device [%d]: %s\n",
 		device,
-		(Pa_GetDeviceInfo(device)->name),
-		asServer);
+		(Pa_GetDeviceInfo(device)->name));
+	asServer ? logCat("Server mode", LOG_AUDIO, LOG_CLASS_INFO, logOutputMethod) : logCat("Client mode", LOG_AUDIO, LOG_CLASS_INFO, logOutputMethod);
 	if (asServer)
 	{
 		err = Pa_OpenStream(
