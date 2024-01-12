@@ -25,11 +25,11 @@ typedef enum logOutputEnum logOutput;
 
 logOutput logOutputMethod;
 
-char* fileLogName = "log.txt";
+char *fileLogName = "log.txt";
 
-static FILE* fileLog = NULL;
+static FILE *fileLog = NULL;
 
-static const char* enumToStringClass(logClass class)
+static const char *enumToStringClass(logClass class)
 {
 	switch (class)
 	{
@@ -44,9 +44,10 @@ static const char* enumToStringClass(logClass class)
 	}
 }
 
-static const char* enumToStringLevel(logLevel level, size_t toTerminal)
+static const char *enumToStringLevel(logLevel level, int toTerminal)
 {
-	if (toTerminal = 1) {
+	if (toTerminal == 1)
+	{
 		switch (level)
 		{
 		case LOG_CLASS_ERROR:
@@ -61,7 +62,8 @@ static const char* enumToStringLevel(logLevel level, size_t toTerminal)
 			return "\x1B[0mUNKNOWN";
 		}
 	}
-	else {
+	else
+	{
 		switch (level)
 		{
 		case LOG_CLASS_ERROR:
@@ -76,10 +78,9 @@ static const char* enumToStringLevel(logLevel level, size_t toTerminal)
 			return "UNKNOWN";
 		}
 	}
-
 }
 
-void logCat(const char* msg, logClass class, logLevel level, logOutput method)
+void logCat(const char *msg, logClass class, logLevel level, logOutput method)
 {
 	switch (method)
 	{
@@ -87,11 +88,13 @@ void logCat(const char* msg, logClass class, logLevel level, logOutput method)
 		printf_s("%s][%s] %s\n\x1B[0m", enumToStringLevel(level, 1), enumToStringClass(class), msg);
 		break;
 	case LOG_OUTPUT_FILE:
-		fileLog == NULL ? fopen_s(&fileLog,fileLogName, "a") : fileLog;
-		if (fileLog != NULL) {
+		fileLog == NULL ? fopen_s(&fileLog, fileLogName, "a") : 0;
+		if (fileLog != NULL)
+		{
 			fprintf(fileLog, "[%s][%s] %s\n", enumToStringLevel(level, 0), enumToStringClass(class), msg);
 		}
-		else {
+		else
+		{
 			printf_s("Error opening file %s\n", fileLogName);
 		}
 		break;

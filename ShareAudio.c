@@ -3,15 +3,19 @@
 #elif __GNUC__
 #define COMPILE "GCC"
 #endif
+#include <stdio.h>
 #include "audio.h"
 #include "data.h"
 #include "log.h"
 #include "winnet.h"
-#include <stdio.h>
+
 
 #define SAMPLE_RATE 48000
 #define FRAMES_PER_BUFFER 2048
 #define VERSION "0.1.0 Experimental"
+
+int sampleRate = SAMPLE_RATE;
+int framesPerBuffer = FRAMES_PER_BUFFER;
 
 char ip[32];
 int port = 0;
@@ -20,14 +24,14 @@ int mode = 0;
 void server(int device)
 {
 	logCat("Server", LOG_MAIN, LOG_CLASS_INFO, logOutputMethod);
-	PaStream* srv = setupStream(device, 2, SAMPLE_RATE, FRAMES_PER_BUFFER, 1);
+	PaStream* srv = setupStream(device, 2, sampleRate, framesPerBuffer, 1);
+	startStream(globalStream);
 	void* nThread = initNet(port, ip, NULL, 0);
 	if (nThread == NULL)
 	{
 		logCat("Failed to init net", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
 		return;
 	}
-	startStream(srv);
 	while (closeThread != NULL)
 	{
 		Sleep(1000);
@@ -121,7 +125,9 @@ int main(int argc, char* argv[])
 				printf_s("-r\t\tList audio devices\n");
 				printf_s("-s\t\tSet the program to server mode\n");
 				printf_s("-t\t\tTest mode\n");
-				printf_s("-v\t\tSet the volume modifier\n\n");
+				printf_s("-v\t\tSet the volume modifier\n");
+				printf_s("-z\t\tSet the chunck size\n");
+				printf_s("-x\t\tSet the sample rate\n\n");
 				printf_s("-he\t\tTo view examples how use\n");
 				printf_s("-ht\t\tTroubleshooting");
 				printf_s("\n");
@@ -142,6 +148,14 @@ int main(int argc, char* argv[])
 				printf_s("[3] If you have a problem with audio, try to change the audio device, some output on Windows not work propery\n\t Recommend select to outup to Windows 'Sound Mapper'\n");
 				printf_s("[3] In bind error, change you port");
 				return EXIT_SUCCESS;
+			}
+			else if (strcmp(argv[i], "-z") == 0) {
+				sscanf_s(argv[i + 1], "%d", &framesPerBuffer);
+				i++;
+			}
+			else if (strcmp(argv[i], "-x") == 0) {
+				sscanf_s(argv[i + 1], "%d", &sampleRate);
+				i++;
 			}
 			else
 			{

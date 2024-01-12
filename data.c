@@ -24,7 +24,7 @@ typedef struct dataHandshake
 
 dataHandshake* dh = NULL;
 
-void copyInto(float* in, float* out, size_t size, size_t volMod, size_t testMode) {
+void copyInto(float* in, float* out, size_t size, float volMod, size_t testMode) {
 	switch (testMode)
 	{
 	case 0:
@@ -75,17 +75,8 @@ float* getWaveFrame(const char* dataFrame)
 	return (float*)((char*)dataFrame + detour);
 }
 
-const int getSampleSize(const char* dataFrame)
+int getSampleSize(const char* dataFrame)
 {
 	size_t detour = sizeof(dataHeader);
 	return *(int*)((char*)dataFrame + detour);
-}
-
-dataHandshake getHandShake(char* dataFrame)
-{
-	dataHeader* header = (dataHeader*)dataFrame;
-	size_t* sizeWave = (size_t*)(header + 1);
-	float* waveFrame = (float*)(sizeWave + 1);
-	dataHandshake data = { *header, *sizeWave, *waveFrame };
-	return data;
 }

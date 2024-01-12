@@ -1,9 +1,8 @@
+#include <stdio.h>
+#include <string.h>
 #include "data.h"
 #include "log.h"
 #include "portaudio/include/portaudio.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 typedef struct audioBuffer
 {
@@ -90,6 +89,10 @@ int clientCallback(
 	const PaStreamCallbackTimeInfo* timeInfo, PaStreamCallbackFlags statusFlags,
 	void* userData)
 {
+	(void)inputBuffer;
+	(void)timeInfo;
+	(void)statusFlags;
+	(void)userData;
 	drawBar((float*)outputBuffer, framesPerBuffer);
 	if (head != NULL)
 	{
@@ -108,6 +111,10 @@ int serverCallback(
 	const PaStreamCallbackTimeInfo* timeInfo, PaStreamCallbackFlags statusFlags,
 	void* userData)
 {
+	(void)outputBuffer;
+	(void)timeInfo;
+	(void)statusFlags;
+	(void)userData;
 	drawBar((float*)inputBuffer, framesPerBuffer);
 	if (audioDataFrame != NULL) {
 		free(audioDataFrame);

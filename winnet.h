@@ -7,7 +7,7 @@ typedef struct connectParam
     char *host;
 } connectParam;
 
-HANDLE closeThread;
+extern HANDLE closeThread;
 
 HANDLE initNet(int port, char addr[], char *host, size_t asClient);
 

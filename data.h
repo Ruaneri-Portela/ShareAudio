@@ -22,12 +22,12 @@ typedef struct dataHandshake
 
 extern dataHandshake *dh;
 
-void copyInto(float* in, float* out, size_t size, size_t volMod, size_t testMode);
+void copyInto(float* in, float* out, size_t size, float volMod, size_t testMode);
 
 char *createDataFrame(const float *data, size_t waveSize);
 
 float *getWaveFrame(const char *dataFrame);
 
-const int getSampleSize(const char *dataFrame);
+int getSampleSize(const char *dataFrame);
 
 dataHandshake getHandShake(char *dataFrame);
