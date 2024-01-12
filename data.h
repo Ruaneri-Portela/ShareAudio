@@ -5,6 +5,7 @@ enum enumHeader
     HANDSHAKE = 0x01,
     AUTH = 0x02,
     DATA = 0x03,
+    NULLDATA = 0x04,
     AUTHCHANGE = 0xFD,
     DISCONNECT = 0xFE,
     END = 0xFF,
@@ -31,3 +32,9 @@ float *getWaveFrame(const char *dataFrame);
 int getSampleSize(const char *dataFrame);
 
 dataHandshake getHandShake(char *dataFrame);
+
+int getSize(dataHandshake* dhData);
+
+size_t getDelay(dataHandshake* dhData);
+
+int detectHost(const char* host, size_t asServer);

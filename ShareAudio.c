@@ -9,7 +9,6 @@
 #include "log.h"
 #include "winnet.h"
 
-
 #define SAMPLE_RATE 48000
 #define FRAMES_PER_BUFFER 2048
 #define VERSION "0.1.0 Experimental"
@@ -17,16 +16,16 @@
 int sampleRate = SAMPLE_RATE;
 int framesPerBuffer = FRAMES_PER_BUFFER;
 
-char ip[32];
+char *host;
 int port = 0;
 int mode = 0;
 
 void server(int device)
 {
 	logCat("Server", LOG_MAIN, LOG_CLASS_INFO, logOutputMethod);
-	PaStream* srv = setupStream(device, 2, sampleRate, framesPerBuffer, 1);
+	PaStream *srv = setupStream(device, 2, sampleRate, framesPerBuffer, 1);
 	startStream(globalStream);
-	void* nThread = initNet(port, ip, NULL, 0);
+	void *nThread = initNet(port, host, 0);
 	if (nThread == NULL)
 	{
 		logCat("Failed to init net", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
@@ -43,7 +42,7 @@ void server(int device)
 void client()
 {
 	logCat("Client", LOG_MAIN, LOG_CLASS_INFO, logOutputMethod);
-	void* nThread = initNet(9950, ip, NULL, 1);
+	void *nThread = initNet(9950, host, 1);
 	if (nThread == NULL)
 	{
 		logCat("Failed to init net", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
@@ -56,12 +55,13 @@ void client()
 	closeNet(nThread);
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
+	HANDLE hProcess = GetCurrentProcess();
+	SetPriorityClass(hProcess, REALTIME_PRIORITY_CLASS);
 	port = 9950;
-	strcpy_s(ip, 32, "127.0.0.1");
 	logOutputMethod = LOG_OUTPUT_CONSOLE;
-	logCat("Program start, build on "COMPILE, LOG_MAIN, LOG_CLASS_INFO, logOutputMethod);
+	logCat("Program start, build on " COMPILE, LOG_MAIN, LOG_CLASS_INFO, logOutputMethod);
 	if (argc > 1)
 	{
 		for (int i = 1; i < argc; i++)
@@ -81,7 +81,7 @@ int main(int argc, char* argv[])
 			}
 			else if (strcmp(argv[i], "-a") == 0)
 			{
-				strcpy_s(ip, 32, argv[i + 1]);
+				host = argv[i + 1];
 				i++;
 			}
 			else if (strcmp(argv[i], "-p") == 0)
@@ -89,7 +89,8 @@ int main(int argc, char* argv[])
 				port = atoi(argv[i + 1]);
 				i++;
 			}
-			else if (strcmp(argv[i], "-t") == 0) {
+			else if (strcmp(argv[i], "-t") == 0)
+			{
 				testMode = 1;
 			}
 			else if (strcmp(argv[i], "-l") == 0)
@@ -107,11 +108,13 @@ int main(int argc, char* argv[])
 				closeAudio();
 				return EXIT_SUCCESS;
 			}
-			else if (strcmp(argv[i], "-v") == 0) {
+			else if (strcmp(argv[i], "-v") == 0)
+			{
 				sscanf_s(argv[i + 1], "%f", &volMod);
 				i++;
 			}
-			else if (strcmp(argv[i], "-h") == 0) {
+			else if (strcmp(argv[i], "-h") == 0)
+			{
 				printf_s("ShareAudio\n\tA easy and light way to share your between your computers\n\tVer: %s\n", VERSION);
 				printf_s("Usage: ShareAudio [options]\n");
 				printf_s("Options:\n");
@@ -133,7 +136,8 @@ int main(int argc, char* argv[])
 				printf_s("\n");
 				return EXIT_SUCCESS;
 			}
-			else if (strcmp(argv[i], "-he") == 0) {
+			else if (strcmp(argv[i], "-he") == 0)
+			{
 				printf_s("Examples:\n");
 				printf_s("[1] ShareAudio -s -p 9950 -a 0.0.0.0 -d 0\n");
 				printf_s("\tStart the program in server mode, listening on port 9950, on all interfaces, using audio device 0\n");
@@ -141,7 +145,8 @@ int main(int argc, char* argv[])
 				printf_s("\tStart the program in client mode, connecting to 192.168.1.1 in port 9950, using audio device 0\n");
 				return EXIT_SUCCESS;
 			}
-			else if (strcmp(argv[i], "-ht") == 0) {
+			else if (strcmp(argv[i], "-ht") == 0)
+			{
 				printf_s("Troubleshooting:\n");
 				printf_s("[1] Allow this program on firewall in case connection is no prossible into computers\n");
 				printf_s("[2] If 'Channel is not avalible' you as select non capture to server , and outup to client device\n\t Client accpets only out devices and server only capture or Loopbacks\n");
@@ -149,11 +154,13 @@ int main(int argc, char* argv[])
 				printf_s("[3] In bind error, change you port");
 				return EXIT_SUCCESS;
 			}
-			else if (strcmp(argv[i], "-z") == 0) {
+			else if (strcmp(argv[i], "-z") == 0)
+			{
 				sscanf_s(argv[i + 1], "%d", &framesPerBuffer);
 				i++;
 			}
-			else if (strcmp(argv[i], "-x") == 0) {
+			else if (strcmp(argv[i], "-x") == 0)
+			{
 				sscanf_s(argv[i + 1], "%d", &sampleRate);
 				i++;
 			}
@@ -178,8 +185,14 @@ int main(int argc, char* argv[])
 		dh->sampleRate = SAMPLE_RATE;
 		dh->waveSize = FRAMES_PER_BUFFER;
 	}
-	else {
+	else
+	{
 		logCat("Failed to allocate memory", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
+	}
+	if (host == NULL)
+	{
+		host = malloc(sizeof(char) * 10);
+		strcpy_s(host, 10, "127.0.0.1");
 	}
 	switch (mode)
 	{
