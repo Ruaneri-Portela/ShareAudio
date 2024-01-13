@@ -85,17 +85,7 @@ int getSampleSize(const char* dataFrame)
 }
 
 int getSize(dataHandshake* dhData) {
-	return (int)(sizeof(dataHeader) + sizeof(size_t) + ((sizeof(float) * dhData->waveSize) * dhData->channel) * dhData->channel) + sizeof(size_t);
-}
-
-void orderDataFrame(char * dataFrame,size_t value, size_t sizeDataFrame) {
-	size_t *dataCount = (size_t*)(dataFrame + (sizeDataFrame - sizeof(size_t)));
-	dataCount[0] = value;
-}
-
-size_t getOrderDataFrame(char* dataFrame, size_t sizeDataFrame) {
-	size_t *dataCount = (size_t*)(dataFrame + (sizeDataFrame - sizeof(size_t)));
-	return dataCount[0];
+	return (int)(sizeof(dataHeader) + sizeof(size_t) + ((sizeof(float) * dhData->waveSize) * dhData->channel) * dhData->channel);
 }
 
 size_t getDelay(dataHandshake* dhData) {

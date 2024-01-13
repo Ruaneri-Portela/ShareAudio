@@ -234,7 +234,6 @@ static DWORD WINAPI inetSrv(LPVOID parms)
 		while (!inetSrvHandshake((connectParam*)parms));
 		logCat("Audio connection established", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
 		int tolerance = 0;
-		size_t order = 0;
 		while (1)
 		{
 			if (closeThread == NULL)
@@ -246,8 +245,6 @@ static DWORD WINAPI inetSrv(LPVOID parms)
 			}
 			if (audioDataFrame != NULL)
 			{
-				orderDataFrame(audioDataFrame, order, localParm->dataSize);
-				order++;
 				iResult = send(localParm->ctx->clientSocket, (char*)audioDataFrame, (int)localParm->dataSize, 0);
 				if (iResult == SOCKET_ERROR)
 				{
@@ -337,9 +334,9 @@ connect:
 			else if (localData == NULL) {
 				localData = malloc(localParm.dataSize);
 				localData == NULL ? logCat("Failed to allocate memory", LOG_NET, LOG_CLASS_ERROR, logOutputMethod) : (void)0;
-				struct timeval timeout;
+				struct timeval timeout = { 0,0 };
 				timeout.tv_sec = 0;
-				timeout.tv_usec = getDelay(dh);
+				timeout.tv_usec = (long)getDelay(dh);
 				if (setsockopt(localParm.ctx->srvSocket, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(timeout)) == SOCKET_ERROR) {
 					logCat("Failed to set socket timeout", LOG_NET, LOG_CLASS_ERROR, logOutputMethod);
 				}
