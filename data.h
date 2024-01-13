@@ -37,6 +37,10 @@ int getSize(dataHandshake* dhData);
 
 size_t getDelay(dataHandshake* dhData);
 
+void orderDataFrame(char* dataFrame, size_t value, size_t sizeDataFrame);
+
+size_t getOrderDataFrame(char* dataFrame, size_t sizeDataFrame);
+
 char* concatString(const char* original,const char* toCat);
 
 int detectHost(const char* host, size_t asServer);

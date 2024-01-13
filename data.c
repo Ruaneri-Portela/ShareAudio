@@ -50,7 +50,7 @@ void copyInto(float* in, float* out, size_t size, float volMod, size_t testMode)
 
 char* createDataFrame(const float* data, size_t waveSize)
 {
-	size_t memorySize = sizeof(dataHeader) + sizeof(size_t) + sizeof(float) * waveSize;
+	size_t memorySize = sizeof(dataHeader) + sizeof(size_t) + sizeof(float) * waveSize + sizeof(size_t);
 	char* dataFrame = (char*)malloc(memorySize);
 	if (dataFrame != NULL) {
 		memset(dataFrame, 0, memorySize);
@@ -85,7 +85,17 @@ int getSampleSize(const char* dataFrame)
 }
 
 int getSize(dataHandshake* dhData) {
-	return (int)(sizeof(dataHeader) + sizeof(size_t) + ((sizeof(float) * dhData->waveSize) * dhData->channel) * dhData->channel);
+	return (int)(sizeof(dataHeader) + sizeof(size_t) + ((sizeof(float) * dhData->waveSize) * dhData->channel) * dhData->channel) + sizeof(size_t);
+}
+
+void orderDataFrame(char * dataFrame,size_t value, size_t sizeDataFrame) {
+	size_t *dataCount = (size_t*)(dataFrame + (sizeDataFrame - sizeof(size_t)));
+	dataCount[0] = value;
+}
+
+size_t getOrderDataFrame(char* dataFrame, size_t sizeDataFrame) {
+	size_t *dataCount = (size_t*)(dataFrame + (sizeDataFrame - sizeof(size_t)));
+	return dataCount[0];
 }
 
 size_t getDelay(dataHandshake* dhData) {

@@ -10,18 +10,18 @@
 // To remove avoid alerts on  gcc
 struct addrinfo
 {
-    int ai_flags;
-    int ai_family;
-    int ai_socktype;
-    int ai_protocol;
-    size_t ai_addrlen;
-    char * ai_canonname;
-    _Field_size_bytes_(ai_addrlen) struct sockaddr * ai_addr;
-    struct addrinfo * ai_next;
+	int ai_flags;
+	int ai_family;
+	int ai_socktype;
+	int ai_protocol;
+	size_t ai_addrlen;
+	char* ai_canonname;
+	_Field_size_bytes_(ai_addrlen) struct sockaddr* ai_addr;
+	struct addrinfo* ai_next;
 };
-INT WSAAPI inet_pton(INT Family,PCSTR pszAddrString,PVOID pAddrBuf,INT dwAddrBufLen);
-PCSTR WSAAPI inet_ntop(INT Family,const VOID *pAddr,PSTR pStringBuf,size_t StringBufSize);
-INT WSAAPI getaddrinfo(PCSTR pNodeName,PCSTR pServiceName,const void *pHints,void *ppResult);
+INT WSAAPI inet_pton(INT Family, PCSTR pszAddrString, PVOID pAddrBuf, INT dwAddrBufLen);
+PCSTR WSAAPI inet_ntop(INT Family, const VOID* pAddr, PSTR pStringBuf, size_t StringBufSize);
+INT WSAAPI getaddrinfo(PCSTR pNodeName, PCSTR pServiceName, const void* pHints, void* ppResult);
 #endif
 
 typedef struct srvCtx
@@ -174,7 +174,7 @@ static void setupSrv(connectParam* parms)
 	}
 }
 
-static short unsigned int inetSrvHandshake(connectParam* localParm)
+static int inetSrvHandshake(connectParam* localParm)
 {
 	logCat("Waiting for client...", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
 	localParm->ctx->clientSocket = SOCKET_ERROR;
@@ -234,6 +234,7 @@ static DWORD WINAPI inetSrv(LPVOID parms)
 		while (!inetSrvHandshake((connectParam*)parms));
 		logCat("Audio connection established", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
 		int tolerance = 0;
+		size_t order = 0;
 		while (1)
 		{
 			if (closeThread == NULL)
@@ -245,6 +246,8 @@ static DWORD WINAPI inetSrv(LPVOID parms)
 			}
 			if (audioDataFrame != NULL)
 			{
+				orderDataFrame(audioDataFrame, order, localParm->dataSize);
+				order++;
 				iResult = send(localParm->ctx->clientSocket, (char*)audioDataFrame, (int)localParm->dataSize, 0);
 				if (iResult == SOCKET_ERROR)
 				{
@@ -365,13 +368,13 @@ connect:
 				else
 				{
 					err = 0;
-					audioDataFrame = malloc(localParm.dataSize);
-					audioDataFrame == NULL ? logCat("Failed to allocate memory", LOG_NET, LOG_CLASS_ERROR, logOutputMethod) : (void)0;
-					memcpy_s(audioDataFrame, localParm.dataSize, localData, localParm.dataSize);
-					dataHeader* header = (dataHeader*)audioDataFrame;
+					dataHeader* header = (dataHeader*)localData;
 					switch (header[0])
 					{
 					case DATA:
+						audioDataFrame = malloc(localParm.dataSize);
+						audioDataFrame == NULL ? logCat("Failed to allocate memory", LOG_NET, LOG_CLASS_ERROR, logOutputMethod) : (void)0;
+						memcpy_s(audioDataFrame, localParm.dataSize, localData, localParm.dataSize);
 						if (audioDataFrame != NULL)
 						{
 							audioBuffer* temp = (audioBuffer*)malloc(sizeof(audioBuffer));
