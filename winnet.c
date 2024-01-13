@@ -188,7 +188,8 @@ static int inetSrvHandshake(connectParam* localParm)
 	logCat("Client connected! (1/3)", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
 	while (closeThread != NULL)
 	{
-		iResult = recv(localParm->ctx->clientSocket, (char*)dh, sizeof(dataHandshake), 0);
+		dataHandshake localDh = { NULLHEADER, 0, 0, 0 };
+		iResult = recv(localParm->ctx->clientSocket, (char*)&localDh, sizeof(dataHandshake), 0);
 		if (iResult == SOCKET_ERROR)
 		{
 			logCat("Recv failed!", LOG_NET, LOG_CLASS_WARNING, logOutputMethod);
@@ -232,6 +233,7 @@ static DWORD WINAPI inetSrv(LPVOID parms)
 	while (closeThread != NULL)
 	{
 		while (!inetSrvHandshake((connectParam*)parms));
+
 		logCat("Audio connection established", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
 		int tolerance = 0;
 		while (1)
@@ -297,6 +299,7 @@ connect:
 		size_t err = 0;
 		PaStream* stream = NULL;
 		void* localData = NULL;
+		size_t chunckWaveSize = 0;
 		while (closeThread != NULL)
 		{
 			if (dh->header == NULLHEADER && stream == NULL)
@@ -328,10 +331,10 @@ connect:
 						}
 					}
 				}
-				stream = setupStream(localParm.device, 2, dh->sampleRate, dh->waveSize, 0);
-				startStream(stream);
 			}
 			else if (localData == NULL) {
+				stream = setupStream(localParm.device, 2, dh->sampleRate, dh->waveSize, 0);
+				startStream(stream);
 				localData = malloc(localParm.dataSize);
 				localData == NULL ? logCat("Failed to allocate memory", LOG_NET, LOG_CLASS_ERROR, logOutputMethod) : (void)0;
 				struct timeval timeout = { 0,0 };
@@ -369,6 +372,11 @@ connect:
 					switch (header[0])
 					{
 					case DATA:
+						chunckWaveSize = getSampleSize(localData);
+						if (chunckWaveSize != dh->waveSize * dh->channel) {
+							logCat("Invalid data size", LOG_NET, LOG_CLASS_WARNING, logOutputMethod);
+							break;
+						}
 						audioDataFrame = malloc(localParm.dataSize);
 						audioDataFrame == NULL ? logCat("Failed to allocate memory", LOG_NET, LOG_CLASS_ERROR, logOutputMethod) : (void)0;
 						memcpy_s(audioDataFrame, localParm.dataSize, localData, localParm.dataSize);
@@ -415,6 +423,7 @@ connect:
 							}
 							audioDataFrame = NULL;
 						}
+						chunckWaveSize = 0;
 						break;
 					case END:
 						logCat("Connection closed", LOG_NET, LOG_CLASS_INFO, logOutputMethod);

@@ -11,7 +11,7 @@
 
 #define VERSION "0.3.0"
 
-int sampleRate = 48000;
+double sampleRate = 48000;
 int framesPerBuffer = 2048;
 
 char* host;
@@ -22,6 +22,9 @@ int deviceAudio = 0;
 void server(int device)
 {
 	logCat("Server", LOG_MAIN, LOG_CLASS_INFO, logOutputMethod);
+	dh->channel = 2;
+	dh->sampleRate = sampleRate;
+	dh->waveSize = framesPerBuffer;
 	PaStream* stream = setupStream(device, 2, dh->sampleRate, dh->waveSize, 1);
 	startStream(stream);
 	void* nThread = initNet(port, host, 0, device);
@@ -128,8 +131,8 @@ int main(int argc, char* argv[])
 				printf_s("-s\t\tSet the program to server mode\n");
 				printf_s("-t\t\tTest mode\n");
 				printf_s("-v\t\tSet the volume modifier\n");
-				printf_s("-z\t\tSet the chunck size [Not working yet]\n");
-				printf_s("-x\t\tSet the sample rate [Not working yet]\n\n");
+				printf_s("-z\t\tSet the chunck size\n");
+				printf_s("-x\t\tSet the sample rate\n\n");
 				printf_s("-he\t\tTo view examples how use\n");
 				printf_s("-ht\t\tTroubleshooting");
 				printf_s("\n");
@@ -160,7 +163,7 @@ int main(int argc, char* argv[])
 			}
 			else if (strcmp(argv[i], "-x") == 0)
 			{
-				sscanf_s(argv[i + 1], "%d", &sampleRate);
+				sscanf_s(argv[i + 1], "%lf", &sampleRate);
 				i++;
 			}
 			else
@@ -179,10 +182,8 @@ int main(int argc, char* argv[])
 	dh = malloc(sizeof(dataHandshake));
 	if (dh != NULL)
 	{
+		memset(dh, 0, sizeof(dataHandshake));
 		dh->header = NULLHEADER;
-		dh->channel = 2;
-		dh->sampleRate = sampleRate;
-		dh->waveSize = framesPerBuffer;
 	}
 	else
 	{
