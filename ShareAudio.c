@@ -9,7 +9,7 @@
 #include "winnet.h"
 #include <stdio.h>
 
-#define VERSION "0.3.0"
+#define VERSION "0.0.1"
 
 double sampleRate = 48000;
 int framesPerBuffer = 2048;
