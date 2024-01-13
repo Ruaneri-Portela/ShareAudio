@@ -43,7 +43,7 @@ typedef struct connectParam
 } connectParam;
 
 static char data[1028];
-static const unsigned char confirmConn[3] = { 0xFF, '\0' };
+static const unsigned char confirmConn[2] = { 0xFF, '\0' };
 
 HANDLE closeThread = NULL;
 
@@ -128,11 +128,11 @@ static void setupAddr(connectParam* parm, ADDRESS_FAMILY family)
 		const char* msgPrefix;
 		if (parm->asServer == 1)
 		{
-			msgPrefix = "Bind on:";
+			msgPrefix = "Listen on: ";
 		}
 		else
 		{
-			msgPrefix = "Connect to host:";
+			msgPrefix = "Connect to host: ";
 		}
 		char* logMsg = concatString(msgPrefix, parm->host);
 		logCat(logMsg, LOG_NET, LOG_CLASS_INFO, logOutputMethod);
@@ -233,7 +233,6 @@ static DWORD WINAPI inetSrv(LPVOID parms)
 	while (closeThread != NULL)
 	{
 		while (!inetSrvHandshake((connectParam*)parms));
-
 		logCat("Audio connection established", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
 		int tolerance = 0;
 		while (1)

@@ -25,7 +25,8 @@ void server(int device)
 	dh->channel = 2;
 	dh->sampleRate = sampleRate;
 	dh->waveSize = framesPerBuffer;
-	PaStream* stream = setupStream(device, 2, dh->sampleRate, dh->waveSize, 1);
+	PaDeviceInfo* info = Pa_GetDeviceInfo(device);
+	PaStream* stream = setupStream(device,info->maxInputChannels, dh->sampleRate, dh->waveSize, 1);
 	startStream(stream);
 	void* nThread = initNet(port, host, 0, device);
 	if (nThread == NULL)
@@ -183,7 +184,6 @@ int main(int argc, char* argv[])
 	if (dh != NULL)
 	{
 		memset(dh, 0, sizeof(dataHandshake));
-		dh->header = NULLHEADER;
 	}
 	else
 	{

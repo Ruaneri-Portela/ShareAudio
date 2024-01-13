@@ -6,7 +6,7 @@ ShareAudio is a software designed for sharing audio between computers using TCP/
 
 - **Low Resource Consumption:** ShareAudio is built with the goal of minimizing RAM and CPU usage, making it suitable for running as a systemd/sysv service on Linux or as a Windows Service. Both the client and server components use less than 4MB of RAM.
 
-- **Transmission Method:** The software employs a datagram over TCP/IP for audio transmission. It encapsulates RAW audio via the network, resulting in high-fidelity (HI-FI) quality audio. For example, a 32-bit depth audio at 96000 Hz consumes around 12 Mbps, while a 48000 audio uses around 6 Mbps.
+- **Transmission Method:** The software employs a datagram over TCP/IP for audio transmission. It encapsulates RAW audio via the network, resulting in high-fidelity (HI-FI) quality audio. For example, a 32-bit depth audio at 96000 Hz 2.0 consumes around 12 Mbps, while a 48000 audio uses around 6 Mbps.
 
 - **Future Developments:**
   - Compression and Encryption: Future versions aim to implement compression and encryption between the audio-sharing pair.
