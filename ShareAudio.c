@@ -9,14 +9,12 @@
 #include "winnet.h"
 #include <stdio.h>
 
-#define SAMPLE_RATE 48000
-#define FRAMES_PER_BUFFER 2048
 #define VERSION "0.3.0"
 
-int sampleRate = SAMPLE_RATE;
-int framesPerBuffer = FRAMES_PER_BUFFER;
+int sampleRate = 48000;
+int framesPerBuffer = 2048;
 
-char *host;
+char* host;
 int port = 0;
 int mode = 0;
 int deviceAudio = 0;
@@ -24,9 +22,9 @@ int deviceAudio = 0;
 void server(int device)
 {
 	logCat("Server", LOG_MAIN, LOG_CLASS_INFO, logOutputMethod);
-	PaStream *stream = setupStream(device, 2, dh->sampleRate, dh->waveSize, 1);
+	PaStream* stream = setupStream(device, 2, dh->sampleRate, dh->waveSize, 1);
 	startStream(stream);
-	void *nThread = initNet(port, host, 0, device);
+	void* nThread = initNet(port, host, 0, device);
 	if (nThread == NULL)
 	{
 		logCat("Failed to init net", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
@@ -43,7 +41,7 @@ void server(int device)
 void client(int device)
 {
 	logCat("Client", LOG_MAIN, LOG_CLASS_INFO, logOutputMethod);
-	void *nThread = initNet(9950, host, 1, device);
+	void* nThread = initNet(9950, host, 1, device);
 	if (nThread == NULL)
 	{
 		logCat("Failed to init net", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
@@ -56,7 +54,7 @@ void client(int device)
 	closeNet(nThread);
 }
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
 	HANDLE hProcess = GetCurrentProcess();
 	SetPriorityClass(hProcess, REALTIME_PRIORITY_CLASS);
@@ -130,8 +128,8 @@ int main(int argc, char *argv[])
 				printf_s("-s\t\tSet the program to server mode\n");
 				printf_s("-t\t\tTest mode\n");
 				printf_s("-v\t\tSet the volume modifier\n");
-				printf_s("-z\t\tSet the chunck size\n");
-				printf_s("-x\t\tSet the sample rate\n\n");
+				printf_s("-z\t\tSet the chunck size [Not working yet]\n");
+				printf_s("-x\t\tSet the sample rate [Not working yet]\n\n");
 				printf_s("-he\t\tTo view examples how use\n");
 				printf_s("-ht\t\tTroubleshooting");
 				printf_s("\n");
@@ -193,7 +191,12 @@ int main(int argc, char *argv[])
 	if (host == NULL)
 	{
 		host = malloc(sizeof(char) * 11);
-		strcpy_s(host, 11, "127.0.0.1\0");
+		if (host != NULL) {
+			strcpy_s(host, 11, "127.0.0.1\0");
+		}
+		else {
+			logCat("Failed to allocate memory", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
+		}
 	}
 	switch (mode)
 	{

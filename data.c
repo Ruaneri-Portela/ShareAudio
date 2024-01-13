@@ -92,7 +92,7 @@ size_t getDelay(dataHandshake* dhData) {
 	return (size_t)(((((float)dhData->waveSize * (float)dhData->channel) / (float)dhData->sampleRate) / 4.0) * 1000);;
 }
 
-char* concatString(char* original, char* toCat) {
+char* concatString(const char* original,const char* toCat) {
 	size_t originalSize = strlen(original);
 	size_t toCatSize = strlen(toCat);
 	char* c = malloc(originalSize + toCatSize + 1);
