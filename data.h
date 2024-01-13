@@ -37,4 +37,6 @@ int getSize(dataHandshake* dhData);
 
 size_t getDelay(dataHandshake* dhData);
 
+char* concatString(char* original, char* toCat);
+
 int detectHost(const char* host, size_t asServer);

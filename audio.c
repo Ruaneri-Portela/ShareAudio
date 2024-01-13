@@ -1,22 +1,19 @@
-#include <stdio.h>
-#include <string.h>
 #include "data.h"
 #include "log.h"
 #include "portaudio/include/portaudio.h"
+#include <stdio.h>
+#include <string.h>
 
 typedef struct audioBuffer
 {
-	char* data;
-	void* next;
+	void* data;
+	struct audioBuffer* next;
+	struct audioBuffer* prev;
 } audioBuffer;
 
 void* audioDataFrame = NULL;
 
 audioBuffer* head = NULL;
-
-PaStream* globalStream = NULL;
-
-int deviceAudio = 0;
 
 static PaError err;
 
@@ -197,9 +194,9 @@ PaStream* setupStream(int device, int lchannel, double sampleRate, int waveSize,
 	parms.suggestedLatency = Pa_GetDeviceInfo(device)->defaultLowInputLatency;
 	channel = lchannel;
 	PaStream* stream;
-	printf_s("Using device [%d]: %s\n",
-		device,
-		(Pa_GetDeviceInfo(device)->name));
+	char* msg = concatString("Using device: ", Pa_GetDeviceInfo(device)->name);
+	logCat(msg, LOG_AUDIO, LOG_CLASS_INFO, logOutputMethod);
+	free(msg);
 	asServer ? logCat("Server mode", LOG_AUDIO, LOG_CLASS_INFO, logOutputMethod) : logCat("Client mode", LOG_AUDIO, LOG_CLASS_INFO, logOutputMethod);
 	if (asServer)
 	{
@@ -227,7 +224,6 @@ PaStream* setupStream(int device, int lchannel, double sampleRate, int waveSize,
 			NULL);
 		checkErr(err);
 	}
-	globalStream = stream;
 	if (barMode) {
 		printf("\033[2J");
 	}

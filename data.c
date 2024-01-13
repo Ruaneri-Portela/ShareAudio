@@ -92,6 +92,17 @@ size_t getDelay(dataHandshake* dhData) {
 	return (size_t)(((((float)dhData->waveSize * (float)dhData->channel) / (float)dhData->sampleRate) / 4.0) * 1000);;
 }
 
+char* concatString(char* original, char* toCat) {
+	size_t originalSize = strlen(original);
+	size_t toCatSize = strlen(toCat);
+	char* c = malloc(originalSize + toCatSize + 1);
+	if (c != NULL) {
+		memcpy(c, original, originalSize);
+		memcpy(c + originalSize, toCat, toCatSize + 1);
+	}
+	return c;
+}
+
 int detectHost(const char* host, size_t asServer) {
 	size_t hostSize = strlen(host);
 	if (hostSize > 6 && hostSize < 16) {

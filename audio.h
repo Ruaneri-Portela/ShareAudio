@@ -1,18 +1,16 @@
 #include "portaudio/include/portaudio.h"
 #include <stdio.h>
+
 typedef struct audioBuffer
 {
     void *data;
-    void *next;
+    struct audioBuffer *next;
+    struct audioBuffer* prev;
 } audioBuffer;
 
 extern void *audioDataFrame;
 
 extern audioBuffer *head;
-
-extern PaStream* globalStream;
-
-extern int deviceAudio;
 
 extern int testMode;
 

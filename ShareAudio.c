@@ -3,15 +3,15 @@
 #elif __GNUC__
 #define COMPILE "GCC"
 #endif
-#include <stdio.h>
 #include "audio.h"
 #include "data.h"
 #include "log.h"
 #include "winnet.h"
+#include <stdio.h>
 
 #define SAMPLE_RATE 48000
 #define FRAMES_PER_BUFFER 2048
-#define VERSION "0.1.0 Experimental"
+#define VERSION "0.3.0"
 
 int sampleRate = SAMPLE_RATE;
 int framesPerBuffer = FRAMES_PER_BUFFER;
@@ -19,13 +19,14 @@ int framesPerBuffer = FRAMES_PER_BUFFER;
 char *host;
 int port = 0;
 int mode = 0;
+int deviceAudio = 0;
 
 void server(int device)
 {
 	logCat("Server", LOG_MAIN, LOG_CLASS_INFO, logOutputMethod);
-	PaStream *srv = setupStream(device, 2, sampleRate, framesPerBuffer, 1);
-	startStream(globalStream);
-	void *nThread = initNet(port, host, 0);
+	PaStream *stream = setupStream(device, 2, dh->sampleRate, dh->waveSize, 1);
+	startStream(stream);
+	void *nThread = initNet(port, host, 0, device);
 	if (nThread == NULL)
 	{
 		logCat("Failed to init net", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
@@ -35,14 +36,14 @@ void server(int device)
 	{
 		Sleep(1000);
 	}
-	shutdownStream(srv);
+	shutdownStream(stream);
 	closeNet(nThread);
 }
 
-void client()
+void client(int device)
 {
 	logCat("Client", LOG_MAIN, LOG_CLASS_INFO, logOutputMethod);
-	void *nThread = initNet(9950, host, 1);
+	void *nThread = initNet(9950, host, 1, device);
 	if (nThread == NULL)
 	{
 		logCat("Failed to init net", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
@@ -182,8 +183,8 @@ int main(int argc, char *argv[])
 	{
 		dh->header = NULLHEADER;
 		dh->channel = 2;
-		dh->sampleRate = SAMPLE_RATE;
-		dh->waveSize = FRAMES_PER_BUFFER;
+		dh->sampleRate = sampleRate;
+		dh->waveSize = framesPerBuffer;
 	}
 	else
 	{
@@ -191,8 +192,8 @@ int main(int argc, char *argv[])
 	}
 	if (host == NULL)
 	{
-		host = malloc(sizeof(char) * 10);
-		strcpy_s(host, 10, "127.0.0.1");
+		host = malloc(sizeof(char) * 11);
+		strcpy_s(host, 11, "127.0.0.1\0");
 	}
 	switch (mode)
 	{
@@ -200,9 +201,7 @@ int main(int argc, char *argv[])
 		server(deviceAudio);
 		break;
 	case 2:
-		client();
-		break;
-	default:
+		client(deviceAudio);
 		break;
 	}
 	free(dh);

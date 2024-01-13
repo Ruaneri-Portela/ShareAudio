@@ -11,14 +11,14 @@ typedef struct connectParam
 {
 	int asServer;
 	int port;
-	char* host;
+	char *host;
 	int dataSize;
 	size_t delay;
-	srvCtx* ctx;
+	srvCtx *ctx;
 } connectParam;
 
 extern HANDLE closeThread;
 
-HANDLE initNet(int port, char* host, size_t asClient);
+HANDLE initNet(int port, char *host, size_t asClient, int device);
 
 void closeNet(void *hThread);

@@ -19,6 +19,7 @@ typedef struct connectParam
 	int port;
 	char* host;
 	int dataSize;
+	int device;
 	size_t delay;
 	srvCtx* ctx;
 } connectParam;
@@ -33,7 +34,6 @@ static int iResult;
 static DWORD WINAPI closeApplication()
 {
 	getchar();
-	stopStream(globalStream);
 	HANDLE local = closeThread;
 	closeThread = NULL;
 	CloseHandle((HANDLE*)local);
@@ -54,7 +54,8 @@ static void closeInet(LPVOID parms)
 	}
 }
 
-static void initInetCommon() {
+static void initInetCommon()
+{
 	WSADATA wsaData;
 	int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
 	if (iResult != 0)
@@ -67,21 +68,24 @@ static void initInetCommon() {
 	}
 }
 
-
-static void setupAddr(connectParam* parm, ADDRESS_FAMILY family) {
+static void setupAddr(connectParam* parm, ADDRESS_FAMILY family)
+{
 	int detectIp = detectHost(parm->host, parm->asServer);
 	char* hostLocal = parm->host;
 	struct addrinfo* res = NULL;
 	char* ip = NULL;
-	if (detectIp == 2) {
+	if (detectIp == 2)
+	{
 		hostLocal = NULL;
 		int tam = sizeof(char) * 16;
 		char* ip = malloc(tam);
 		if (ip == NULL)
 			logCat("Failed to allocate memory", LOG_NET, LOG_CLASS_ERROR, logOutputMethod);
 		getaddrinfo(parm->host, 0, 0, &res);
-		for (struct addrinfo* ptr = res; ptr != NULL; ptr = ptr->ai_next) {
-			if (ptr->ai_addr->sa_family == AF_INET) {
+		for (struct addrinfo* ptr = res; ptr != NULL; ptr = ptr->ai_next)
+		{
+			if (ptr->ai_addr->sa_family == AF_INET)
+			{
 				struct sockaddr_in* ipv4 = (struct sockaddr_in*)ptr->ai_addr;
 				inet_ntop(AF_INET, &(ipv4->sin_addr), ip, 16);
 				hostLocal = ip;
@@ -90,11 +94,14 @@ static void setupAddr(connectParam* parm, ADDRESS_FAMILY family) {
 	}
 	parm->ctx->srvAddr.sin_family = family;
 	parm->ctx->srvAddr.sin_port = htons(parm->port);
-	if (inet_pton(AF_INET, hostLocal, &parm->ctx->srvAddr.sin_addr, strlen(parm->host)) == 0 && hostLocal != NULL) {
-		if (res != NULL) {
+	if (inet_pton(AF_INET, hostLocal, &parm->ctx->srvAddr.sin_addr, strlen(parm->host)) == 0 && hostLocal != NULL)
+	{
+		if (res != NULL)
+		{
 			free(res);
 		}
-		if (ip != NULL) {
+		if (ip != NULL)
+		{
 			free(ip);
 		}
 		logCat("Invalid address", LOG_NET, LOG_CLASS_ERROR, logOutputMethod);
@@ -102,27 +109,22 @@ static void setupAddr(connectParam* parm, ADDRESS_FAMILY family) {
 	else
 	{
 		const char* msgPrefix;
-		if (parm->asServer == 1) {
+		if (parm->asServer == 1)
+		{
 			msgPrefix = "Bind on:";
-		}
-		else {
-			msgPrefix = "Connect to host:";
-		}
-		size_t tamanhoMsg = strlen(msgPrefix) + strlen(parm->host) + 1;
-		char* msg = malloc(sizeof(char) * tamanhoMsg);
-		if (msg != NULL) {
-			strcpy_s(msg, tamanhoMsg, msgPrefix);
-			strcat_s(msg, tamanhoMsg, parm->host);
-			logCat(msg, LOG_NET, LOG_CLASS_INFO, logOutputMethod);
 		}
 		else
 		{
-			logCat("Failed to allocate memory", LOG_NET, LOG_CLASS_ERROR, logOutputMethod);
+			msgPrefix = "Connect to host:";
 		}
+		char* logMsg = concatString(msgPrefix, parm->host);
+		logCat(logMsg, LOG_NET, LOG_CLASS_INFO, logOutputMethod);
+		free(logMsg);
 	}
 }
 
-static void setupSrv(connectParam* parms) {
+static void setupSrv(connectParam* parms)
+{
 	initInetCommon();
 	setupAddr(parms, AF_INET);
 	parms->ctx->srvSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -155,7 +157,8 @@ static void setupSrv(connectParam* parms) {
 	}
 }
 
-static short unsigned int inetSrvHandshake(connectParam* localParm) {
+static short unsigned int inetSrvHandshake(connectParam* localParm)
+{
 	short unsigned int connectSession = 1;
 	logCat("Waiting for client...", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
 	localParm->ctx->clientSocket = SOCKET_ERROR;
@@ -167,14 +170,13 @@ static short unsigned int inetSrvHandshake(connectParam* localParm) {
 		Sleep((DWORD)localParm->delay);
 	}
 	logCat("Client connected! (1/3)", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
-	while (connectSession && closeThread != NULL)
+	while (closeThread != NULL)
 	{
 		iResult = recv(localParm->ctx->clientSocket, (char*)dh, sizeof(dataHandshake), 0);
 		if (iResult == SOCKET_ERROR)
 		{
 			logCat("Recv failed!", LOG_NET, LOG_CLASS_WARNING, logOutputMethod);
-			connectSession = 0;
-			break;
+			return 0;
 		}
 		else
 		{
@@ -184,8 +186,7 @@ static short unsigned int inetSrvHandshake(connectParam* localParm) {
 			if (iResult == SOCKET_ERROR)
 			{
 				logCat("Send failed!", LOG_NET, LOG_CLASS_WARNING, logOutputMethod);
-				connectSession = 0;
-				break;
+				return 0;
 			}
 			else
 			{
@@ -193,8 +194,7 @@ static short unsigned int inetSrvHandshake(connectParam* localParm) {
 				if (iResult == SOCKET_ERROR)
 				{
 					logCat("Recv failed!", LOG_NET, LOG_CLASS_WARNING, logOutputMethod);
-					connectSession = 0;
-					break;
+					return 0;
 				}
 				if (strcmp((char*)confirmConn, data) == 0)
 				{
@@ -203,43 +203,39 @@ static short unsigned int inetSrvHandshake(connectParam* localParm) {
 				}
 			}
 			logCat("Handshake failled", LOG_NET, LOG_CLASS_WARNING, logOutputMethod);
-			connectSession = 0;
-			break;
+			return 0;
 		}
 		Sleep((DWORD)localParm->delay);
 	}
-	return connectSession;
 }
 
 static DWORD WINAPI inetSrv(LPVOID parms)
 {
 	connectParam* localParm = (connectParam*)parms;
-	int connectSession = 1;
 	while (closeThread != NULL)
 	{
-		connectSession = 1;
 		while (!inetSrvHandshake((connectParam*)parms));
 		logCat("Audio connection stablished", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
 		int tolerance = 0;
-		while (connectSession)
+		while (1)
 		{
 			if (closeThread == NULL)
 			{
 				audioDataFrame = createDataFrame(NULL, dh->waveSize);
 				dataHeader* header = (dataHeader*)audioDataFrame;
 				*header = END;
-				connectSession = 0;
+				break;
 			}
 			if (audioDataFrame != NULL)
 			{
 				iResult = send(localParm->ctx->clientSocket, (char*)audioDataFrame, (int)localParm->dataSize, 0);
 				if (iResult == SOCKET_ERROR)
 				{
-					logCat("Send failed!", LOG_NET, LOG_CLASS_WARNING, logOutputMethod);
-					connectSession = 0;
 					tolerance++;
-					if (tolerance > 10)
-						break;
+					Sleep(1000);
+					if (tolerance > 5)
+						logCat("Send failed!", LOG_NET, LOG_CLASS_WARNING, logOutputMethod);
+					break;
 				}
 				else
 				{
@@ -282,10 +278,11 @@ connect:
 		logCat("Host connected, sending 'hello' code (1/3)", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
 		dh->header = NULLHEADER;
 		size_t err = 0;
-		PaStream* globalStream = NULL;
+		PaStream* stream = NULL;
+		void* localData = NULL;
 		while (closeThread != NULL)
 		{
-			if (dh->header == NULLHEADER && globalStream == NULL)
+			if (dh->header == NULLHEADER && stream == NULL)
 			{
 				iResult = send(localParm.ctx->srvSocket, (char*)dh, sizeof(dataHandshake), 0);
 				if (iResult == SOCKET_ERROR)
@@ -314,89 +311,116 @@ connect:
 						}
 					}
 				}
-				globalStream = setupStream(deviceAudio, 2, dh->sampleRate, dh->waveSize, 0);
-				startStream(globalStream);
+				stream = setupStream(localParm.device, 2, dh->sampleRate, dh->waveSize, 0);
+				startStream(stream);
+			}
+			else if (localData == NULL) {
+				localData = malloc(localParm.dataSize);
+				localData == NULL ? logCat("Failed to allocate memory", LOG_NET, LOG_CLASS_ERROR, logOutputMethod) : 0;
+				struct timeval timeout;
+				timeout.tv_sec = 0;
+				timeout.tv_usec = getDelay(dh);
+				if (setsockopt(localParm.ctx->srvSocket, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(timeout)) == SOCKET_ERROR) {
+					logCat("Failed to set socket timeout", LOG_NET, LOG_CLASS_ERROR, logOutputMethod);
+				}
 			}
 			else if (localParm.dataSize > (int)(sizeof(dataHeader) + sizeof(size_t)))
 			{
-				void* localData = malloc(localParm.dataSize);
-				if (localData != NULL) {
-					memset(localData, 0, localParm.dataSize);
-					iResult = recv(localParm.ctx->srvSocket, (char*)localData, localParm.dataSize, 0);
-					if (iResult == SOCKET_ERROR)
+				iResult = recv(localParm.ctx->srvSocket, (char*)localData, localParm.dataSize, 0);
+				if (iResult == SOCKET_ERROR)
+				{
+					err++;
+					if (err > 10)
 					{
-						err++;
-						logCat("Client cannot recive data", LOG_NET, LOG_CLASS_WARNING, logOutputMethod);
+						logCat("Close connection", LOG_NET, LOG_CLASS_WARNING, logOutputMethod);
+						if (stream != NULL)
+						{
+							shutdownStream(stream);
+							stream = NULL;
+						};
 						free(localData);
-						head = NULL;
-						if (err > 10)
-						{
-							logCat("Close connection", LOG_NET, LOG_CLASS_WARNING, logOutputMethod);
-							if (globalStream != NULL) {
-								shutdownStream(globalStream);
-								globalStream = NULL;
-							};
-							globalStream = NULL;
-							goto connect;
-						}
-					}
-					else
-					{
-						err = 0;
-						audioDataFrame = localData;
-						dataHeader* header = (dataHeader*)audioDataFrame;
-						switch (header[0])
-						{
-						case DATA:
-							if (audioDataFrame != NULL)
-							{
-								audioBuffer* temp = (audioBuffer*)malloc(sizeof(audioBuffer));
-								temp->data = audioDataFrame;
-								temp->next = NULL;
-								if (head == NULL)
-								{
-									head = temp;
-								}
-								else
-								{
-									for (audioBuffer* i = head; i != NULL; i = i->next)
-									{
-										if (i->next == NULL)
-										{
-											i->next = temp;
-											break;
-										}
-									}
-								}
-								audioDataFrame = NULL;
-							}
-							break;
-						case END:
-							logCat("Connection closed", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
-							closesocket(localParm.ctx->srvSocket);
-							if (globalStream != NULL) {
-								shutdownStream(globalStream);
-								globalStream = NULL;
-							}
-							goto connect;
-						case AUTH:
-							break;
-						case HANDSHAKE:
-							break;
-						default:
-							break;
-						}
+						localData = NULL;
+						stream = NULL;
+						goto connect;
 					}
 				}
 				else
 				{
-					logCat("Failed to allocate memory", LOG_NET, LOG_CLASS_ERROR, logOutputMethod);
+					err = 0;
+					audioDataFrame = malloc(localParm.dataSize);
+					audioDataFrame == NULL ? logCat("Failed to allocate memory", LOG_NET, LOG_CLASS_ERROR, logOutputMethod) : 0;
+					memcpy_s(audioDataFrame, localParm.dataSize, localData, localParm.dataSize);
+					dataHeader* header = (dataHeader*)audioDataFrame;
+					switch (header[0])
+					{
+					case DATA:
+						if (audioDataFrame != NULL)
+						{
+							audioBuffer* temp = (audioBuffer*)malloc(sizeof(audioBuffer));
+							temp->data = audioDataFrame;
+							temp->next = NULL;
+							temp->prev = NULL;
+							if (head == NULL)
+							{
+								head = temp;
+							}
+							else
+							{
+								int bufferSize = 0;
+								int delete = 0;
+								for (audioBuffer* i = head; i != NULL; i = i->next)
+								{
+									bufferSize++;
+									if (bufferSize > 5) {
+										audioBuffer* tempLocal = i;
+										free(i->data);
+										if (delete == 0) {
+											i->prev->next = temp;
+											temp->prev = i->prev;
+											delete++;
+										}
+										else if (i->next != NULL) {
+											free(i->prev);
+										}
+										else {
+											free(i->prev);
+											free(i);
+											break;
+										}
+									}
+									else if (i->next == NULL)
+									{
+										i->next = temp;
+										temp->prev = i;
+										break;
+									}
+								}
+							}
+							audioDataFrame = NULL;
+						}
+						break;
+					case END:
+						logCat("Connection closed", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
+						closesocket(localParm.ctx->srvSocket);
+						if (stream != NULL)
+						{
+							shutdownStream(stream);
+							stream = NULL;
+						}
+						goto connect;
+					case AUTH:
+						break;
+					case HANDSHAKE:
+						break;
+					default:
+						break;
+					}
 				}
 			}
 		}
-		if (globalStream != NULL) {
-			shutdownStream(globalStream);
-			globalStream = NULL;
+		if (stream != NULL)
+		{
+			shutdownStream(stream);
 		}
 		closesocket(localParm.ctx->srvSocket);
 		closeInet(parms);
@@ -404,26 +428,20 @@ connect:
 	return 0;
 }
 
-HANDLE initNet(int port, char* host, size_t asClient)
+HANDLE initNet(int port, char* host, size_t asClient, int device)
 {
 	closeThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)closeApplication, NULL, 0, NULL);
-	if (closeThread == NULL)
-	{
-		printf("Failed to create thread\n");
-		return NULL;
-	}
+	closeThread == NULL ? logCat("Failed to create thread", LOG_NET, LOG_CLASS_ERROR, logOutputMethod) : 0;
 	HANDLE hThread;
 	connectParam* dataParm = NULL;
 	dataParm = malloc(sizeof(connectParam));
 	if (dataParm != NULL)
 	{
 		dataParm->ctx = malloc(sizeof(srvCtx));
-		if (dataParm->ctx == NULL)
-		{
-			logCat("Failed to allocate memory", LOG_NET, LOG_CLASS_ERROR, logOutputMethod);
-		}
+		dataParm->ctx == NULL ? logCat("Failed to allocate memory", LOG_NET, LOG_CLASS_ERROR, logOutputMethod) : 0;
 		dataParm->host = host;
 		dataParm->port = port;
+		dataParm->device = device;
 		if (asClient)
 		{
 			dataParm->asServer = 0;
@@ -435,14 +453,11 @@ HANDLE initNet(int port, char* host, size_t asClient)
 			setupSrv(dataParm);
 			hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)inetSrv, dataParm, 0, NULL);
 		}
-		if (hThread == NULL)
-		{
-			printf("Failed to create thread\n");
-			return NULL;
-		}
+		hThread == NULL ? logCat("Failed to create thread", LOG_NET, LOG_CLASS_ERROR, logOutputMethod) : 0;
 		return hThread;
 	}
-	else {
+	else
+	{
 		logCat("Failed to allocate memory", LOG_NET, LOG_CLASS_ERROR, logOutputMethod);
 	}
 	return NULL;
