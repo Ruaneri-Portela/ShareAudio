@@ -44,6 +44,8 @@ typedef struct connectParam
 
 static char data[1028];
 static const unsigned char confirmConn[2] = { 0xFF, '\0' };
+size_t sessionPacket = 0;
+size_t totalPacketSrv = 0;
 
 HANDLE closeThread = NULL;
 
@@ -51,10 +53,35 @@ static int iResult;
 
 static DWORD WINAPI closeApplication()
 {
-	getchar();
-	HANDLE local = closeThread;
-	closeThread = NULL;
-	CloseHandle((HANDLE*)local);
+	char comando[1028];
+	Sleep(1000);
+	while (1) {
+		printf_s("Comand => ");
+		scanf_s("%s", comando, 1028);
+		if (strcmp(comando, "exit") == 0) {
+			HANDLE local = closeThread;
+			CloseHandle((HANDLE*)local);
+			closeThread = NULL;
+			break;
+		}
+		else if (strcmp(comando, "info") == 0) {
+			printf_s("Session packet: %zu\n", sessionPacket);
+			if (totalPacketSrv != 0) {
+				printf_s("Total packet: %zu\n", totalPacketSrv + 1);
+				printf_s("Packet lost: %zu\n", sessionPacket - (totalPacketSrv + 1));
+				printf_s("Packet lost percent: %.2f\n", ((float)sessionPacket - (float)(totalPacketSrv + 1)) / (float)totalPacketSrv * 100);
+				double totalMB = ((double)(sizeof(size_t) * dh->waveSize * dh->channel * totalPacketSrv) / 1024.00f) / 1024.00f;
+				printf_s("Total MB reviced: %.2lf\n", totalMB);
+			}
+		}
+		else if (strcmp(comando, "help") == 0) {
+			printf_s("exit => Close application\n");
+			printf_s("info => Show info\n");
+		}
+		else {
+			printf_s("Invalid command\n");
+		}
+	}
 	return 0;
 }
 
@@ -235,17 +262,19 @@ static DWORD WINAPI inetSrv(LPVOID parms)
 		while (!inetSrvHandshake((connectParam*)parms));
 		logCat("Audio connection established", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
 		int tolerance = 0;
+		sessionPacket = 0;
 		while (1)
 		{
 			if (closeThread == NULL)
 			{
-				audioDataFrame = createDataFrame(NULL, dh->waveSize);
+				audioDataFrame = createDataFrame(NULL, dh);
 				dataHeader* header = (dataHeader*)audioDataFrame;
 				*header = END;
 				break;
 			}
 			if (audioDataFrame != NULL)
 			{
+				orderDataFrame((char*)audioDataFrame, sessionPacket, dh);
 				iResult = send(localParm->ctx->clientSocket, (char*)audioDataFrame, (int)localParm->dataSize, 0);
 				if (iResult == SOCKET_ERROR)
 				{
@@ -257,6 +286,7 @@ static DWORD WINAPI inetSrv(LPVOID parms)
 				}
 				else
 				{
+					sessionPacket++;
 					tolerance = 0;
 				}
 				free(audioDataFrame);
@@ -344,9 +374,10 @@ connect:
 				}
 				logCat("Audio connection established", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
 			}
-			else if (localParm.dataSize > (int)(sizeof(dataHeader) + sizeof(size_t)))
+			else if (localParm.dataSize > (int)(sizeof(dataHeader) + sizeof(size_t) * 2))
 			{
 				iResult = recv(localParm.ctx->srvSocket, (char*)localData, localParm.dataSize, 0);
+				totalPacketSrv = getOrderDataFrame(localData, dh);
 				if (iResult == SOCKET_ERROR)
 				{
 					err++;
@@ -423,6 +454,7 @@ connect:
 							audioDataFrame = NULL;
 						}
 						chunckWaveSize = 0;
+						sessionPacket++;
 						break;
 					case END:
 						logCat("Connection closed", LOG_NET, LOG_CLASS_INFO, logOutputMethod);

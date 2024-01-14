@@ -118,11 +118,11 @@ int serverCallback(
 	}
 	if (testMode)
 	{
-		audioDataFrame = createDataFrame(NULL, framesPerBuffer * channel);
+		audioDataFrame = createDataFrame(NULL,dh);
 	}
 	else
 	{
-		audioDataFrame = createDataFrame((float*)inputBuffer, framesPerBuffer * channel);
+		audioDataFrame = createDataFrame((float*)inputBuffer, dh);
 	}
 	return 0;
 }

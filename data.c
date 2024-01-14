@@ -48,9 +48,24 @@ void copyInto(float* in, float* out, size_t size, float volMod, size_t testMode)
 
 }
 
-char* createDataFrame(const float* data, size_t waveSize)
+int getSize(dataHandshake* dhData) {
+	return (int)(sizeof(dataHeader) + (sizeof(size_t) * 2) + ((sizeof(float) * dhData->waveSize) * dhData->channel));
+}
+
+void orderDataFrame(char* dataFrame, size_t value,dataHandshake* dhData) {
+	size_t detour = getSize(dhData) - sizeof(size_t);
+	*(size_t*)((char*)dataFrame + detour) = value;
+}
+
+size_t getOrderDataFrame(char* dataFrame, dataHandshake* dhData) {
+	size_t detour = getSize(dhData) - sizeof(size_t);
+	return *(size_t*)((char*)dataFrame + detour);
+}
+
+char* createDataFrame(const float* data, dataHandshake* dhData)
 {
-	size_t memorySize = sizeof(dataHeader) + sizeof(size_t) + sizeof(float) * waveSize + sizeof(size_t);
+	size_t memorySize = getSize(dh); 
+	size_t audioPadding = dhData->waveSize * dhData->channel;
 	char* dataFrame = (char*)malloc(memorySize);
 	if (dataFrame != NULL) {
 		memset(dataFrame, 0, memorySize);
@@ -64,35 +79,31 @@ char* createDataFrame(const float* data, size_t waveSize)
 		return NULL;
 	}
 	size_t* sizeWave = (size_t*)(header + 1);
-	*sizeWave = waveSize;
-
+	*sizeWave = dhData->waveSize * dhData->channel;
 	float* waveFrame = (float*)(sizeWave + 1);
-
-	data == NULL ? copyInto(NULL, waveFrame, waveSize, 1, 1) : copyInto((float*)data, waveFrame, waveSize, 1, 0);
+	size_t* dataCount = (size_t*)(waveFrame + audioPadding);
+	*dataCount = 0;
+	data == NULL ? copyInto(NULL, waveFrame,audioPadding, 1, 1) : copyInto((float*)data, waveFrame,audioPadding, 1, 0);
 	return dataFrame;
 }
 
 float* getWaveFrame(const char* dataFrame)
 {
-	size_t detour = sizeof(dataHeader) + sizeof(size_t);
+	size_t detour = sizeof(dataHeader) + (sizeof(size_t));
 	return (float*)((char*)dataFrame + detour);
 }
 
-int getSampleSize(const char* dataFrame)
+size_t getSampleSize(const char* dataFrame)
 {
 	size_t detour = sizeof(dataHeader);
-	return *(int*)((char*)dataFrame + detour);
-}
-
-int getSize(dataHandshake* dhData) {
-	return (int)(sizeof(dataHeader) + sizeof(size_t) + ((sizeof(float) * dhData->waveSize) * dhData->channel) * dhData->channel);
+	return *(size_t*)((char*)dataFrame + detour);
 }
 
 size_t getDelay(dataHandshake* dhData) {
 	return (size_t)(((((float)dhData->waveSize * (float)dhData->channel) / (float)dhData->sampleRate) / 4.0) * 1000);;
 }
 
-char* concatString(const char* original,const char* toCat) {
+char* concatString(const char* original, const char* toCat) {
 	size_t originalSize = strlen(original);
 	size_t toCatSize = strlen(toCat);
 	char* c = malloc(originalSize + toCatSize + 1);

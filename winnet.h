@@ -17,6 +17,9 @@ typedef struct connectParam
 	srvCtx *ctx;
 } connectParam;
 
+extern size_t sessionPacket;
+extern size_t totalPacketSrv;
+
 extern HANDLE closeThread;
 
 HANDLE initNet(int port, char *host, size_t asClient, int device);
