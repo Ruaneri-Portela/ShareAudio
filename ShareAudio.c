@@ -25,7 +25,7 @@ void server(int device)
 	dh->channel = 2;
 	dh->sampleRate = sampleRate;
 	dh->waveSize = framesPerBuffer;
-	PaDeviceInfo* info = Pa_GetDeviceInfo(device);
+	const PaDeviceInfo* info = Pa_GetDeviceInfo(device);
 	PaStream* stream = setupStream(device,info->maxInputChannels, dh->sampleRate, dh->waveSize, 1);
 	startStream(stream);
 	void* nThread = initNet(port, host, 0, device);

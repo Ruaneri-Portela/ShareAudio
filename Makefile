@@ -8,7 +8,7 @@ endif
 SRCS := $(wildcard *.c)
 BUILD_DIR := ./build
 OBJS := $(addprefix $(BUILD_DIR)/, $(SRCS:.c=.o))
-TARGET := $(BUILD_DIR)/sharedaudio
+TARGET := $(BUILD_DIR)/ShareAudio
 
 all: $(BUILD_DIR) $(TARGET)
 

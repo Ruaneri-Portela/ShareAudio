@@ -7,23 +7,7 @@
 
 #ifdef _MSC_VER
 #pragma comment(lib, "ws2_32.lib")
-#elif __GNUC__
-// To remove avoid alerts on  gcc
-struct addrinfo
-{
-	int ai_flags;
-	int ai_family;
-	int ai_socktype;
-	int ai_protocol;
-	size_t ai_addrlen;
-	char* ai_canonname;
-	_Field_size_bytes_(ai_addrlen) struct sockaddr* ai_addr;
-	struct addrinfo* ai_next;
-};
 #endif
-
-
-
 
 typedef struct srvCtx
 {
