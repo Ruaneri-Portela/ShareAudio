@@ -3,6 +3,7 @@
 #include "log.h"
 #include <stdio.h>
 #include <winsock2.h>
+#include <WS2tcpip.h>
 
 #ifdef _MSC_VER
 #pragma comment(lib, "ws2_32.lib")
@@ -19,10 +20,10 @@ struct addrinfo
 	_Field_size_bytes_(ai_addrlen) struct sockaddr* ai_addr;
 	struct addrinfo* ai_next;
 };
-INT WSAAPI inet_pton(INT Family, PCSTR pszAddrString, PVOID pAddrBuf, INT dwAddrBufLen);
-PCSTR WSAAPI inet_ntop(INT Family, const VOID* pAddr, PSTR pStringBuf, size_t StringBufSize);
-INT WSAAPI getaddrinfo(PCSTR pNodeName, PCSTR pServiceName, const void* pHints, void* ppResult);
 #endif
+
+
+
 
 typedef struct srvCtx
 {
@@ -53,30 +54,35 @@ static int iResult;
 
 static DWORD WINAPI closeApplication()
 {
-	char comando[1028];
+	char comand[1028];
 	Sleep(1000);
 	while (1) {
 		printf_s("Comand => ");
-		scanf_s("%s", comando, 1028);
-		if (strcmp(comando, "exit") == 0) {
+		scanf_s("%s", comand, 1028);
+		if (strcmp(comand, "exit") == 0) {
 			HANDLE local = closeThread;
 			CloseHandle((HANDLE*)local);
 			closeThread = NULL;
 			break;
 		}
-		else if (strcmp(comando, "info") == 0) {
+		else if (strcmp(comand, "info") == 0) {
 			printf_s("Session packet: %zu\n", sessionPacket);
 			if (totalPacketSrv != 0) {
 				printf_s("Total packet: %zu\n", totalPacketSrv + 1);
-				printf_s("Packet lost: %zu\n", sessionPacket - (totalPacketSrv + 1));
-				printf_s("Packet lost percent: %.2f\n", ((float)sessionPacket - (float)(totalPacketSrv + 1)) / (float)totalPacketSrv * 100);
+				printf_s("Packet lost: %zu\n", (totalPacketSrv + 1) - sessionPacket);
+				printf_s("Packet lost percent: %.2f\n", ((float)((totalPacketSrv + 1) - sessionPacket)) / (float)totalPacketSrv * 100);
 				double totalMB = ((double)(sizeof(size_t) * dh->waveSize * dh->channel * totalPacketSrv) / 1024.00f) / 1024.00f;
 				printf_s("Total MB reviced: %.2lf\n", totalMB);
 			}
 		}
-		else if (strcmp(comando, "help") == 0) {
+		else if (strcmp(comand, "help") == 0) {
 			printf_s("exit => Close application\n");
 			printf_s("info => Show info\n");
+			printf_s("volume => Set volume\n");
+		}
+		else if (strcmp(comand, "volume") == 0) {
+			printf_s("New volume value: ");
+			scanf_s("%f", &volMod);
 		}
 		else {
 			printf_s("Invalid command\n");
@@ -131,14 +137,17 @@ static void setupAddr(connectParam* parm, ADDRESS_FAMILY family)
 			if (ptr->ai_addr->sa_family == AF_INET)
 			{
 				struct sockaddr_in* ipv4 = (struct sockaddr_in*)ptr->ai_addr;
-				inet_ntop(AF_INET, &(ipv4->sin_addr), ip, 16);
-				hostLocal = ip;
+				if (ip != NULL) {
+					inet_ntop(AF_INET, &(ipv4->sin_addr), ip, 16);
+					hostLocal = ip;
+					break;
+				}
 			}
 		}
 	}
 	parm->ctx->srvAddr.sin_family = family;
 	parm->ctx->srvAddr.sin_port = htons(parm->port);
-	if (inet_pton(AF_INET, hostLocal, &parm->ctx->srvAddr.sin_addr, strlen(parm->host)) == 0 && hostLocal != NULL)
+	if (hostLocal != NULL &&  inet_pton(AF_INET, hostLocal, &parm->ctx->srvAddr.sin_addr) == 0 )
 	{
 		if (res != NULL)
 		{
@@ -333,7 +342,7 @@ connect:
 		{
 			if (dh->header == NULLHEADER && stream == NULL)
 			{
-				iResult = send(localParm.ctx->srvSocket, (char*)dh, sizeof(dataHandshake), 0);
+				iResult = send(localParm.ctx->srvSocket, (char*)dh, sizeof(*dh), 0);
 				if (iResult == SOCKET_ERROR)
 				{
 					logCat("Send failed!", LOG_NET, LOG_CLASS_WARNING, logOutputMethod);
@@ -341,14 +350,14 @@ connect:
 				else
 				{
 					logCat("Hello send... Wait Handshake (2/3)", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
-					iResult = recv(localParm.ctx->srvSocket, (char*)dh, sizeof(dataHandshake), 0);
+					iResult = recv(localParm.ctx->srvSocket, (char*)dh, sizeof(*dh), 0);
 					if (iResult == SOCKET_ERROR)
 					{
 						logCat("Recv failed!", LOG_NET, LOG_CLASS_WARNING, logOutputMethod);
 					}
 					else
 					{
-						send(localParm.ctx->srvSocket, (char*)confirmConn, 3, 0);
+						send(localParm.ctx->srvSocket, (char*)confirmConn, 2, 0);
 						if (iResult == SOCKET_ERROR)
 						{
 							logCat("Send failed!", LOG_NET, LOG_CLASS_WARNING, logOutputMethod);
