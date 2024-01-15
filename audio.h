@@ -12,9 +12,9 @@ extern void *audioDataFrame;
 
 extern audioBuffer *head;
 
-extern int testMode;
+extern unsigned short int testMode;
 
-extern int barMode;
+extern unsigned short int barMode;
 
 extern float volMod;
 
@@ -30,9 +30,9 @@ int serverCallback(
     const PaStreamCallbackTimeInfo *timeInfo, PaStreamCallbackFlags statusFlags,
     void *userData);
 
-void stopStream(PaStream *s);
+void stopStream(PaStream *stream);
 
-void startStream(PaStream *s);
+void startStream(PaStream *stream);
 
 void initAudio();
 

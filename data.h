@@ -31,7 +31,7 @@ void orderDataFrame(char* dataFrame, size_t value, dataHandshake* dhData);
 
 size_t getOrderDataFrame(char* dataFrame,dataHandshake* dhData);
 
-char* createDataFrame(const float* data, dataHandshake* dhData);
+char* createDataFrame(const float* data, dataHandshake* dhData, unsigned short int testmode);
 
 float *getWaveFrame(const char *dataFrame);
 

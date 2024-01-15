@@ -62,7 +62,7 @@ size_t getOrderDataFrame(char* dataFrame, dataHandshake* dhData) {
 	return *(size_t*)((char*)dataFrame + detour);
 }
 
-char* createDataFrame(const float* data, dataHandshake* dhData)
+char* createDataFrame(const float* data, dataHandshake* dhData, unsigned short int testmode)
 {
 	size_t memorySize = getSize(dh); 
 	size_t audioPadding = dhData->waveSize * dhData->channel;
@@ -83,7 +83,7 @@ char* createDataFrame(const float* data, dataHandshake* dhData)
 	float* waveFrame = (float*)(sizeWave + 1);
 	size_t* dataCount = (size_t*)(waveFrame + audioPadding);
 	*dataCount = 0;
-	data == NULL ? copyInto(NULL, waveFrame,audioPadding, 1, 1) : copyInto((float*)data, waveFrame,audioPadding, 1, 0);
+	testmode ? copyInto(NULL, waveFrame,audioPadding, 1, 1) : copyInto((float*)data, waveFrame,audioPadding, 1, 0);
 	return dataFrame;
 }
 

@@ -39,7 +39,7 @@ void server(int device)
 		Sleep(1000);
 	}
 	shutdownStream(stream);
-	closeNet(nThread);
+	closeNet(nThread); 
 }
 
 void client(int device)

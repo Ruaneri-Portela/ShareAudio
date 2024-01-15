@@ -11,17 +11,15 @@ typedef struct audioBuffer
 	struct audioBuffer* prev;
 } audioBuffer;
 
-void* audioDataFrame = NULL;
+char* audioDataFrame = NULL;
 
 audioBuffer* head = NULL;
 
 static PaError err;
 
-static size_t channel;
+unsigned short int testMode = 0;
 
-int testMode = 0;
-
-int barMode = 0;
+unsigned short int barMode = 0;
 
 float volMod = 1;
 
@@ -57,7 +55,7 @@ static void drawBar(float* data, unsigned long framesPerBuffer)
 		volL = maxLocal(volL, absLocal(data[i]));
 		volR = maxLocal(volR, absLocal(data[i + 1]));
 	}
-	printf("\033[G");
+	printf("\r");
 	for (int i = 0; i < dispSize; i++)
 	{
 		float barProportion = i / (float)dispSize;
@@ -89,16 +87,19 @@ int clientCallback(
 	(void)inputBuffer;
 	(void)timeInfo;
 	(void)statusFlags;
-	(void)userData;
+	dataHandshake* lDh = (dataHandshake*)userData;
 	drawBar((float*)outputBuffer, framesPerBuffer);
 	if (head != NULL)
 	{
 		audioBuffer* temp = head;
 		float* data = getWaveFrame(temp->data);
-		copyInto(data, (float*)outputBuffer, framesPerBuffer * channel, volMod, testMode);
+		copyInto(data, (float*)outputBuffer, framesPerBuffer * lDh->channel, volMod, testMode);
 		head = temp->next;
 		free(temp->data);
 		free(temp);
+		if (head != NULL && head->prev != NULL) {
+			head->prev = NULL;
+		}
 	}
 	return 0;
 }
@@ -111,32 +112,25 @@ int serverCallback(
 	(void)outputBuffer;
 	(void)timeInfo;
 	(void)statusFlags;
-	(void)userData;
+	dataHandshake* lDh = (dataHandshake*)userData;
 	drawBar((float*)inputBuffer, framesPerBuffer);
 	if (audioDataFrame != NULL) {
 		free(audioDataFrame);
 	}
-	if (testMode)
-	{
-		audioDataFrame = createDataFrame(NULL,dh);
-	}
-	else
-	{
-		audioDataFrame = createDataFrame((float*)inputBuffer, dh);
-	}
+	audioDataFrame = createDataFrame((float*)inputBuffer, lDh, testMode);
 	return 0;
 }
 
-void stopStream(PaStream* s)
+void stopStream(PaStream* stream)
 {
-	err = Pa_StopStream(s);
+	err = Pa_StopStream(stream);
 	checkErr(err);
 	logCat("Stream stopped", LOG_AUDIO, LOG_CLASS_INFO, logOutputMethod);
 }
 
-void startStream(PaStream* s)
+void startStream(PaStream* stream)
 {
-	err = Pa_StartStream(s);
+	err = Pa_StartStream(stream);
 	checkErr(err);
 	logCat("Stream started", LOG_AUDIO, LOG_CLASS_INFO, logOutputMethod);
 }
@@ -192,7 +186,6 @@ PaStream* setupStream(int device, int lchannel, double sampleRate, int waveSize,
 	parms.hostApiSpecificStreamInfo = NULL;
 	parms.sampleFormat = paFloat32;
 	parms.suggestedLatency = Pa_GetDeviceInfo(device)->defaultLowInputLatency;
-	channel = lchannel;
 	PaStream* stream;
 	char* msg = concatString("Using device: ", Pa_GetDeviceInfo(device)->name);
 	logCat(msg, LOG_AUDIO, LOG_CLASS_INFO, logOutputMethod);
@@ -208,7 +201,7 @@ PaStream* setupStream(int device, int lchannel, double sampleRate, int waveSize,
 			waveSize,
 			paNoFlag,
 			serverCallback,
-			NULL);
+			dh);
 		checkErr(err);
 	}
 	else
@@ -221,11 +214,8 @@ PaStream* setupStream(int device, int lchannel, double sampleRate, int waveSize,
 			waveSize,
 			paNoFlag,
 			clientCallback,
-			NULL);
+			dh);
 		checkErr(err);
-	}
-	if (barMode) {
-		printf("\033[2J");
 	}
 	return stream;
 }
