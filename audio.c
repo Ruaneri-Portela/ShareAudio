@@ -15,8 +15,6 @@ char* audioDataFrame = NULL;
 
 audioBuffer* head = NULL;
 
-static PaError err;
-
 unsigned short int testMode = 0;
 
 unsigned short int barMode = 0;
@@ -123,29 +121,25 @@ int serverCallback(
 
 void stopStream(PaStream* stream)
 {
-	err = Pa_StopStream(stream);
-	checkErr(err);
+	checkErr(Pa_StopStream(stream));
 	logCat("Stream stopped", LOG_AUDIO, LOG_CLASS_INFO, logOutputMethod);
 }
 
 void startStream(PaStream* stream)
 {
-	err = Pa_StartStream(stream);
-	checkErr(err);
+	checkErr(Pa_StartStream(stream));
 	logCat("Stream started", LOG_AUDIO, LOG_CLASS_INFO, logOutputMethod);
 }
 
 void initAudio()
 {
-	err = Pa_Initialize();
-	checkErr(err);
+	checkErr(Pa_Initialize());
 	logCat("PortAudio initialized", LOG_AUDIO, LOG_CLASS_INFO, logOutputMethod);
 }
 
 void closeAudio()
 {
-	err = Pa_Terminate();
-	checkErr(err);
+	checkErr(Pa_Terminate());
 	logCat("PortAudio terminated", LOG_AUDIO, LOG_CLASS_INFO, logOutputMethod);
 }
 
@@ -155,8 +149,7 @@ void listAudioDevices()
 	printf("==============================\nDevices atrach on computer\nNumber of devices: %d\nListing avaliable devices...\n\n", numDevices);
 	if (numDevices < 0)
 	{
-		err = numDevices;
-		checkErr(err);
+		checkErr(numDevices);
 	}
 	else if (numDevices == 0)
 	{
@@ -193,7 +186,7 @@ PaStream* setupStream(int device, int lchannel, double sampleRate, int waveSize,
 	asServer ? logCat("Server mode", LOG_AUDIO, LOG_CLASS_INFO, logOutputMethod) : logCat("Client mode", LOG_AUDIO, LOG_CLASS_INFO, logOutputMethod);
 	if (asServer)
 	{
-		err = Pa_OpenStream(
+		checkErr(Pa_OpenStream(
 			&stream,
 			&parms,
 			NULL,
@@ -201,12 +194,11 @@ PaStream* setupStream(int device, int lchannel, double sampleRate, int waveSize,
 			waveSize,
 			paNoFlag,
 			serverCallback,
-			dh);
-		checkErr(err);
+			dh));
 	}
 	else
 	{
-		err = Pa_OpenStream(
+		checkErr(Pa_OpenStream(
 			&stream,
 			NULL,
 			&parms,
@@ -214,17 +206,14 @@ PaStream* setupStream(int device, int lchannel, double sampleRate, int waveSize,
 			waveSize,
 			paNoFlag,
 			clientCallback,
-			dh);
-		checkErr(err);
+			dh));
 	}
 	return stream;
 }
 
 void shutdownStream(PaStream* stream)
 {
-	err = Pa_StopStream(stream);
-	checkErr(err);
-	err = Pa_CloseStream(stream);
-	checkErr(err);
+	checkErr(Pa_StopStream(stream));
+	checkErr(Pa_CloseStream(stream));
 	logCat("Stream shutdowner", LOG_AUDIO, LOG_CLASS_INFO, logOutputMethod);
 }

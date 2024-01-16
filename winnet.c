@@ -18,11 +18,11 @@ typedef struct srvCtx
 
 typedef struct connectParam
 {
-	int asServer;
-	int port;
+	unsigned short int asServer;
+	unsigned int port;
 	char* host;
-	int dataSize;
-	int device;
+	size_t dataSize;
+	short int device;
 	size_t delay;
 	srvCtx* ctx;
 } connectParam;
@@ -392,9 +392,9 @@ connect:
 					}
 				}
 			}
-			else if (localParm.dataSize > (int)(sizeof(dataHeader) + (sizeof(size_t) * 2)))
+			else if (localParm.dataSize > (sizeof(dataHeader) + (sizeof(size_t) * 2)))
 			{
-				iResult = recv(localParm.ctx->srvSocket, (char*)localData, localParm.dataSize, 0);
+				iResult = recv(localParm.ctx->srvSocket, (char*)localData, (int)localParm.dataSize, 0);
 				totalPacketSrv = getOrderDataFrame(localData, dh);
 				if (iResult == SOCKET_ERROR)
 				{

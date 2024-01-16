@@ -17,7 +17,7 @@ for build in "${builds[@]}"; do
     mkdir -p "./build/$build" 
     cp "./$build/Release/"*.exe "./build/$build/" -f
     cp "./$build/Release/"*.dll "./build/$build/" -f
-    zip "./build/ShareAudio_MSVC_$build($version).zip" "./build/$build/"* -j
+    zip "./build/ShareAudio_MSVC_$msbild($version).zip" "./build/$build/"* -j
     rm -rf "./build/$build"
 done
 # packing for x64_GNU_GCC

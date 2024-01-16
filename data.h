@@ -25,7 +25,7 @@ extern dataHandshake *dh;
 
 void copyInto(float* in, float* out, size_t size, float volMod, size_t testMode);
 
-int getSize(dataHandshake* dhData);
+size_t getSize(dataHandshake* dhData);
 
 void orderDataFrame(char* dataFrame, size_t value, dataHandshake* dhData);
 
@@ -35,12 +35,10 @@ char* createDataFrame(const float* data, dataHandshake* dhData, unsigned short i
 
 float *getWaveFrame(const char *dataFrame);
 
-int getSampleSize(const char *dataFrame);
-
-dataHandshake getHandShake(char *dataFrame);
+size_t getSampleSize(const char *dataFrame);
 
 size_t getDelay(dataHandshake* dhData);
 
 char* concatString(const char* original,const char* toCat);
 
-int detectHost(const char* host, size_t asServer);
+unsigned short int  detectHost(const char* host, size_t asServer);

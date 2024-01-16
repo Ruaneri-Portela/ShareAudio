@@ -96,6 +96,7 @@ void logCat(const char *msg, logClass class, logLevel level, logOutput method)
 		else
 		{
 			printf_s("Error opening file %s\n", fileLogName);
+			logCat("Error opening file", LOG_MAIN, LOG_CLASS_ERROR, LOG_OUTPUT_CONSOLE);
 		}
 		break;
 	default:
