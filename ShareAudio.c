@@ -8,8 +8,7 @@
 #include "log.h"
 #include "winnet.h"
 #include <stdio.h>
-
-#define VERSION "0.0.1"
+#include "VERSION.h"
 
 double sampleRate = 48000;
 int framesPerBuffer = 2048;
@@ -21,41 +20,41 @@ int deviceAudio = 0;
 
 void server(int device)
 {
-	logCat("Server", LOG_MAIN, LOG_CLASS_INFO, logOutputMethod);
+	SA_Log("Server", LOG_MAIN, LOG_CLASS_INFO, logOutputMethod);
 	dh->channel = 2;
 	dh->sampleRate = sampleRate;
 	dh->waveSize = framesPerBuffer;
 	const PaDeviceInfo* info = Pa_GetDeviceInfo(device);
-	PaStream* stream = setupStream(device,info->maxInputChannels, dh->sampleRate, dh->waveSize, 1);
-	startStream(stream);
-	void* nThread = initNet(port, host, 0, device);
+	PaStream* stream = SA_AudioOpenStream(device,info->maxInputChannels, dh->sampleRate, dh->waveSize, 1);
+	SA_AudioStartStream(stream);
+	void* nThread = SA_NetInit(port, host, 0, device);
 	if (nThread == NULL)
 	{
-		logCat("Failed to init net", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
+		SA_Log("Failed to init net", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
 		return;
 	}
 	while (closeThread != NULL)
 	{
 		Sleep(1000);
 	}
-	shutdownStream(stream);
-	closeNet(nThread); 
+	SA_AudioCloseStream(stream);
+	SA_NetClose(nThread); 
 }
 
 void client(int device)
 {
-	logCat("Client", LOG_MAIN, LOG_CLASS_INFO, logOutputMethod);
-	void* nThread = initNet(9950, host, 1, device);
+	SA_Log("Client", LOG_MAIN, LOG_CLASS_INFO, logOutputMethod);
+	void* nThread = SA_NetInit(9950, host, 1, device);
 	if (nThread == NULL)
 	{
-		logCat("Failed to init net", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
+		SA_Log("Failed to init net", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
 		return;
 	}
 	while (closeThread != NULL)
 	{
 		Sleep(1000);
 	}
-	closeNet(nThread);
+	SA_NetClose(nThread);
 }
 
 int main(int argc, char* argv[])
@@ -64,7 +63,7 @@ int main(int argc, char* argv[])
 	SetPriorityClass(hProcess, REALTIME_PRIORITY_CLASS);
 	port = 9950;
 	logOutputMethod = LOG_OUTPUT_CONSOLE;
-	logCat("Program start, build on " COMPILE, LOG_MAIN, LOG_CLASS_INFO, logOutputMethod);
+	SA_Log("Program start. Build on " COMPILE ". Binary version " VERSION, LOG_MAIN, LOG_CLASS_INFO, logOutputMethod);
 	if (argc > 1)
 	{
 		for (int i = 1; i < argc; i++)
@@ -104,11 +103,15 @@ int main(int argc, char* argv[])
 			{
 				barMode = 1;
 			}
+			else if (strcmp(argv[i], "-i") == 0)
+			{
+				printf_s("ShareAudio\n\tA easy and light way to share your between your computers\n\tVer: %s\n", VERSION);
+			}
 			else if (strcmp(argv[i], "-r") == 0)
 			{
-				initAudio();
-				listAudioDevices();
-				closeAudio();
+				SA_AudioInit();
+				SA_AudioListAllDevices();
+				SA_AudioClose();
 				return EXIT_SUCCESS;
 			}
 			else if (strcmp(argv[i], "-v") == 0)
@@ -176,10 +179,10 @@ int main(int argc, char* argv[])
 	}
 	else
 	{
-		logCat("Needs a comand line args", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
+		SA_Log("Needs a comand line args", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
 		return EXIT_SUCCESS;
 	}
-	initAudio();
+	SA_AudioInit();
 	dh = malloc(sizeof(dataHandshake));
 	if (dh != NULL)
 	{
@@ -187,7 +190,7 @@ int main(int argc, char* argv[])
 	}
 	else
 	{
-		logCat("Failed to allocate memory", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
+		SA_Log("Failed to allocate memory", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
 	}
 	if (host == NULL)
 	{
@@ -196,7 +199,7 @@ int main(int argc, char* argv[])
 			strcpy_s(host, 11, "127.0.0.1\0");
 		}
 		else {
-			logCat("Failed to allocate memory", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
+			SA_Log("Failed to allocate memory", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
 		}
 	}
 	switch (mode)
@@ -209,7 +212,7 @@ int main(int argc, char* argv[])
 		break;
 	}
 	free(dh);
-	closeAudio();
-	logCat("Program exit", LOG_MAIN, LOG_CLASS_INFO, logOutputMethod);
+	SA_AudioClose();
+	SA_Log("Program exit", LOG_MAIN, LOG_CLASS_INFO, logOutputMethod);
 	return EXIT_SUCCESS;
 }

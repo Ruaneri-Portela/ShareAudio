@@ -1,4 +1,6 @@
 #!/bin/bash
+rm -f VERSION.h
+echo "#define VERSION \"$GIT_VERSION\"" >> VERSION.h
 make clean
 make
 # packing for MSVC

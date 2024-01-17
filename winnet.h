@@ -22,6 +22,6 @@ extern size_t totalPacketSrv;
 
 extern HANDLE closeThread;
 
-HANDLE initNet(int port, char *host, size_t asClient, int device);
+HANDLE SA_NetInit(int port, char* host, size_t asClient, int device);
 
-void closeNet(void *hThread);
+void SA_NetClose(void* hThread);

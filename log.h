@@ -24,4 +24,4 @@ extern char *fileLogName;
 
 extern logOutput logOutputMethod;
 
-void logCat(const char *msg, logClass class, logLevel level, logOutput method);
+void SA_Log(const char *msg, logClass class, logLevel level, logOutput method);

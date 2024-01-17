@@ -29,7 +29,7 @@ char *fileLogName = "log.txt";
 
 static FILE *fileLog = NULL;
 
-static const char *enumToStringClass(logClass class)
+static const char *SA_LogEnumClass(logClass class)
 {
 	switch (class)
 	{
@@ -44,7 +44,7 @@ static const char *enumToStringClass(logClass class)
 	}
 }
 
-static const char *enumToStringLevel(logLevel level, int toTerminal)
+static const char *SA_LogEnumToLevel(logLevel level, int toTerminal)
 {
 	if (toTerminal == 1)
 	{
@@ -80,23 +80,23 @@ static const char *enumToStringLevel(logLevel level, int toTerminal)
 	}
 }
 
-void logCat(const char *msg, logClass class, logLevel level, logOutput method)
+void SA_Log(const char *msg, logClass class, logLevel level, logOutput method)
 {
 	switch (method)
 	{
 	case LOG_OUTPUT_CONSOLE:
-		printf_s("%s][%s] %s\n\x1B[0m", enumToStringLevel(level, 1), enumToStringClass(class), msg);
+		printf_s("%s][%s] %s\n\x1B[0m", SA_LogEnumToLevel(level, 1), SA_LogEnumClass(class), msg);
 		break;
 	case LOG_OUTPUT_FILE:
 		fileLog == NULL ? fopen_s(&fileLog, fileLogName, "a") : 0;
 		if (fileLog != NULL)
 		{
-			fprintf(fileLog, "[%s][%s] %s\n", enumToStringLevel(level, 0), enumToStringClass(class), msg);
+			fprintf(fileLog, "[%s][%s] %s\n", SA_LogEnumToLevel(level, 0), SA_LogEnumClass(class), msg);
 		}
 		else
 		{
 			printf_s("Error opening file %s\n", fileLogName);
-			logCat("Error opening file", LOG_MAIN, LOG_CLASS_ERROR, LOG_OUTPUT_CONSOLE);
+			SA_Log("Error opening file", LOG_MAIN, LOG_CLASS_ERROR, LOG_OUTPUT_CONSOLE);
 		}
 		break;
 	default:
