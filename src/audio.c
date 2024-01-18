@@ -1,8 +1,14 @@
+#include <string.h>
+#include <stdio.h>
+
+#include "../portaudio/include/portaudio.h"
 #include "data.h"
 #include "log.h"
-#include "../portaudio/include/portaudio.h"
-#include <stdio.h>
-#include <string.h>
+
+#if !(defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__))
+#include "linux.h"
+#endif
+
 
 typedef struct audioDevices {
 	const PaDeviceInfo** devices;
@@ -64,6 +70,7 @@ int SA_AudioServerCallback(
 	(void)framesPerBuffer;
 	if (audioDataFrame != NULL) {
 		free(audioDataFrame);
+		audioDataFrame = NULL;
 	}
 	audioDataFrame = SA_DataCreateDataFrame((float*)inputBuffer, userData, testMode);
 	return 0;
@@ -124,15 +131,11 @@ void SA_AudioListAllDevices()
 	for (int i = 0;; i++) {
 		if (devicesData.devices[i] != NULL)
 		{
-			if (devicesData.devices[i]->maxInputChannels > 0) {
-				printf_s("Device Input %d:\n\t%s\n\tSample Rate:%f\n\tChannels:%d\n\n", i,
-					devicesData.devices[i]->name, devicesData.devices[i]->defaultSampleRate, devicesData.devices[i]->maxInputChannels);
-			}
-			else if (devicesData.devices[i]->maxOutputChannels > 0)
-			{
-				printf_s("Device Output %d:\n\t%s\n\tSample Rate:%f\n\tChannels:%d\n\n", i,
-					devicesData.devices[i]->name, devicesData.devices[i]->defaultSampleRate, devicesData.devices[i]->maxOutputChannels);
-			}
+				printf_s("Device Input %d:\n\t%s\n\tSample Rate:%f\n\tChannels Int:%d\n\tChannels Out:%d\n\n", i,
+					devicesData.devices[i]->name, 
+					devicesData.devices[i]->defaultSampleRate, 
+					devicesData.devices[i]->maxInputChannels, 
+					devicesData.devices[i]->maxOutputChannels);
 		}
 		else
 		{

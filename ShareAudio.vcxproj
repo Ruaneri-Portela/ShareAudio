@@ -32,14 +32,16 @@
     <ClCompile Include="src/log.c" />
     <ClCompile Include="src/ShareAudio.c" />
     <ClCompile Include="src/threads.c" />
-    <ClCompile Include="src/winnet.c" />
+    <ClCompile Include="src\linux.c" />
+    <ClCompile Include="src\net.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src/audio.h" />
     <ClInclude Include="src/data.h" />
     <ClInclude Include="src/log.h" />
     <ClInclude Include="src/threads.h" />
-    <ClInclude Include="src/winnet.h" />
+    <ClInclude Include="src\linux.h" />
+    <ClInclude Include="src\net.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="portaudioMSVC2022\portaudio.vcxproj">

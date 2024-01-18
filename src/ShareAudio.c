@@ -1,15 +1,24 @@
+#include <stdio.h>
+#include <string.h>
+
 #ifdef _MSC_VER
 #define COMPILE "MSVC"
 #elif __GNUC__
 #define COMPILE "GCC"
 #endif
-#include "data.h"
-#include "audio.h"
-#include "log.h"
-#include "winnet.h"
-#include "threads.h"
-#include <stdio.h>
+
+#if !(defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__))
+#include "linux.h"
+#endif
+
 #include "VERSION.h"
+#include "threads.h"
+#include "audio.h"
+#include "data.h"
+#include "log.h"
+#include "net.h"
+
+
 
 double sampleRate = 48000;
 int framesPerBuffer = 2048;
@@ -177,8 +186,15 @@ int main(int argc, char* argv[])
 	}
 	else
 	{
-		SA_Log("Needs a comand line args", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
-		return EXIT_SUCCESS;
+		host = "192.168.1.252";
+		port = 9950;
+		mode = 2;
+		deviceAudio = 5;
+		volMod = 1;
+		testMode = 0;
+		sampleRate = 44100;
+		//SA_Log("Needs a comand line args", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
+		//return EXIT_SUCCESS;
 	}
 	SA_AudioInit();
 	dh = malloc(sizeof(dataHandshake));
