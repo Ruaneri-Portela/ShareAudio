@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -11,6 +12,7 @@ void memcpy_s(void* dest, size_t destsz, const void* src, size_t count)
     }
     memcpy(dest, src, count);
 }
+#endif
 
 
 unsigned short int fopen_s(FILE** file, const char* filename, const char* mode)
@@ -21,7 +23,9 @@ unsigned short int fopen_s(FILE** file, const char* filename, const char* mode)
     }
     return 1;
 }
+#endif
 
+#ifndef printf_s
 void printf_s(const char* format, ...)
 {
     va_list args;
@@ -29,7 +33,9 @@ void printf_s(const char* format, ...)
     vprintf(format, args);
     va_end(args);
 }
+#endif
 
+#ifndef strcpy_s
 void strcpy_s(char* dest, size_t destsz, const char* src)
 {
     if (destsz < strlen(src))
@@ -38,7 +44,9 @@ void strcpy_s(char* dest, size_t destsz, const char* src)
     }
     strcpy(dest, src);
 }
+#endif
 
+#ifndef sscanf_s
 void sscanf_s(const char* str, const char* format, ...)
 {
     va_list args;
