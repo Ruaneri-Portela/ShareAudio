@@ -42,7 +42,7 @@ void SA_DataCopyAudio(float *in, float *out, size_t size, float volMod, size_t t
 	case 1:
 		for (size_t i = 0; i < size; i++)
 		{
-			out[i] = (float)((float)rand() / RAND_MAX * 2.0 - 1.0);
+			out[i] = (float)((float)rand() / RAND_MAX * 2.0 - 1.0) * volMod;
 		}
 		break;
 	default:

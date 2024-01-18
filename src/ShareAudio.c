@@ -18,16 +18,14 @@
 #include "log.h"
 #include "net.h"
 
-
-
 double sampleRate = 48000;
 int framesPerBuffer = 2048;
 
-char* host;
+char *host;
 int port = 0;
 int mode = 0;
 int deviceAudio = 0;
-float volMod = 0;
+float volMod = 1;
 unsigned short int volSet = 0;
 
 void server(int device)
@@ -36,10 +34,18 @@ void server(int device)
 	dh->channel = 2;
 	dh->sampleRate = sampleRate;
 	dh->waveSize = framesPerBuffer;
-	const PaDeviceInfo* info = Pa_GetDeviceInfo(device);
-	PaStream* stream = SA_AudioOpenStream(device,info->maxInputChannels, dh->sampleRate, dh->waveSize, 1, dh);
+	if (volSet)
+	{
+		dh->volMod = volMod;
+	}
+	else
+	{
+		dh->volMod = 1;
+	}
+	const PaDeviceInfo *info = Pa_GetDeviceInfo(device);
+	PaStream *stream = SA_AudioOpenStream(device, info->maxInputChannels, dh->sampleRate, dh->waveSize, 1, dh);
 	SA_AudioStartStream(stream);
-	void* nThread = SA_NetInit(port, host, 0, device);
+	void *nThread = SA_NetInit(port, host, 0, device);
 	if (nThread == NULL)
 	{
 		SA_Log("Failed to init net", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
@@ -50,13 +56,13 @@ void server(int device)
 		SA_Sleep(1000);
 	}
 	SA_AudioCloseStream(stream);
-	SA_NetClose(nThread); 
+	SA_NetClose(nThread);
 }
 
 void client(int device)
 {
 	SA_Log("Client", LOG_MAIN, LOG_CLASS_INFO, logOutputMethod);
-	void* nThread = SA_NetInit(9950, host, 1, device);
+	void *nThread = SA_NetInit(9950, host, 1, device);
 	if (nThread == NULL)
 	{
 		SA_Log("Failed to init net", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
@@ -69,7 +75,7 @@ void client(int device)
 	SA_NetClose(nThread);
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
 	SA_ProcessSetPriority();
 	port = 9950;
@@ -186,24 +192,21 @@ int main(int argc, char* argv[])
 	}
 	else
 	{
-		host = "192.168.1.252";
+		host = "0.0.0.0";
 		port = 9950;
-		mode = 2;
-		deviceAudio = 4;
-		volMod = 1;
+		mode = 1;
+		deviceAudio = 2;
 		testMode = 0;
 		sampleRate = 48000;
-		//SA_Log("Needs a comand line args", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
-		//return EXIT_SUCCESS;
+		testMode = 0;
+		// SA_Log("Needs a comand line args", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
+		// return EXIT_SUCCESS;
 	}
 	SA_AudioInit();
 	dh = malloc(sizeof(dataHandshake));
 	if (dh != NULL)
 	{
 		memset(dh, 0, sizeof(dataHandshake));
-		if (volSet) {
-			dh->volMod = volMod;
-		}
 	}
 	else
 	{
@@ -212,10 +215,12 @@ int main(int argc, char* argv[])
 	if (host == NULL)
 	{
 		host = malloc(sizeof(char) * 11);
-		if (host != NULL) {
+		if (host != NULL)
+		{
 			strcpy_s(host, 11, "127.0.0.1\0");
 		}
-		else {
+		else
+		{
 			SA_Log("Failed to allocate memory", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
 		}
 	}
