@@ -354,13 +354,6 @@ static unsigned short int SA_NetSetupClient(connectParam *parms)
 					{
 						SA_Log("Handshake completed (3/3)", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
 						parms->dataSize = SA_DataGetDataFrameSize(dh);
-						struct timeval timeout = {0, 0};
-						timeout.tv_sec = 0;
-						timeout.tv_usec = (long)SA_DataGetDelayInterFrames(dh);
-						if (setsockopt(parms->ctx->srvSocket, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout)) == SOCKET_ERROR)
-						{
-							SA_Log("Failed to set socket timeout", LOG_NET, LOG_CLASS_ERROR, logOutputMethod);
-						}
 						return 1;
 					}
 				}
@@ -388,7 +381,7 @@ static void SA_NetClient(void *parms)
 			SA_AudioStartStream(stream);
 			while (closeThread != NULL && localParm.dataSize > sizeof(dataHandshake) + sizeof(size_t) * 2)
 			{
-				if (recv(localParm.ctx->srvSocket, (char *)localData, (int)localParm.dataSize, 0) == SOCKET_ERROR)
+				if (recv(localParm.ctx->srvSocket, (char *)localData, (int)localParm.dataSize, MSG_WAITALL) == SOCKET_ERROR)
 				{
 					err++;
 					if (err > 10)

@@ -189,10 +189,10 @@ int main(int argc, char* argv[])
 		host = "192.168.1.252";
 		port = 9950;
 		mode = 2;
-		deviceAudio = 5;
+		deviceAudio = 4;
 		volMod = 1;
 		testMode = 0;
-		sampleRate = 44100;
+		sampleRate = 48000;
 		//SA_Log("Needs a comand line args", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
 		//return EXIT_SUCCESS;
 	}
