@@ -62,8 +62,7 @@ void client(int device)
 
 int main(int argc, char* argv[])
 {
-	HANDLE hProcess = GetCurrentProcess();
-	SetPriorityClass(hProcess, REALTIME_PRIORITY_CLASS);
+	SA_ProcessSetPriority();
 	port = 9950;
 	logOutputMethod = LOG_OUTPUT_CONSOLE;
 	SA_Log("Program start. Build on " COMPILE ". Binary version " VERSION, LOG_MAIN, LOG_CLASS_INFO, logOutputMethod);
