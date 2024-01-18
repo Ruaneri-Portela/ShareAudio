@@ -1,13 +1,12 @@
+#include <stdio.h>
 #include "audio.h"
 #include "threads.h"
-#include "data.h"
-#include "log.h"
-#include <stdio.h>
-
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
 #include <winsock2.h>
 #include <WS2tcpip.h>
 #endif
+#include "data.h"
+#include "log.h"
 
 #ifdef _MSC_VER
 #pragma comment(lib, "ws2_32.lib")
@@ -151,6 +150,7 @@ static void SA_NetResolveHost(connectParam *parm, ADDRESS_FAMILY family)
 
 static void SA_NetSetupServer(connectParam *parms)
 {
+	SA_WinNetOpen();
 	SA_NetResolveHost(parms, AF_INET);
 	parms->ctx->srvSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (parms->ctx->srvSocket == INVALID_SOCKET)
@@ -223,7 +223,6 @@ static unsigned short int SA_NetServerGetHandhake(connectParam *localParm)
 
 static void SA_NetServer(void *parms)
 {
-	SA_WinNetOpen();
 	connectParam *localParm = (connectParam *)parms;
 	while (closeThread != NULL)
 	{
