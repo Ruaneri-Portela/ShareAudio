@@ -1,12 +1,33 @@
 #include <stdio.h>
+#include <string.h>
 #include "audio.h"
 #include "threads.h"
-#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
-#include <winsock2.h>
-#include <WS2tcpip.h>
-#endif
 #include "data.h"
 #include "log.h"
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
+
+#include <winsock2.h>
+#include <WS2tcpip.h>
+
+#else
+
+#define __USE_XOPEN2K
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <sys/time.h>
+#include <unistd.h>
+#include "linux.h"
+#define SOCKET int
+#define INVALID_SOCKET -1
+#define SOCKET_ERROR -1
+#define SOCKADDR_IN struct sockaddr_in
+#define SOCKADDR struct sockaddr
+#define ADDRESS_FAMILY int
+#define closesocket close
+
+#endif
 
 #ifdef _MSC_VER
 #pragma comment(lib, "ws2_32.lib")
@@ -188,7 +209,7 @@ static unsigned short int SA_NetServerGetHandhake(connectParam *localParm)
 	while ((int)localParm->ctx->clientSocket == SOCKET_ERROR && closeThread != NULL)
 	{
 		localParm->ctx->clientSocket = accept(localParm->ctx->srvSocket, NULL, NULL);
-		Sleep((DWORD)localParm->delay);
+		SA_Sleep(localParm->delay);
 	}
 	SA_Log("Client connected! (1/3)", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
 	dataHandshake localDh = {0xff, 0, 0, 0, 0};

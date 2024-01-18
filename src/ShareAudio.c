@@ -3,12 +3,16 @@
 #elif __GNUC__
 #define COMPILE "GCC"
 #endif
+#if !(defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__))
+#include "linux.h"
+#endif
+#include <stdio.h>
+#include <string.h>
 #include "data.h"
 #include "audio.h"
 #include "log.h"
-#include "winnet.h"
+#include "net.h"
 #include "threads.h"
-#include <stdio.h>
 #include "VERSION.h"
 
 double sampleRate = 48000;

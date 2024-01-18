@@ -4,6 +4,11 @@
 #include <stdio.h>
 #include <string.h>
 
+#if !(defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__))
+#include "linux.h"
+#endif
+
+
 typedef struct audioDevices {
 	const PaDeviceInfo** devices;
 	int numDevices;

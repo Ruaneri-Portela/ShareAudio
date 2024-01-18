@@ -1,5 +1,14 @@
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
 #include <windows.h>
+#else
+#include <netinet/in.h>
+#define SOCKET int
+#define INVALID_SOCKET -1
+#define SOCKET_ERROR -1
+#define SOCKADDR_IN struct sockaddr_in
+#define SOCKADDR struct sockaddr
+#define ADDRESS_FAMILY int
+
 #endif
 typedef struct netCtx
 {

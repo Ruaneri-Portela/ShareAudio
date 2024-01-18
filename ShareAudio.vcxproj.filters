@@ -27,7 +27,7 @@
     <ClCompile Include="src/ShareAudio.c">
       <Filter>Arquivos de Origem</Filter>
     </ClCompile>
-    <ClCompile Include="src/winnet.c">
+    <ClCompile Include="src/net.c">
       <Filter>Arquivos de Origem</Filter>
     </ClCompile>
     <ClCompile Include="src/threads.c">
@@ -35,7 +35,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src/winnet.h">
+    <ClInclude Include="src/net.h">
       <Filter>Arquivos de Cabeçalho</Filter>
     </ClInclude>
     <ClInclude Include="src/log.h">

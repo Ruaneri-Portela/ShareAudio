@@ -3,6 +3,8 @@ CFLAGS := -Wall -Wextra -pedantic
 LIBS := -lportaudio
 ifeq ($(OS),Windows_NT)
     LIBS += -lws2_32 
+else
+	LIBS += -lpthread -lrt
 endif
 
 SRCS := $(wildcard src/*.c)
