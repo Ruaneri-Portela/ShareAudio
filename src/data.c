@@ -3,7 +3,6 @@
 #include <string.h>
 #include "log.h"
 
-
 enum enumHeader
 {
 	NULLHEADER = 0x00,
@@ -120,8 +119,8 @@ char *SA_DataConcatString(const char *original, const char *toCat)
 	char *newString = malloc(originalSize + toCatSize + 1);
 	if (newString != NULL)
 	{
-		memcpy(newString, original, originalSize);
-		memcpy(newString + originalSize, toCat, toCatSize + 1);
+		memcpy_s(newString, originalSize, original, originalSize);
+		memcpy_s(newString + originalSize, toCatSize + 1, toCat, toCatSize + 1);
 	}
 	return newString;
 }
