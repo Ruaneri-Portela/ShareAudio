@@ -23,6 +23,7 @@ typedef struct dataHandshake
 	size_t channel;
 	double sampleRate;
 	size_t waveSize;
+	float volMod;
 } dataHandshake;
 
 dataHandshake *dh = NULL;

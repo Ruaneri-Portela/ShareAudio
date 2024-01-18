@@ -17,10 +17,6 @@ audioBuffer* head = NULL;
 
 unsigned short int testMode = 0;
 
-unsigned short int barMode = 0;
-
-float volMod = 1;
-
 static inline float SA_AudioGetMax(float a, float b)
 {
 	return a > b ? a : b;
@@ -39,44 +35,6 @@ static inline void SA_AudioCheckError(PaError err)
 	}
 }
 
-static void SA_AudioDrawBar(float* data, unsigned long framesPerBuffer)
-{
-	if (!barMode)
-	{
-		return;
-	}
-	int dispSize = 100;
-	float volL = 0;
-	float volR = 0;
-	for (unsigned long i = 0; i < framesPerBuffer * 2; i += 2)
-	{
-		volL = SA_AudioGetMax(volL, SA_AudioGetAbs(data[i]));
-		volR = SA_AudioGetMax(volR, SA_AudioGetAbs(data[i + 1]));
-	}
-	printf("\r");
-	for (int i = 0; i < dispSize; i++)
-	{
-		float barProportion = i / (float)dispSize;
-		if (barProportion <= volL && barProportion <= volR)
-		{
-			printf("█");
-		}
-		else if (barProportion <= volL)
-		{
-			printf("▀");
-		}
-		else if (barProportion <= volR)
-		{
-			printf("▄");
-		}
-		else
-		{
-			printf(" ");
-		}
-	}
-	fflush(stdout);
-}
-
 int SA_AudioClientCallback(
 	const void* inputBuffer, void* outputBuffer, unsigned long framesPerBuffer,
 	const PaStreamCallbackTimeInfo* timeInfo, PaStreamCallbackFlags statusFlags,
@@ -85,13 +43,11 @@ int SA_AudioClientCallback(
 	(void)inputBuffer;
 	(void)timeInfo;
 	(void)statusFlags;
-	dataHandshake* lDh = (dataHandshake*)userData;
-	SA_AudioDrawBar((float*)outputBuffer, framesPerBuffer);
 	if (head != NULL)
 	{
 		audioBuffer* temp = head;
 		float* data = SA_DataGetWaveData(temp->data);
-		SA_DataCopyAudio(data, (float*)outputBuffer, framesPerBuffer * lDh->channel, volMod, testMode);
+		SA_DataCopyAudio(data, (float*)outputBuffer, framesPerBuffer * ((dataHandshake*)userData)->channel, ((dataHandshake*)userData)->volMod, testMode);
 		head = temp->next;
 		free(temp->data);
 		free(temp);
@@ -110,12 +66,11 @@ int SA_AudioServerCallback(
 	(void)outputBuffer;
 	(void)timeInfo;
 	(void)statusFlags;
-	dataHandshake* lDh = (dataHandshake*)userData;
-	SA_AudioDrawBar((float*)inputBuffer, framesPerBuffer);
+	(void)framesPerBuffer;
 	if (audioDataFrame != NULL) {
 		free(audioDataFrame);
 	}
-	audioDataFrame = SA_DataCreateDataFrame((float*)inputBuffer, lDh, testMode);
+	audioDataFrame = SA_DataCreateDataFrame((float*)inputBuffer, userData, testMode);
 	return 0;
 }
 
@@ -169,17 +124,17 @@ void SA_AudioListAllDevices()
 	printf("==============================\n");
 }
 
-PaStream* SA_AudioOpenStream(int device, int lchannel, double sampleRate, int waveSize, unsigned short asServer)
+PaStream* SA_AudioOpenStream(size_t device, size_t lchannel, double sampleRate, size_t waveSize, unsigned short asServer, void* configs)
 {
 	PaStreamParameters parms;
 	memset(&parms, 0, sizeof(parms));
-	parms.channelCount = lchannel;
-	parms.device = device;
+	parms.channelCount = (int)lchannel;
+	parms.device = (int)device;
 	parms.hostApiSpecificStreamInfo = NULL;
 	parms.sampleFormat = paFloat32;
-	parms.suggestedLatency = Pa_GetDeviceInfo(device)->defaultLowInputLatency;
+	parms.suggestedLatency = Pa_GetDeviceInfo((int)device)->defaultLowInputLatency;
 	PaStream* stream;
-	char* msg = SA_DataConcatString("Using device: ", Pa_GetDeviceInfo(device)->name);
+	char* msg = SA_DataConcatString("Using device: ", Pa_GetDeviceInfo((int)device)->name);
 	SA_Log(msg, LOG_AUDIO, LOG_CLASS_INFO, logOutputMethod);
 	free(msg);
 	asServer ? SA_Log("Server mode", LOG_AUDIO, LOG_CLASS_INFO, logOutputMethod) : SA_Log("Client mode", LOG_AUDIO, LOG_CLASS_INFO, logOutputMethod);
@@ -189,11 +144,11 @@ PaStream* SA_AudioOpenStream(int device, int lchannel, double sampleRate, int wa
 			&stream,
 			&parms,
 			NULL,
-			sampleRate,
-			waveSize,
+			(int)sampleRate,
+			(int)waveSize,
 			paNoFlag,
 			SA_AudioServerCallback,
-			dh));
+			configs));
 	}
 	else
 	{
@@ -201,11 +156,11 @@ PaStream* SA_AudioOpenStream(int device, int lchannel, double sampleRate, int wa
 			&stream,
 			NULL,
 			&parms,
-			sampleRate,
-			waveSize,
+			(int)sampleRate,
+			(int)waveSize,
 			paNoFlag,
 			SA_AudioClientCallback,
-			dh));
+			configs));
 	}
 	return stream;
 }

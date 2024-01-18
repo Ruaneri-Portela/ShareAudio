@@ -1,4 +1,5 @@
 #include "portaudio/include/portaudio.h"
+#include <stdlib.h>
 
 typedef struct audioBuffer
 {
@@ -12,10 +13,6 @@ extern char* audioDataFrame;
 extern audioBuffer* head;
 
 extern unsigned short int testMode;
-
-extern unsigned short int barMode;
-
-extern float volMod;
 
 int SA_AudioClientCallback(
 	const void* inputBuffer, void* outputBuffer, unsigned long framesPerBuffer,
@@ -37,6 +34,6 @@ void SA_AudioClose();
 
 void SA_AudioListAllDevices();
 
-PaStream* SA_AudioOpenStream(int device, int lchannel, double sampleRate, int waveSize, unsigned short asServer);
+PaStream* SA_AudioOpenStream(size_t device, size_t lchannel, double sampleRate, size_t waveSize, unsigned short asServer, void* configs);
 
 void SA_AudioCloseStream(PaStream* stream);

@@ -1,4 +1,5 @@
 #include "audio.h"
+#include "threads.h"
 #include "data.h"
 #include "log.h"
 #include <stdio.h>
@@ -37,55 +38,10 @@ size_t sessionPacket = 0;
 
 size_t totalPacketSrv = 0;
 
-HANDLE closeThread = NULL;
+void *closeThread = NULL;
 
-static DWORD WINAPI SA_Console()
-{
-	char comand[1028];
-	Sleep(1000);
-	while (1)
-	{
-		printf_s("Comand => ");
-		scanf_s("%s", comand, 1028);
-		if (strcmp(comand, "exit") == 0)
-		{
-			HANDLE local = closeThread;
-			CloseHandle((HANDLE *)local);
-			closeThread = NULL;
-			break;
-		}
-		else if (strcmp(comand, "info") == 0)
-		{
-			printf_s("Session packet: %zu\n", sessionPacket);
-			if (totalPacketSrv != 0)
-			{
-				printf_s("Total packet: %zu\n", totalPacketSrv + 1);
-				printf_s("Packet lost: %zu\n", (totalPacketSrv + 1) - sessionPacket);
-				printf_s("Packet lost percent: %.2f\n", ((float)((totalPacketSrv + 1) - sessionPacket)) / (float)totalPacketSrv * 100);
-				double totalMB = ((double)(sizeof(size_t) * dh->waveSize * dh->channel * totalPacketSrv) / 1024.00f) / 1024.00f;
-				printf_s("Total MB reviced: %.2lf\n", totalMB);
-			}
-		}
-		else if (strcmp(comand, "help") == 0)
-		{
-			printf_s("exit => Close application\n");
-			printf_s("info => Show info\n");
-			printf_s("volume => Set volume\n");
-		}
-		else if (strcmp(comand, "volume") == 0)
-		{
-			printf_s("New volume value: ");
-			scanf_s("%f", &volMod);
-		}
-		else
-		{
-			printf_s("Invalid command\n");
-		}
-	}
-	return 0;
-}
-
-static void SA_WinNetEnd(LPVOID parms)
+#ifdef WIN32
+static void SA_WinNetEnd(void *parms)
 {
 	free(((connectParam *)parms)->ctx);
 	free(parms);
@@ -110,6 +66,14 @@ static void SA_WinNetOpen()
 		SA_Log("WSA Start", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
 	}
 }
+#else
+static void SA_WinNetEnd(void *parms)
+{
+}
+static void SA_WinNetOpen()
+{
+}
+#endif
 
 static void SA_NetResolveHost(connectParam *parm, ADDRESS_FAMILY family)
 {
@@ -224,7 +188,7 @@ static unsigned short int SA_NetServerGetHandhake(connectParam *localParm)
 		Sleep((DWORD)localParm->delay);
 	}
 	SA_Log("Client connected! (1/3)", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
-	dataHandshake localDh = {0xff, 0, 0, 0};
+	dataHandshake localDh = {0xff, 0, 0, 0, 0};
 	if (recv(localParm->ctx->clientSocket, (char *)&localDh, sizeof(dataHandshake), 0) == SOCKET_ERROR)
 	{
 		SA_Log("Recv failed!", LOG_NET, LOG_CLASS_WARNING, logOutputMethod);
@@ -254,13 +218,12 @@ static unsigned short int SA_NetServerGetHandhake(connectParam *localParm)
 	return 0;
 }
 
-static DWORD WINAPI SA_NetServer(LPVOID parms)
+static void SA_NetServer(void *parms)
 {
 	connectParam *localParm = (connectParam *)parms;
 	while (closeThread != NULL)
 	{
-		while (!SA_NetServerGetHandhake((connectParam *)parms))
-			;
+		while (!SA_NetServerGetHandhake((connectParam *)parms));
 		SA_Log("Audio connection established", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
 		int tolerance = 0;
 		sessionPacket = 0;
@@ -296,7 +259,6 @@ static DWORD WINAPI SA_NetServer(LPVOID parms)
 		};
 	}
 	SA_WinNetEnd(parms);
-	return 0;
 }
 
 static unsigned short int SA_NetSetupClient(connectParam *parms)
@@ -343,7 +305,6 @@ static unsigned short int SA_NetSetupClient(connectParam *parms)
 		else
 		{
 			SA_Log("Host connected, sending 'hello' code (1/3)", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
-			memset(dh, 0, sizeof(dataHandshake));
 			if (send(parms->ctx->srvSocket, (char *)dh, sizeof(*dh), 0) == SOCKET_ERROR)
 			{
 				SA_Log("Send failed!", LOG_NET, LOG_CLASS_WARNING, logOutputMethod);
@@ -381,7 +342,7 @@ static unsigned short int SA_NetSetupClient(connectParam *parms)
 	return 0;
 }
 
-static DWORD WINAPI SA_NetClient(LPVOID parms)
+static void SA_NetClient(void *parms)
 {
 	connectParam localParm = *(connectParam *)parms;
 	PaStream *stream = NULL;
@@ -391,107 +352,119 @@ static DWORD WINAPI SA_NetClient(LPVOID parms)
 	SA_WinNetOpen();
 	while (closeThread != NULL)
 	{
-		while (closeThread != NULL && !(SA_NetSetupClient(&localParm)))
-			;
+		while (closeThread != NULL && !(SA_NetSetupClient(&localParm)));
 		localData = malloc(localParm.dataSize);
-		localData == NULL ? SA_Log("Failed to allocate memory", LOG_NET, LOG_CLASS_ERROR, logOutputMethod) : (void)0;
-		stream = SA_AudioOpenStream(localParm.device, dh->channel, dh->sampleRate, dh->waveSize, 0);
-		SA_AudioStartStream(stream);
-		while (closeThread != NULL && localParm.dataSize > sizeof(dataHandshake) + sizeof(size_t) * 2)
+		if (localData)
 		{
-			if (recv(localParm.ctx->srvSocket, (char *)localData, (int)localParm.dataSize, 0) == SOCKET_ERROR)
+			stream = SA_AudioOpenStream(localParm.device, dh->channel, dh->sampleRate, dh->waveSize, 0,dh);
+			SA_AudioStartStream(stream);
+			while (closeThread != NULL && localParm.dataSize > sizeof(dataHandshake) + sizeof(size_t) * 2)
 			{
-				err++;
-				if (err > 10)
+				if (recv(localParm.ctx->srvSocket, (char *)localData, (int)localParm.dataSize, 0) == SOCKET_ERROR)
 				{
-					SA_Log("Close connection", LOG_NET, LOG_CLASS_WARNING, logOutputMethod);
-					SA_AudioCloseStream(stream);
-					stream = NULL;
-					free(localData);
-					localData = NULL;
-					stream = NULL;
-					break;
-				}
-			}
-			else
-			{
-				totalPacketSrv = SA_DataGetOrderDataFrame(localData, dh);
-				err = 0;
-				dataHeader *header = (dataHeader *)localData;
-				switch (header[0])
-				{
-				case DATA:
-					chunckWaveSize = SA_DataGetWaveSize(localData);
-					if (chunckWaveSize != dh->waveSize * dh->channel)
+					err++;
+					if (err > 10)
 					{
-						SA_Log("Invalid data size", LOG_NET, LOG_CLASS_WARNING, logOutputMethod);
+						SA_Log("Close connection", LOG_NET, LOG_CLASS_WARNING, logOutputMethod);
+						SA_AudioCloseStream(stream);
+						stream = NULL;
+						free(localData);
+						localData = NULL;
+						stream = NULL;
 						break;
 					}
-					audioDataFrame = malloc(localParm.dataSize);
-					audioDataFrame == NULL ? SA_Log("Failed to allocate memory", LOG_NET, LOG_CLASS_ERROR, logOutputMethod) : (void)0;
-					if (audioDataFrame != NULL)
+				}
+				else
+				{
+					totalPacketSrv = SA_DataGetOrderDataFrame(localData, dh);
+					err = 0;
+					dataHeader *header = (dataHeader *)localData;
+					switch (header[0])
 					{
-						memcpy_s(audioDataFrame, localParm.dataSize, localData, localParm.dataSize);
-						audioBuffer *temp = (audioBuffer *)malloc(sizeof(audioBuffer));
-						temp->data = audioDataFrame;
-						temp->next = NULL;
-						temp->prev = NULL;
-						if (head == NULL)
+					case DATA:
+						chunckWaveSize = SA_DataGetWaveSize(localData);
+						if (chunckWaveSize != dh->waveSize * dh->channel)
 						{
-							head = temp;
+							SA_Log("Invalid data size", LOG_NET, LOG_CLASS_WARNING, logOutputMethod);
+							break;
 						}
-						else
+						audioDataFrame = malloc(localParm.dataSize);
+						audioDataFrame == NULL ? SA_Log("Failed to allocate memory", LOG_NET, LOG_CLASS_ERROR, logOutputMethod) : (void)0;
+						if (audioDataFrame != NULL)
 						{
-							int bufferSize = 0;
-							int delete = 0;
-							for (audioBuffer *i = head; i != NULL; i = i->next)
+							memcpy_s(audioDataFrame, localParm.dataSize, localData, localParm.dataSize);
+							audioBuffer *temp = (audioBuffer *)malloc(sizeof(audioBuffer));
+							if (temp)
 							{
-								bufferSize++;
-								if (bufferSize > 5)
+								temp->data = audioDataFrame;
+								temp->next = NULL;
+								temp->prev = NULL;
+								if (head == NULL)
 								{
-									free(i->data);
-									if (delete == 0)
-									{
-										i->prev->next = temp;
-										temp->prev = i->prev;
-										delete ++;
-									}
-									else if (i->next != NULL)
-									{
-										free(i->prev);
-									}
-									else
-									{
-										free(i->prev);
-										free(i);
-										break;
-									}
+									head = temp;
 								}
-								else if (i->next == NULL)
+								else
 								{
-									i->next = temp;
-									temp->prev = i;
-									break;
+									int bufferSize = 0;
+									int delete = 0;
+									for (audioBuffer *i = head; i != NULL; i = i->next)
+									{
+										bufferSize++;
+										if (bufferSize > 5)
+										{
+											free(i->data);
+											if (delete == 0)
+											{
+												i->prev->next = temp;
+												temp->prev = i->prev;
+												delete ++;
+											}
+											else if (i->next != NULL)
+											{
+												free(i->prev);
+											}
+											else
+											{
+												free(i->prev);
+												free(i);
+												break;
+											}
+										}
+										else if (i->next == NULL)
+										{
+											i->next = temp;
+											temp->prev = i;
+											break;
+										}
+									}
 								}
 							}
+							else
+							{
+								SA_Log("Failed to allocate memory", LOG_NET, LOG_CLASS_ERROR, logOutputMethod);
+							}
 						}
+						chunckWaveSize = 0;
+						sessionPacket++;
+						break;
+					case END:
+						SA_Log("Connection closed", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
+						closesocket(localParm.ctx->srvSocket);
+						SA_AudioCloseStream(stream);
+						stream = NULL;
+						break;
+					default:
+						SA_Log("Invalid header", LOG_NET, LOG_CLASS_WARNING, logOutputMethod);
+						break;
 					}
-					chunckWaveSize = 0;
-					sessionPacket++;
-					break;
-				case END:
-					SA_Log("Connection closed", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
-					closesocket(localParm.ctx->srvSocket);
-					SA_AudioCloseStream(stream);
-					stream = NULL;
-					break;
-				default:
-					SA_Log("Invalid header", LOG_NET, LOG_CLASS_WARNING, logOutputMethod);
-					break;
 				}
 			}
+			free(localData);
 		}
-		free(localData);
+		else
+		{
+			SA_Log("Failed to allocate memory", LOG_NET, LOG_CLASS_ERROR, logOutputMethod);
+		}
 	}
 	if (stream != NULL)
 	{
@@ -499,14 +472,11 @@ static DWORD WINAPI SA_NetClient(LPVOID parms)
 	}
 	closesocket(localParm.ctx->srvSocket);
 	SA_WinNetEnd(parms);
-	return 0;
 }
 
-HANDLE SA_NetInit(int port, char *host, size_t asClient, int device)
+void *SA_NetInit(int port, char *host, size_t asClient, int device)
 {
-	closeThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)SA_Console, NULL, 0, NULL);
-	closeThread == NULL ? SA_Log("Failed to create thread", LOG_NET, LOG_CLASS_ERROR, logOutputMethod) : (void)0;
-	HANDLE hThread;
+	void *netThread;
 	connectParam *dataParm = NULL;
 	dataParm = malloc(sizeof(connectParam));
 	if (dataParm != NULL)
@@ -519,16 +489,17 @@ HANDLE SA_NetInit(int port, char *host, size_t asClient, int device)
 		if (asClient)
 		{
 			dataParm->asServer = 0;
-			hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)SA_NetClient, dataParm, 0, NULL);
+			netThread = SA_ThreadCreate(SA_NetClient, (void *)dataParm);
 		}
 		else
 		{
 			dataParm->asServer = 1;
 			SA_NetSetupServer(dataParm);
-			hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)SA_NetServer, dataParm, 0, NULL);
+			netThread = SA_ThreadCreate(SA_NetServer, (void *)dataParm);
 		}
-		hThread == NULL ? SA_Log("Failed to create thread", LOG_NET, LOG_CLASS_ERROR, logOutputMethod) : (void)0;
-		return hThread;
+		netThread == NULL ? SA_Log("Failed to create thread", LOG_NET, LOG_CLASS_ERROR, logOutputMethod) : (void)0;
+		closeThread = netThread;
+		return netThread;
 	}
 	else
 	{
@@ -539,6 +510,5 @@ HANDLE SA_NetInit(int port, char *host, size_t asClient, int device)
 
 void SA_NetClose(void *hThread)
 {
-	WaitForSingleObject((HANDLE *)hThread, INFINITE);
-	CloseHandle((HANDLE *)hThread);
+	SA_ThreadClose(hThread);
 }

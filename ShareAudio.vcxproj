@@ -31,12 +31,14 @@
     <ClCompile Include="data.c" />
     <ClCompile Include="log.c" />
     <ClCompile Include="ShareAudio.c" />
+    <ClCompile Include="threads.c" />
     <ClCompile Include="winnet.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="audio.h" />
     <ClInclude Include="data.h" />
     <ClInclude Include="log.h" />
+    <ClInclude Include="threads.h" />
     <ClInclude Include="winnet.h" />
   </ItemGroup>
   <ItemGroup>

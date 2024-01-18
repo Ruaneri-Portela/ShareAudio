@@ -3,8 +3,8 @@
 #elif __GNUC__
 #define COMPILE "GCC"
 #endif
-#include "audio.h"
 #include "data.h"
+#include "audio.h"
 #include "log.h"
 #include "winnet.h"
 #include <stdio.h>
@@ -17,6 +17,8 @@ char* host;
 int port = 0;
 int mode = 0;
 int deviceAudio = 0;
+float volMod = 0;
+unsigned short int volSet = 0;
 
 void server(int device)
 {
@@ -25,7 +27,7 @@ void server(int device)
 	dh->sampleRate = sampleRate;
 	dh->waveSize = framesPerBuffer;
 	const PaDeviceInfo* info = Pa_GetDeviceInfo(device);
-	PaStream* stream = SA_AudioOpenStream(device,info->maxInputChannels, dh->sampleRate, dh->waveSize, 1);
+	PaStream* stream = SA_AudioOpenStream(device,info->maxInputChannels, dh->sampleRate, dh->waveSize, 1, dh);
 	SA_AudioStartStream(stream);
 	void* nThread = SA_NetInit(port, host, 0, device);
 	if (nThread == NULL)
@@ -99,10 +101,6 @@ int main(int argc, char* argv[])
 			{
 				logOutputMethod = LOG_OUTPUT_FILE;
 			}
-			else if (strcmp(argv[i], "-b") == 0)
-			{
-				barMode = 1;
-			}
 			else if (strcmp(argv[i], "-i") == 0)
 			{
 				printf_s("ShareAudio\n\tA easy and light way to share your between your computers\n\tVer: %s\n", VERSION);
@@ -116,6 +114,7 @@ int main(int argc, char* argv[])
 			}
 			else if (strcmp(argv[i], "-v") == 0)
 			{
+				volSet = 1;
 				sscanf_s(argv[i + 1], "%f", &volMod);
 				i++;
 			}
@@ -125,7 +124,6 @@ int main(int argc, char* argv[])
 				printf_s("Usage: ShareAudio [options]\n");
 				printf_s("Options:\n");
 				printf_s("-a\t\tSet the ip address to connect to\n");
-				printf_s("-b\t\tShow sond animated bar\n");
 				printf_s("-c\t\tSet the program to client mode\n");
 				printf_s("-d\t\tSet the audio device to use\n");
 				printf_s("-h\t\tShow this help\n");
@@ -187,6 +185,9 @@ int main(int argc, char* argv[])
 	if (dh != NULL)
 	{
 		memset(dh, 0, sizeof(dataHandshake));
+		if (volSet) {
+			dh->volMod = volMod;
+		}
 	}
 	else
 	{
