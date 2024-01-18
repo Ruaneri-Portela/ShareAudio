@@ -1,4 +1,4 @@
-#include "portaudio/include/portaudio.h"
+#include "../portaudio/include/portaudio.h"
 #include <stdlib.h>
 
 typedef struct audioBuffer

@@ -5,3 +5,5 @@ void SA_ThreadClose(void* hThread);
 void SA_ThreadJoin(void* hThread);
 
 void SA_ProcessSetPriority();
+
+void SA_Sleep(unsigned int ms);

@@ -7,6 +7,7 @@
 #include "audio.h"
 #include "log.h"
 #include "winnet.h"
+#include "threads.h"
 #include <stdio.h>
 #include "VERSION.h"
 
@@ -37,7 +38,7 @@ void server(int device)
 	}
 	while (closeThread != NULL)
 	{
-		Sleep(1000);
+		SA_Sleep(1000);
 	}
 	SA_AudioCloseStream(stream);
 	SA_NetClose(nThread); 
@@ -54,7 +55,7 @@ void client(int device)
 	}
 	while (closeThread != NULL)
 	{
-		Sleep(1000);
+		SA_Sleep(1000);
 	}
 	SA_NetClose(nThread);
 }

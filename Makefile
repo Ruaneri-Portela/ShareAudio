@@ -1,13 +1,13 @@
 CC := gcc
-CFLAGS := -Wall
-LIBS :=
+CFLAGS := -Wall -Wextra -pedantic
+LIBS := -lportaudio
 ifeq ($(OS),Windows_NT)
-    LIBS += -lws2_32 -lportaudio
+    LIBS += -lws2_32 
 endif
 
-SRCS := $(wildcard *.c)
+SRCS := $(wildcard src/*.c)
 BUILD_DIR := ./build
-OBJS := $(addprefix $(BUILD_DIR)/, $(SRCS:.c=.o))
+OBJS := $(addprefix $(BUILD_DIR)/, $(notdir $(SRCS:.c=.o)))
 TARGET := $(BUILD_DIR)/ShareAudio
 
 all: $(BUILD_DIR) $(TARGET)
@@ -15,7 +15,7 @@ all: $(BUILD_DIR) $(TARGET)
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
 
-$(BUILD_DIR)/%.o : %.c
+$(BUILD_DIR)/%.o : src/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(TARGET): $(OBJS)

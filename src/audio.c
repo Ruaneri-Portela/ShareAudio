@@ -1,11 +1,11 @@
 #include "data.h"
 #include "log.h"
-#include "portaudio/include/portaudio.h"
+#include "../portaudio/include/portaudio.h"
 #include <stdio.h>
 #include <string.h>
 
 typedef struct audioDevices {
-	PaDeviceInfo** devices;
+	const PaDeviceInfo** devices;
 	int numDevices;
 } audioDevices;
 

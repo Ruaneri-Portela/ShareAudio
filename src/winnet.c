@@ -3,8 +3,11 @@
 #include "data.h"
 #include "log.h"
 #include <stdio.h>
+
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
 #include <winsock2.h>
 #include <WS2tcpip.h>
+#endif
 
 #ifdef _MSC_VER
 #pragma comment(lib, "ws2_32.lib")
@@ -32,15 +35,14 @@ static char data[1028];
 
 static const unsigned char confirmConn[2] = {0xFF, '\0'};
 
-static WSADATA wsaData;
-
 size_t sessionPacket = 0;
 
 size_t totalPacketSrv = 0;
 
 void *closeThread = NULL;
 
-#ifdef WIN32
+#if  defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
+static WSADATA wsaData;
 static void SA_WinNetEnd(void *parms)
 {
 	free(((connectParam *)parms)->ctx);
@@ -69,6 +71,8 @@ static void SA_WinNetOpen()
 #else
 static void SA_WinNetEnd(void *parms)
 {
+	free(((connectParam*)parms)->ctx);
+	free(parms);
 }
 static void SA_WinNetOpen()
 {
@@ -147,7 +151,6 @@ static void SA_NetResolveHost(connectParam *parm, ADDRESS_FAMILY family)
 
 static void SA_NetSetupServer(connectParam *parms)
 {
-	SA_WinNetOpen();
 	SA_NetResolveHost(parms, AF_INET);
 	parms->ctx->srvSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (parms->ctx->srvSocket == INVALID_SOCKET)
@@ -220,6 +223,7 @@ static unsigned short int SA_NetServerGetHandhake(connectParam *localParm)
 
 static void SA_NetServer(void *parms)
 {
+	SA_WinNetOpen();
 	connectParam *localParm = (connectParam *)parms;
 	while (closeThread != NULL)
 	{
@@ -242,7 +246,7 @@ static void SA_NetServer(void *parms)
 				if (send(localParm->ctx->clientSocket, (char *)audioDataFrame, (int)localParm->dataSize, 0) == SOCKET_ERROR)
 				{
 					tolerance++;
-					Sleep(1000);
+					SA_Sleep(1000);
 					if (tolerance > 5)
 						SA_Log("Send failed!", LOG_NET, LOG_CLASS_WARNING, logOutputMethod);
 					break;
@@ -255,7 +259,7 @@ static void SA_NetServer(void *parms)
 				free(audioDataFrame);
 				audioDataFrame = NULL;
 			}
-			Sleep((DWORD)localParm->delay);
+			SA_Sleep(localParm->delay);
 		};
 	}
 	SA_WinNetEnd(parms);
@@ -474,7 +478,7 @@ static void SA_NetClient(void *parms)
 	SA_WinNetEnd(parms);
 }
 
-void *SA_NetInit(int port, char *host, size_t asClient, int device)
+void *SA_NetInit(unsigned int port, char *host, unsigned short int asClient, short int device)
 {
 	void *netThread;
 	connectParam *dataParm = NULL;
@@ -508,7 +512,7 @@ void *SA_NetInit(int port, char *host, size_t asClient, int device)
 	return NULL;
 }
 
-void SA_NetClose(void *hThread)
+void SA_NetClose(void *thread)
 {
-	SA_ThreadClose(hThread);
+	SA_ThreadClose(thread);
 }

@@ -27,19 +27,19 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="audio.c" />
-    <ClCompile Include="data.c" />
-    <ClCompile Include="log.c" />
-    <ClCompile Include="ShareAudio.c" />
-    <ClCompile Include="threads.c" />
-    <ClCompile Include="winnet.c" />
+    <ClCompile Include="src/audio.c" />
+    <ClCompile Include="src/data.c" />
+    <ClCompile Include="src/log.c" />
+    <ClCompile Include="src/ShareAudio.c" />
+    <ClCompile Include="src/threads.c" />
+    <ClCompile Include="src/winnet.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="audio.h" />
-    <ClInclude Include="data.h" />
-    <ClInclude Include="log.h" />
-    <ClInclude Include="threads.h" />
-    <ClInclude Include="winnet.h" />
+    <ClInclude Include="src/audio.h" />
+    <ClInclude Include="src/data.h" />
+    <ClInclude Include="src/log.h" />
+    <ClInclude Include="src/threads.h" />
+    <ClInclude Include="src/winnet.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="portaudioMSVC2022\portaudio.vcxproj">

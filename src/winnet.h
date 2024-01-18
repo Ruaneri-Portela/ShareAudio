@@ -1,5 +1,6 @@
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
 #include <windows.h>
-
+#endif
 typedef struct netCtx
 {
 	SOCKET clientSocket;
@@ -21,10 +22,10 @@ extern size_t sessionPacket;
 
 extern size_t totalPacketSrv;
 
-extern HANDLE closeThread;
+extern void* closeThread;
 
 unsigned short int SA_NetSetupClient(connectParam* parms);
 
-HANDLE SA_NetInit(int port, char* host, size_t asClient, int device);
+void* SA_NetInit(unsigned int port, const char* host, unsigned short int asClient, short int device);
 
-void SA_NetClose(void* hThread);
+void SA_NetClose(void* thread);

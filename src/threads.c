@@ -20,4 +20,7 @@ void SA_ProcessSetPriority()
 	HANDLE hProcess = GetCurrentProcess();
 	SetPriorityClass(hProcess, REALTIME_PRIORITY_CLASS);
 }
+void SA_Sleep(unsigned int ms) {
+	Sleep((DWORD)ms);
+}
 #endif

@@ -1,6 +1,7 @@
 #!/bin/bash
-rm -f VERSION.h
-echo "#define VERSION \"$GIT_VERSION\"" >> VERSION.h
+rm -f src/VERSION.h
+GIT_VERSION=$(git describe --tags)
+echo "#define VERSION \"$GIT_VERSION\"" >> src/VERSION.h
 make clean
 make
 # packing for MSVC
