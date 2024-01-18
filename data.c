@@ -116,13 +116,13 @@ char *SA_DataConcatString(const char *original, const char *toCat)
 {
 	size_t originalSize = strlen(original);
 	size_t toCatSize = strlen(toCat);
-	char *c = malloc(originalSize + toCatSize + 1);
-	if (c != NULL)
+	char *newString = malloc(originalSize + toCatSize + 1);
+	if (newString != NULL)
 	{
-		memcpy(c, original, originalSize);
-		memcpy(c + originalSize, toCat, toCatSize + 1);
+		memcpy(newString, original, originalSize);
+		memcpy(newString + originalSize, toCat, toCatSize + 1);
 	}
-	return c;
+	return newString;
 }
 
 unsigned short int SA_DataDetectIsIp(const char *host, size_t asServer)

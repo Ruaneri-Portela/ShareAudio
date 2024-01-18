@@ -1,8 +1,13 @@
-#include <stdio.h>
-#include <string.h>
-#include "portaudio/include/portaudio.h"
 #include "data.h"
 #include "log.h"
+#include "portaudio/include/portaudio.h"
+#include <stdio.h>
+#include <string.h>
+
+typedef struct audioDevices {
+	PaDeviceInfo** devices;
+	int numDevices;
+} audioDevices;
 
 typedef struct audioBuffer
 {
@@ -17,17 +22,7 @@ audioBuffer* head = NULL;
 
 unsigned short int testMode = 0;
 
-static inline float SA_AudioGetMax(float a, float b)
-{
-	return a > b ? a : b;
-}
-
-static inline float SA_AudioGetAbs(float a)
-{
-	return a > 0 ? a : a * -1;
-}
-
-static inline void SA_AudioCheckError(PaError err)
+static void SA_AudioCheckError(PaError err)
 {
 	if (err != paNoError)
 	{
@@ -51,7 +46,7 @@ int SA_AudioClientCallback(
 		head = temp->next;
 		free(temp->data);
 		free(temp);
-		if (head != NULL && head->prev != NULL) {
+		if (head != NULL) {
 			head->prev = NULL;
 		}
 	}
@@ -98,10 +93,9 @@ void SA_AudioClose()
 	SA_Log("PortAudio terminated", LOG_AUDIO, LOG_CLASS_INFO, logOutputMethod);
 }
 
-void SA_AudioListAllDevices()
+static audioDevices SA_GetAllDevices()
 {
 	int numDevices = Pa_GetDeviceCount();
-	printf("==============================\nDevices atrach on computer\nNumber of devices: %d\nListing avaliable devices...\n\n", numDevices);
 	if (numDevices < 0)
 	{
 		SA_AudioCheckError(numDevices);
@@ -110,18 +104,42 @@ void SA_AudioListAllDevices()
 	{
 		SA_Log("No devices found", LOG_AUDIO, LOG_CLASS_ERROR, logOutputMethod);
 	}
-	const PaDeviceInfo* deviceInfo;
-	for (int i = 0; i < numDevices; i++)
+	const PaDeviceInfo** devices = (const PaDeviceInfo**)malloc(sizeof(const PaDeviceInfo*) * (numDevices + 1));
+	if (devices == NULL)
 	{
-		deviceInfo = Pa_GetDeviceInfo(i);
-		printf("Device [%d]:\n\tname: %s\n\tmaxInputChannels: %d\n\tmaxOutputChannels: %d\n\tdefaultSampleRate: %f\n\n",
-			i,
-			deviceInfo->name,
-			deviceInfo->maxInputChannels,
-			deviceInfo->maxOutputChannels,
-			deviceInfo->defaultSampleRate);
+		SA_Log("Failed to allocate memory", LOG_AUDIO, LOG_CLASS_ERROR, logOutputMethod);
 	}
-	printf("==============================\n");
+	for (int i = 0; i < numDevices; i++) {
+		devices[i] = Pa_GetDeviceInfo(i);
+	}
+	devices[numDevices] = NULL;
+	audioDevices devicesData = { devices, numDevices };
+	return devicesData;
+}
+
+void SA_AudioListAllDevices()
+{
+	audioDevices devicesData = SA_GetAllDevices();
+	printf_s("Found %d devices\n\n", devicesData.numDevices);
+	for (int i = 0;; i++) {
+		if (devicesData.devices[i] != NULL)
+		{
+			if (devicesData.devices[i]->maxInputChannels > 0) {
+				printf_s("Device Input %d:\n\t%s\n\tSample Rate:%f\n\tChannels:%d\n\n", i,
+					devicesData.devices[i]->name, devicesData.devices[i]->defaultSampleRate, devicesData.devices[i]->maxInputChannels);
+			}
+			else if (devicesData.devices[i]->maxOutputChannels > 0)
+			{
+				printf_s("Device Output %d:\n\t%s\n\tSample Rate:%f\n\tChannels:%d\n\n", i,
+					devicesData.devices[i]->name, devicesData.devices[i]->defaultSampleRate, devicesData.devices[i]->maxOutputChannels);
+			}
+		}
+		else
+		{
+			break;
+		}
+	}
+	free(devicesData.devices);
 }
 
 PaStream* SA_AudioOpenStream(size_t device, size_t lchannel, double sampleRate, size_t waveSize, unsigned short asServer, void* configs)
