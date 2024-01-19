@@ -44,10 +44,7 @@ void SA_ThreadJoin(void* hThread)
 }
 void SA_ProcessSetPriority()
 {
-	pthread_t thread = pthread_self();
-	struct sched_param param;
-	param.sched_priority = sched_get_priority_max(SCHED_FIFO);
-	pthread_setschedparam(thread, SCHED_FIFO, &param);
+	nice(-20);
 }
 void SA_Sleep(unsigned int ms) {
 	usleep(ms * 1000);

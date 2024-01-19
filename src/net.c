@@ -355,6 +355,7 @@ static unsigned short int SA_NetSetupClient(connectParam *parms)
 					{
 						SA_Log("Handshake completed (3/3)", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
 						parms->dataSize = SA_DataGetDataFrameSize(dh);
+						SA_Log("Audio connection established", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
 						return 1;
 					}
 				}
