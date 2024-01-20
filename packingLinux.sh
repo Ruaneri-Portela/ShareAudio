@@ -1,6 +1,6 @@
 #!/bin/bash
 GIT_VERSION=$(git describe --tags)
-rm -f .\src\VERSION.h
+rm -f ./src/VERSION.h
 echo "#define VERSION \"$GIT_VERSION\""
 make clean
 make
