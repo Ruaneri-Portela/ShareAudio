@@ -28,7 +28,7 @@ foreach ($build in $builds) {
     New-Item -ItemType Directory -Path ".\build\$build" -Force
     Copy-Item -Path ".\$build\Release\*.exe" -Destination ".\build\$build" -Force
     Copy-Item -Path ".\$build\Release\*.dll" -Destination ".\build\$build" -Force
-    Compress-Archive -Path ".\build\$build\*" -DestinationPath ".\build\ShareAudio_MSVC_$msbild($version).zip" -Force
+    Compress-Archive -Path ".\build\$build\*" -DestinationPath ".\build\ShareAudio_MSVC_$msbild($version)_win.zip" -Force
     Remove-Item -Path ".\build\$build" -Recurse -Force
 }
 
@@ -37,5 +37,5 @@ New-Item -ItemType Directory -Path ".\build\x64_GNU_GCC" -Force
 $paDLL = Get-Command libportaudio.dll | ForEach-Object { $_.Source }
 Copy-Item -Path $paDLL -Destination ".\build\x64_GNU_GCC" -Force
 Copy-Item -Path ".\build\*.exe" -Destination ".\build\x64_GNU_GCC" -Force
-Compress-Archive -Path ".\build\x64_GNU_GCC\*" -DestinationPath ".\build\ShareAudio_GNU-GCC_x64($version).zip" -Force
+Compress-Archive -Path ".\build\x64_GNU_GCC\*" -DestinationPath ".\build\ShareAudio_GNU-GCC_x64($version)_win.zip" -Force
 Remove-Item -Path ".\build\x64_GNU_GCC" -Recurse -Force
