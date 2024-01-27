@@ -44,7 +44,10 @@
     <ClInclude Include="src\net.h" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="portaudioMSVC2022\portaudio.vcxproj">
+    <None Include="Makefile" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="msvc\portaudio\portaudio.vcxproj">
       <Project>{0a18a071-125e-442f-aff7-a3f68abecf99}</Project>
     </ProjectReference>
   </ItemGroup>

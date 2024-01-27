@@ -8,7 +8,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ShareAudio", "ShareAudio.vc
 		{0A18A071-125E-442F-AFF7-A3F68ABECF99} = {0A18A071-125E-442F-AFF7-A3F68ABECF99}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "portaudio", "portaudioMSVC2022\portaudio.vcxproj", "{0A18A071-125E-442F-AFF7-A3F68ABECF99}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "portaudio", "msvc\portaudio\portaudio.vcxproj", "{0A18A071-125E-442F-AFF7-A3F68ABECF99}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

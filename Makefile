@@ -4,7 +4,7 @@ LIBS := -lportaudio
 ifeq ($(OS),Windows_NT)
     LIBS += -lws2_32 
 else
-	LIBS += -lpthread -lrt
+    LIBS += -lpthread -lrt
 endif
 
 SRCS := $(wildcard src/*.c)
@@ -22,6 +22,7 @@ $(BUILD_DIR)/%.o : src/%.c
 
 $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) $^ -o $@ $(LIBS)
+	@echo Build complete for ShareAudio
 
 clean:
 	rm -r $(BUILD_DIR)/*
