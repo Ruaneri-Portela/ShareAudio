@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdio.h>
+#include <time.h>
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
 
@@ -255,8 +256,11 @@ static void SA_NetServer(void *parms)
 		SA_Log("Audio connection established", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
 		int tolerance = 0;
 		sessionPacket = 0;
+		time_t lastPacket = time(NULL);
+		time_t lastTry;
 		while (1)
 		{
+			lastTry = time(NULL) - lastPacket;
 			if (closeThread == NULL)
 			{
 				audioDataFrame = SA_DataCreateDataFrame(NULL, dh, 1);
@@ -264,10 +268,14 @@ static void SA_NetServer(void *parms)
 				*header = END;
 				break;
 			}
+			if (lastTry > 10) {
+				audioDataFrame = SA_DataCreateDataFrame(NULL, dh, 1);
+				dataHeader *header = (dataHeader *)audioDataFrame;
+				*header = NULLDATA;
+			}
 			if (audioDataFrame != NULL)
 			{
 				SA_DataPutOrderDataFrame((char *)audioDataFrame, sessionPacket, dh);
-
 				if (send(localParm->ctx->clientSocket, (char *)audioDataFrame, (int)localParm->dataSize, 0) == SOCKET_ERROR)
 				{
 					tolerance++;
@@ -278,6 +286,7 @@ static void SA_NetServer(void *parms)
 				}
 				else
 				{
+					lastPacket = time(NULL);
 					sessionPacket++;
 					tolerance = 0;
 				}
@@ -475,6 +484,8 @@ static void SA_NetClient(void *parms)
 						closesocket(localParm.ctx->srvSocket);
 						SA_AudioCloseStream(stream);
 						stream = NULL;
+						break;
+					case NULLDATA:
 						break;
 					default:
 						SA_Log("Invalid header", LOG_NET, LOG_CLASS_WARNING, logOutputMethod);
