@@ -4,7 +4,7 @@ LIBS := -lportaudio
 ifeq ($(OS),Windows_NT)
     LIBS += -lws2_32 
 else
-    LIBS += -lpthread -lrt
+    LIBS += -lpthread
 endif
 
 SRCS := $(wildcard src/*.c)
