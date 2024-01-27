@@ -45,6 +45,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Makefile" />
+    <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="msvc\portaudio\portaudio.vcxproj">
