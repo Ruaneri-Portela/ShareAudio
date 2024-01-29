@@ -109,7 +109,6 @@ size_t SA_DataGetWaveSize(const char *dataFrame)
 size_t SA_DataGetDelayInterFrames(dataHandshake *dhData)
 {
 	return (size_t)(((((float)dhData->waveSize * (float)dhData->channel) / (float)dhData->sampleRate) / 4.0) * 1000);
-	;
 }
 
 char *SA_DataConcatString(const char *original, const char *toCat)
