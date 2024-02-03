@@ -1,6 +1,8 @@
 # ShareAudio
 
-ShareAudio is a software designed for sharing audio between computers using TCP/IP. It utilizes PortAudio as an audio backend and Winsock2 with a network API on Windows. The current build is specifically for Windows, and it is written in C.
+ShareAudio is software written in C designed for sharing desktop audio between computers, with the intention of being lightweight, portable and multiplatform, working over TCP/IP and using PortAudio as an audio backend.
+
+Your intention is to create something that can run as a service, which, after installed and properly configured, is plugin-and-play
 
 ## Features
 
@@ -8,31 +10,45 @@ ShareAudio is a software designed for sharing audio between computers using TCP/
 
 - **Transmission Method:** The software employs a datagram over TCP/IP for audio transmission. It encapsulates RAW audio via the network, resulting in high-fidelity (HI-FI) quality audio. For example, a 32-bit depth audio at 96000 Hz 2.0 consumes around 6 Mbps, while a 48000 audio uses around 3 Mbps.
 
+- **Next Genereation Windows Plataform** As it is a new project, we already support Windows ARM64, making it software optimized for the new architecture for Windows PCs without the need for emulation or translation
+
 - **Future Developments:**
   - Compression and Encryption: Future versions aim to implement compression and encryption between the audio-sharing pair.
   - Platform Compatibility: The code is intended to be portable and compatible with any system that has PortAudio, including Linux, MacOS, BSD, and Haiku.
+  - Convert parts into libraries to allow integration with other codes and languages
 
 ## Usage
 
 - **Binary**
-  - Download .Zip on Builds Diretory
-  - Make sure you have Visual Studio Redistributable 2022 64-bit
+  - Download .zip on Releases
+  - On Windows make sure you have Visual Studio Redistributable 2022 for your CPU architecture
+  - On Linux make sure you have libportaudio on your system
   - Run
 
 - **Building and Running:**
   - Clone the repository.
+
+  ***Windows***
   - You can choice build system, as Makefile to MSYS2/MinGw environment or Visual Studio 2022
-  - To build in VS 2022 there are two ways, download portaudio via VCPKG or clone portaudio's git, for the second option see PortAudio's git for instructions on how to build PortAuduio in VS.
+  - To build via MSVC, you must clone Portaudio's git and also download ASIO, the ASIO SDK must be placed in the asio folder in the project directory
+  - It is also possible to compile via VCPKG, you must dereference the project, and use global includes instead of the directory, it is not recommended for the following reason
+  - On Windows, only the most recent git compilation of Portaudio supports Audio Loopback, which means that the version via VCPKG and MSYS/MinGW will not be able to replicate the desktop audio
+  - For the build using the MinGw toolchains, the project comes with the Makefile
+  - For MinGw builds they will be placed inside the build directory, for MSVC look inside the respective directories for the architecture
+
+  ***Linux***
+  - To build on Linux, you only need the development toolchain, the famous build-essential in the case of those based on Debian, or the similar meta package in your distro and libportaudio-dev
+  - The executable will be placed in ./build
 
 ## Technical Details
 
 - **Audio Backend:** PortAudio
-- **Networking:** Winsock2 with a network API on Windows
+- **Networking:** Unix Socket in Linux and Winsock2 on Windows, work over TCP/IP
 - **Audio Quality:** HI-FI quality with transmission rates mentioned above
 
 ## Compatibility
 
-For now only Windows is compatible
+Compatible with Windows and Linux
 
 ## License
 
