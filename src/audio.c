@@ -99,7 +99,7 @@ void SA_AudioClose()
 	SA_Log("PortAudio terminated", LOG_AUDIO, LOG_CLASS_INFO, logOutputMethod);
 }
 
-static audioDevices SA_GetAllDevices()
+audioDevices SA_GetAllDevices()
 {
 	int numDevices = Pa_GetDeviceCount();
 	if (numDevices < 0)

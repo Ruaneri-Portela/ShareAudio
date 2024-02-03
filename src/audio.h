@@ -1,6 +1,11 @@
 #include "../portaudio/include/portaudio.h"
 #include <stdlib.h>
 
+typedef struct audioDevices {
+	const PaDeviceInfo** devices;
+	int numDevices;
+} audioDevices;
+
 typedef struct audioBuffer
 {
 	void* data;
@@ -31,6 +36,8 @@ void SA_AudioStartStream(PaStream* stream);
 void SA_AudioInit();
 
 void SA_AudioClose();
+
+audioDevices SA_GetAllDevices();
 
 void SA_AudioListAllDevices();
 

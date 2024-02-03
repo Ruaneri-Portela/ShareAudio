@@ -9,6 +9,9 @@
 
 #if !(defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__))
 #include "linux.h"
+#define ISWIN 0
+#else
+#define ISWIN 1
 #endif
 
 #include "VERSION.h"
@@ -18,69 +21,35 @@
 #include "log.h"
 #include "net.h"
 
-double sampleRate = 48000;
-int framesPerBuffer = 2048;
+void server(int device, int port, const char* host);
 
-char *host;
-int port = 0;
-int mode = 0;
-int deviceAudio = 0;
-float volMod = 1;
-unsigned short int volSet = 0;
+void client(int device, int port, const char* host);
 
-void server(int device)
+int main(int argc, char* argv[])
 {
-	SA_Log("Server", LOG_MAIN, LOG_CLASS_INFO, logOutputMethod);
-	dh->channel = 2;
-	dh->sampleRate = sampleRate;
-	dh->waveSize = framesPerBuffer;
-	if (volSet)
+	unsigned short int mode = 0;
+	const char* host = NULL;
+	int deviceAudio = -1;
+	int port = 9950;
+
+	dh = malloc(sizeof(dataHandshake));
+	if (dh != NULL)
 	{
-		dh->volMod = volMod;
+		dh->sampleRate = -1;
+		dh->waveSize = 2048;
+		dh->volMod = -1;
+		dh->header = 0x0;
+		dh->channel = 2;
 	}
 	else
 	{
-		dh->volMod = 1;
+		SA_Log("Failed to allocate memory", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
 	}
-	const PaDeviceInfo *info = Pa_GetDeviceInfo(device);
-	PaStream *stream = SA_AudioOpenStream(device, info->maxInputChannels, dh->sampleRate, dh->waveSize, 1, dh);
-	SA_AudioStartStream(stream);
-	void *nThread = SA_NetInit(port, host, 0, device);
-	if (nThread == NULL)
-	{
-		SA_Log("Failed to init net", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
-		return;
-	}
-	while (closeThread != NULL)
-	{
-		SA_Sleep(1000);
-	}
-	SA_AudioCloseStream(stream);
-	SA_NetClose(nThread);
-}
 
-void client(int device)
-{
-	SA_Log("Client", LOG_MAIN, LOG_CLASS_INFO, logOutputMethod);
-	void *nThread = SA_NetInit(9950, host, 1, device);
-	if (nThread == NULL)
-	{
-		SA_Log("Failed to init net", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
-		return;
-	}
-	while (closeThread != NULL)
-	{
-		SA_Sleep(1000);
-	}
-	SA_NetClose(nThread);
-}
-
-int main(int argc, char *argv[])
-{
 	SA_ProcessSetPriority();
-	port = 9950;
 	logOutputMethod = LOG_OUTPUT_CONSOLE;
 	SA_Log("Program start. Build on " COMPILE ". Binary version " VERSION, LOG_MAIN, LOG_CLASS_INFO, logOutputMethod);
+	SA_Log(Pa_GetVersionText(), LOG_MAIN, LOG_CLASS_INFO, logOutputMethod);
 	if (argc > 1)
 	{
 		for (int i = 1; i < argc; i++)
@@ -125,12 +94,12 @@ int main(int argc, char *argv[])
 				SA_AudioInit();
 				SA_AudioListAllDevices();
 				SA_AudioClose();
+				free(dh);
 				return EXIT_SUCCESS;
 			}
 			else if (strcmp(argv[i], "-v") == 0)
 			{
-				volSet = 1;
-				sscanf_s(argv[i + 1], "%f", &volMod);
+				sscanf_s(argv[i + 1], "%f", &dh->volMod);
 				i++;
 			}
 			else if (strcmp(argv[i], "-h") == 0)
@@ -153,6 +122,7 @@ int main(int argc, char *argv[])
 				printf_s("-he\t\tTo view examples how use\n");
 				printf_s("-ht\t\tTroubleshooting");
 				printf_s("\n");
+				free(dh);
 				return EXIT_SUCCESS;
 			}
 			else if (strcmp(argv[i], "-he") == 0)
@@ -162,6 +132,7 @@ int main(int argc, char *argv[])
 				printf_s("\tStart the program in server mode, listening on port 9950, on all interfaces, using audio device 0\n");
 				printf_s("[2] ShareAudio -c - p 9950 -a 192.168.1.1 -d 0\n");
 				printf_s("\tStart the program in client mode, connecting to 192.168.1.1 in port 9950, using audio device 0\n");
+				free(dh);
 				return EXIT_SUCCESS;
 			}
 			else if (strcmp(argv[i], "-ht") == 0)
@@ -171,70 +142,119 @@ int main(int argc, char *argv[])
 				printf_s("[2] If 'Channel is not avalible' you as select non capture to server , and outup to client device\n\t Client accpets only out devices and server only capture or Loopbacks\n");
 				printf_s("[3] If you have a problem with audio, try to change the audio device, some output on Windows not work propery\n\t Recommend select to outup to Windows 'Sound Mapper'\n");
 				printf_s("[3] In bind error, change you port");
+				free(dh);
 				return EXIT_SUCCESS;
 			}
 			else if (strcmp(argv[i], "-z") == 0)
 			{
-				sscanf_s(argv[i + 1], "%d", &framesPerBuffer);
+				sscanf_s(argv[i + 1], "%zd", &dh->waveSize);
 				i++;
 			}
 			else if (strcmp(argv[i], "-x") == 0)
 			{
-				sscanf_s(argv[i + 1], "%lf", &sampleRate);
+				sscanf_s(argv[i + 1], "%lf", &dh->sampleRate);
 				i++;
 			}
 			else
 			{
 				printf_s("Unknown option: %s\n", argv[i]);
+				free(dh);
 				return EXIT_SUCCESS;
 			}
 		}
 	}
 	else
 	{
-		host = "0.0.0.0";
-		port = 9950;
-		mode = 1;
-		deviceAudio = 2;
-		testMode = 0;
-		sampleRate = 48000;
-		testMode = 0;
-		// SA_Log("Needs a comand line args", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
-		// return EXIT_SUCCESS;
+		SA_Log("Needs a comand line args", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
+		return EXIT_SUCCESS;
 	}
 	SA_AudioInit();
-	dh = malloc(sizeof(dataHandshake));
-	if (dh != NULL)
-	{
-		memset(dh, 0, sizeof(dataHandshake));
-	}
-	else
-	{
-		SA_Log("Failed to allocate memory", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
-	}
-	if (host == NULL)
-	{
-		host = malloc(sizeof(char) * 11);
-		if (host != NULL)
+
+	if (deviceAudio == -1 && mode == 1 && ISWIN) {
+		int defaultOutDevice = Pa_GetDefaultOutputDevice();
+		const char* defaultOutDeviceName = Pa_GetDeviceInfo(defaultOutDevice)->name;
+		audioDevices deviceList = SA_GetAllDevices();
+		int loopbackDevice = -1;
+		for (int i = 0;; i++) {
+			if (deviceList.devices[i] != NULL)
+			{
+				const char* searchName = deviceList.devices[i]->name;
+				if (strstr(searchName, defaultOutDeviceName) != NULL && strstr(searchName, "[Loopback]"))
+				{
+					loopbackDevice = i;
+					break;
+				}
+			}
+			else
+			{
+				break;
+			}
+		}
+		if (loopbackDevice != -1)
 		{
-			strcpy_s(host, 11, "127.0.0.1\0");
+			deviceAudio = loopbackDevice;
 		}
 		else
 		{
-			SA_Log("Failed to allocate memory", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
+			SA_Log("Loopback device not found It's is cause by using old DLL or MSYS2 version...", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
 		}
+	}
+	else {
+		(deviceAudio == -1) ? deviceAudio = Pa_GetDefaultOutputDevice() : deviceAudio;
+	}
+	(dh->sampleRate == -1 && deviceAudio != -1) ? dh->sampleRate = Pa_GetDeviceInfo(deviceAudio)->defaultSampleRate : dh->sampleRate;
+	if (host == NULL)
+	{
+		host = "127.0.0.1";
 	}
 	switch (mode)
 	{
+	case 0:
+		SA_Log("No mode selected", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
+		break;
 	case 1:
-		server(deviceAudio);
+		server(deviceAudio, port, host);
 		break;
 	case 2:
-		client(deviceAudio);
+		client(deviceAudio, port, host);
 		break;
 	}
-	free(dh);
 	SA_AudioClose();
+	free(dh);
 	SA_Log("Program exit", LOG_MAIN, LOG_CLASS_INFO, logOutputMethod);
 	return EXIT_SUCCESS;
+}
+
+void server(int device, int port, const char* host)
+{
+	SA_Log("Server", LOG_MAIN, LOG_CLASS_INFO, logOutputMethod);
+	if (dh->volMod == -1)
+		dh->volMod = 1;
+	const PaDeviceInfo* info = Pa_GetDeviceInfo(device);
+	PaStream* stream = SA_AudioOpenStream(device, info->maxInputChannels, dh->sampleRate, dh->waveSize, 1, dh);
+	SA_AudioStartStream(stream);
+	void* nThread = SA_NetInit(port, host, 0, device);
+	if (nThread == NULL)
+	{
+		SA_Log("Failed to init net", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
+		return;
+	}
+	while (closeThread != NULL)
+		SA_Sleep(1000);
+	SA_AudioCloseStream(stream);
+	SA_NetClose(nThread);
+}
+
+void client(int device, int port, const char* host)
+{
+	SA_Log("Client", LOG_MAIN, LOG_CLASS_INFO, logOutputMethod);
+	void* nThread = SA_NetInit(port, host, 1, device);
+	if (nThread == NULL)
+	{
+		SA_Log("Failed to init net", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
+		return;
+	}
+	while (closeThread != NULL)
+		SA_Sleep(1000);
+	SA_NetClose(nThread);
 }
