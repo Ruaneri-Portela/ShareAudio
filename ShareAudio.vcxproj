@@ -42,6 +42,7 @@
     <ClInclude Include="src/threads.h" />
     <ClInclude Include="src\linux.h" />
     <ClInclude Include="src\net.h" />
+    <ClInclude Include="src\resource.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Makefile" />
@@ -51,6 +52,12 @@
     <ProjectReference Include="msvc\portaudio\portaudio.vcxproj">
       <Project>{0a18a071-125e-442f-aff7-a3f68abecf99}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="src\Resource.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="icon.ico" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

@@ -147,12 +147,12 @@ int main(int argc, char* argv[])
 			}
 			else if (strcmp(argv[i], "-z") == 0)
 			{
-				sscanf_s(argv[i + 1], "%zd", &dh->waveSize);
+				sscanf_s(argv[i + 1], "%zd", &(dh->waveSize));
 				i++;
 			}
 			else if (strcmp(argv[i], "-x") == 0)
 			{
-				sscanf_s(argv[i + 1], "%lf", &dh->sampleRate);
+				sscanf_s(argv[i + 1], "%lf", &(dh->sampleRate));
 				i++;
 			}
 			else
@@ -200,7 +200,8 @@ int main(int argc, char* argv[])
 		}
 	}
 	else {
-		(deviceAudio == -1) ? deviceAudio = Pa_GetDefaultOutputDevice() : deviceAudio;
+		(deviceAudio == -1 && mode == 2) ? deviceAudio = Pa_GetDefaultOutputDevice() : deviceAudio;
+		(deviceAudio == -1 && mode == 1) ? deviceAudio = Pa_GetDefaultInputDevice() : deviceAudio;
 	}
 	(dh->sampleRate == -1 && deviceAudio != -1) ? dh->sampleRate = Pa_GetDeviceInfo(deviceAudio)->defaultSampleRate : dh->sampleRate;
 	if (host == NULL)
