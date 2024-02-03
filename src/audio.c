@@ -130,7 +130,7 @@ void SA_AudioListAllDevices()
 	for (int i = 0;; i++) {
 		if (devicesData.devices[i] != NULL)
 		{
-				printf_s("Device Input %d:\n\t%s\n\tSample Rate:%f\n\tChannels Int:%d\n\tChannels Out:%d\n\n", i,
+				printf_s("Device %d:\n\t%s\n\tSample Rate:%f\n\tChannels Int:%d\n\tChannels Out:%d\n\n", i,
 					devicesData.devices[i]->name, 
 					devicesData.devices[i]->defaultSampleRate, 
 					devicesData.devices[i]->maxInputChannels, 
