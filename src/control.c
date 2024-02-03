@@ -5,7 +5,8 @@
 #include "net.h"
 #include <stdio.h>
 
-void SA_Init(saConnection* conn) {
+void SA_Init(saConnection *conn)
+{
 	SA_AudioInit();
 	audioDevices deviceList = SA_GetAllDevices();
 	if (deviceList.numDevices < conn->device)
@@ -15,13 +16,13 @@ void SA_Init(saConnection* conn) {
 	if (conn->device == -1 && conn->mode == 1 && ISWIN)
 	{
 		int defaultOutDevice = Pa_GetDefaultOutputDevice();
-		const char* defaultOutDeviceName = Pa_GetDeviceInfo(defaultOutDevice)->name;
+		const char *defaultOutDeviceName = Pa_GetDeviceInfo(defaultOutDevice)->name;
 		int loopbackDevice = -1;
 		for (int i = 0;; i++)
 		{
 			if (deviceList.devices[i] != NULL)
 			{
-				const char* searchName = deviceList.devices[i]->name;
+				const char *searchName = deviceList.devices[i]->name;
 				if (strstr(searchName, defaultOutDeviceName) != NULL && strstr(searchName, "[Loopback]"))
 				{
 					loopbackDevice = i;
@@ -55,7 +56,7 @@ void SA_Init(saConnection* conn) {
 	conn->dh->volMod == -1 ? conn->dh->volMod = 1 : conn->dh->volMod;
 }
 
-void SA_Server(saConnection* conn)
+void SA_Server(saConnection *conn)
 {
 	SA_Log("Server", LOG_MAIN, LOG_CLASS_INFO, logOutputMethod);
 	conn->audio = SA_AudioOpenStream(conn->device, 1, conn->dh);
@@ -67,7 +68,7 @@ void SA_Server(saConnection* conn)
 	}
 }
 
-void SA_Client(saConnection* conn)
+void SA_Client(saConnection *conn)
 {
 	SA_Log("Client", LOG_MAIN, LOG_CLASS_INFO, logOutputMethod);
 	conn->thread = SA_NetInit(conn->port, conn->host, 1, conn->device, conn->dh);
@@ -77,7 +78,7 @@ void SA_Client(saConnection* conn)
 	}
 }
 
-void SA_Close(saConnection* conn)
+void SA_Close(saConnection *conn)
 {
 	if (conn->audio)
 		SA_AudioCloseStream(conn->audio);
@@ -85,18 +86,19 @@ void SA_Close(saConnection* conn)
 	free(conn);
 }
 
-void SA_SetVolumeModifier(float vol,saConnection *conn)
+void SA_SetVolumeModifier(float vol, saConnection *conn)
 {
 	conn->dh->volMod = vol;
 }
 
-float SA_GetVolumeModifier(saConnection* conn)
+float SA_GetVolumeModifier(saConnection *conn)
 {
 	return conn->dh->volMod;
 }
 
 void SA_ListAllAudioDevices()
 {
+
 	audioDevices devicesData = SA_GetAllDevices();
 	printf_s("Found %d devices\n\n", devicesData.numDevices);
 	for (int i = 0;; i++)
@@ -104,8 +106,8 @@ void SA_ListAllAudioDevices()
 		if (devicesData.devices[i] != NULL)
 		{
 			printf_s("Device %d:\n\t%s\n\tSample Rate:%f\n", i,
-				devicesData.devices[i]->name,
-				devicesData.devices[i]->defaultSampleRate);
+					 devicesData.devices[i]->name,
+					 devicesData.devices[i]->defaultSampleRate);
 			if (devicesData.devices[i]->maxInputChannels > 0)
 				printf_s("\tChannels Int:%d\n", devicesData.devices[i]->maxInputChannels);
 			if (devicesData.devices[i]->maxOutputChannels > 0)
@@ -118,4 +120,48 @@ void SA_ListAllAudioDevices()
 		}
 	}
 	free(devicesData.devices);
+}
+
+saConnection *SA_Setup()
+{
+	saConnection *conn = malloc(sizeof(saConnection));
+	if (conn == NULL)
+	{
+		SA_Log("Failed to allocate memory", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
+	}
+	else
+	{
+		memset(conn, 0, sizeof(saConnection));
+		conn->device = -1;
+		conn->host = NULL;
+		conn->mode = 0;
+		conn->port = 9950;
+		conn->dh = malloc(sizeof(dataHandshake));
+		memset(conn->dh, 0, sizeof(dataHandshake));
+		conn->dh->testMode = 0;
+		if (conn->dh == NULL)
+		{
+			SA_Log("Failed to allocate memory", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
+		}
+		else
+		{
+			conn->dh->sampleRate = -1;
+			conn->dh->waveSize = 2048;
+			conn->dh->volMod = -1;
+			conn->dh->header = 0x0;
+			conn->dh->channel = 2;
+			SA_ProcessSetPriority();
+			logOutputMethod = LOG_OUTPUT_CONSOLE;
+			SA_Log("Program start. Build on " COMPILE ". Binary version " VERSION, LOG_MAIN, LOG_CLASS_INFO, logOutputMethod);
+			SA_Log(Pa_GetVersionText(), LOG_MAIN, LOG_CLASS_INFO, logOutputMethod);
+		}
+		SA_AudioInit();
+	}
+	return conn;
+}
+
+void SA_Shutdown(saConnection * conn)
+{
+	SA_Close(conn);
+	SA_AudioClose();
 }

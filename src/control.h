@@ -12,3 +12,5 @@ void SA_SetVolumeModifier(float vol);
 float SA_GetVolumeModifier();
 
 void SA_ListAllAudioDevices();
+
+saConnection *SA_Setup();
