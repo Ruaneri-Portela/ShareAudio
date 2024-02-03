@@ -11,7 +11,7 @@
 
 int main(int argc, char *argv[])
 {
-	saConnection *conn = SA_Setup();
+	saConnection *conn = SA_Setup(-1, NULL, 0, 9950, 0, 2, -1, 2048, -1);
 	if (argc > 1)
 	{
 		for (int i = 1; i < argc; i++)
@@ -53,7 +53,9 @@ int main(int argc, char *argv[])
 			}
 			else if (strcmp(argv[i], "-r") == 0)
 			{
+				SA_AudioInit();
 				SA_ListAllAudioDevices();
+
 				goto EXIT;
 			}
 			else if (strcmp(argv[i], "-v") == 0)

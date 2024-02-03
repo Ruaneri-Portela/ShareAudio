@@ -19,10 +19,7 @@ foreach ($build in $builds) {
     } else {
         $msbild = $build
     }
-
-    & "C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe" ShareAudio.sln -t:Clean -p:Configuration=Release -p:Platform="$msbild"
     & "C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe" ShareAudio.sln -p:Configuration=Release -p:Platform="$msbild"
-    & "C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe" ShareAudio.sln -t:Clean -p:Configuration=Debug -p:Platform="$msbild"
     & "C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe" ShareAudio.sln -p:Configuration=Debug -p:Platform="$msbild"
 
     New-Item -ItemType Directory -Path ".\build\$build" -Force

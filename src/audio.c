@@ -83,13 +83,21 @@ void SA_AudioStartStream(PaStream* stream)
 	SA_Log("Stream started", LOG_AUDIO, LOG_CLASS_INFO, logOutputMethod);
 }
 
+#if defined(DLL_EXPORT)
+__declspec(dllexport) void SA_AudioInit()
+#else
 void SA_AudioInit()
+#endif
 {
 	SA_AudioCheckError(Pa_Initialize());
 	SA_Log("PortAudio initialized", LOG_AUDIO, LOG_CLASS_INFO, logOutputMethod);
 }
 
+#if defined(DLL_EXPORT)
+__declspec(dllexport) void SA_AudioClose()
+#else
 void SA_AudioClose()
+#endif
 {
 	SA_AudioCheckError(Pa_Terminate());
 	SA_Log("PortAudio terminated", LOG_AUDIO, LOG_CLASS_INFO, logOutputMethod);

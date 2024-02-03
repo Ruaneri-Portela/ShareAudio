@@ -14,3 +14,7 @@ float SA_GetVolumeModifier();
 void SA_ListAllAudioDevices();
 
 saConnection *SA_Setup();
+
+void SA_Shutdown(saConnection* conn);
+
+const char* SA_GetStats(saConnection* conn);
