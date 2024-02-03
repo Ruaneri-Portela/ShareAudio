@@ -47,4 +47,12 @@ void sscanf_s(const char* str, const char* format, ...)
 	vsscanf(str, format, args);
 	va_end(args);
 }
+
+void sprintf_s(char* dest, size_t destsz, const char* format, ...)
+{
+	va_list args;
+	va_start(args, format);
+	vsprintf(dest, format, args);
+	va_end(args);
+}
 #endif

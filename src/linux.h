@@ -12,4 +12,6 @@ void strcpy_s(char* dest, size_t destsz, const char* src);
 
 void sscanf_s(const char* str, const char* format, ...);
 
+void sprintf_s(char* dest, size_t destsz, const char* format, ...);
+
 #endif
