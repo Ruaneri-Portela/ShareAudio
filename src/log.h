@@ -1,27 +1,27 @@
 enum logClassEnum
 {
-    LOG_NET,
-    LOG_AUDIO,
-    LOG_MAIN
+	LOG_NET,
+	LOG_AUDIO,
+	LOG_MAIN
 };
 enum logLevelEnum
 {
-    LOG_CLASS_ERROR,
-    LOG_CLASS_WARNING,
-    LOG_CLASS_INFO,
-    LOG_CLASS_DEBUG
+	LOG_CLASS_ERROR,
+	LOG_CLASS_WARNING,
+	LOG_CLASS_INFO,
+	LOG_CLASS_DEBUG
 };
 enum logOutputEnum
 {
-    LOG_OUTPUT_CONSOLE,
-    LOG_OUTPUT_FILE
+	LOG_OUTPUT_CONSOLE,
+	LOG_OUTPUT_FILE
 };
 typedef enum logClassEnum logClass;
 typedef enum logLevelEnum logLevel;
 typedef enum logOutputEnum logOutput;
 
-extern char *fileLogName;
+extern char* fileLogName;
 
 extern logOutput logOutputMethod;
 
-void SA_Log(const char *msg, logClass class, logLevel level, logOutput method);
+void SA_Log(const char* msg, logClass class, logLevel level, logOutput method);

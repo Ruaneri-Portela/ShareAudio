@@ -32,6 +32,7 @@
     <ClCompile Include="src/log.c" />
     <ClCompile Include="src/ShareAudio.c" />
     <ClCompile Include="src/threads.c" />
+    <ClCompile Include="src\control.c" />
     <ClCompile Include="src\linux.c" />
     <ClCompile Include="src\net.c" />
   </ItemGroup>
@@ -40,6 +41,8 @@
     <ClInclude Include="src/data.h" />
     <ClInclude Include="src/log.h" />
     <ClInclude Include="src/threads.h" />
+    <ClInclude Include="src\config.h" />
+    <ClInclude Include="src\control.h" />
     <ClInclude Include="src\linux.h" />
     <ClInclude Include="src\net.h" />
     <ClInclude Include="src\resource.h" />

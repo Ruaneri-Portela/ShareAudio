@@ -6,4 +6,4 @@ void SA_ThreadJoin(void* hThread);
 
 void SA_ProcessSetPriority();
 
-void SA_Sleep(unsigned int ms);
+void SA_Sleep(size_t ms);

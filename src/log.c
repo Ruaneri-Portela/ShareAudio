@@ -1,9 +1,6 @@
-#include <stdlib.h>
+#include "config.h"
 #include <stdio.h>
-
-#if !(defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__))
-#include "linux.h"
-#endif
+#include <stdlib.h>
 
 enum logClassEnum
 {
@@ -29,11 +26,11 @@ typedef enum logOutputEnum logOutput;
 
 logOutput logOutputMethod;
 
-char *fileLogName = "log.txt";
+char* fileLogName = "log.txt";
 
-static FILE *fileLog = NULL;
+static FILE* fileLog = NULL;
 
-static const char *SA_LogEnumClass(logClass class)
+static const char* SA_LogEnumClass(logClass class)
 {
 	switch (class)
 	{
@@ -48,7 +45,7 @@ static const char *SA_LogEnumClass(logClass class)
 	}
 }
 
-static const char *SA_LogEnumToLevel(logLevel level, int toTerminal)
+static const char* SA_LogEnumToLevel(logLevel level, int toTerminal)
 {
 	if (toTerminal == 1)
 	{
@@ -84,7 +81,7 @@ static const char *SA_LogEnumToLevel(logLevel level, int toTerminal)
 	}
 }
 
-void SA_Log(const char *msg, logClass class, logLevel level, logOutput method)
+void SA_Log(const char* msg, logClass class, logLevel level, logOutput method)
 {
 	switch (method)
 	{

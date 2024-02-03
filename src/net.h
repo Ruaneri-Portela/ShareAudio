@@ -21,10 +21,10 @@ typedef struct connectParam
 {
 	int asServer;
 	int port;
-	char *host;
+	char* host;
 	int dataSize;
 	size_t delay;
-	netCtx *ctx;
+	netCtx* ctx;
 } connectParam;
 
 extern size_t sessionPacket;

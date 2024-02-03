@@ -1,30 +1,27 @@
-#include <string.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "../portaudio/include/portaudio.h"
+#include "config.h"
 #include "data.h"
 #include "log.h"
 
-#if !(defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__))
-#include "linux.h"
-#endif
-
 typedef struct audioDevices
 {
-	const PaDeviceInfo **devices;
+	const PaDeviceInfo** devices;
 	int numDevices;
 } audioDevices;
 
 typedef struct audioBuffer
 {
-	void *data;
-	struct audioBuffer *next;
-	struct audioBuffer *prev;
+	void* data;
+	struct audioBuffer* next;
+	struct audioBuffer* prev;
 } audioBuffer;
 
-char *audioDataFrame = NULL;
+char* audioDataFrame = NULL;
 
-audioBuffer *head = NULL;
+audioBuffer* head = NULL;
 
 unsigned short int testMode = 0;
 
@@ -37,18 +34,18 @@ static void SA_AudioCheckError(PaError err)
 }
 
 int SA_AudioClientCallback(
-	const void *inputBuffer, void *outputBuffer, unsigned long framesPerBuffer,
-	const PaStreamCallbackTimeInfo *timeInfo, PaStreamCallbackFlags statusFlags,
-	void *userData)
+	const void* inputBuffer, void* outputBuffer, unsigned long framesPerBuffer,
+	const PaStreamCallbackTimeInfo* timeInfo, PaStreamCallbackFlags statusFlags,
+	void* userData)
 {
 	(void)inputBuffer;
 	(void)timeInfo;
 	(void)statusFlags;
 	if (head != NULL)
 	{
-		audioBuffer *temp = head;
-		float *data = SA_DataGetWaveData(temp->data);
-		SA_DataCopyAudio(data, (float *)outputBuffer, framesPerBuffer * ((dataHandshake *)userData)->channel, ((dataHandshake *)userData)->volMod, testMode);
+		audioBuffer* temp = head;
+		float* data = SA_DataGetWaveData(temp->data);
+		SA_DataCopyAudio(data, (float*)outputBuffer, framesPerBuffer * ((dataHandshake*)userData)->channel, ((dataHandshake*)userData)->volMod, testMode);
 		head = temp->next;
 		free(temp->data);
 		free(temp);
@@ -61,9 +58,9 @@ int SA_AudioClientCallback(
 }
 
 int SA_AudioServerCallback(
-	const void *inputBuffer, void *outputBuffer, unsigned long framesPerBuffer,
-	const PaStreamCallbackTimeInfo *timeInfo, PaStreamCallbackFlags statusFlags,
-	void *userData)
+	const void* inputBuffer, void* outputBuffer, unsigned long framesPerBuffer,
+	const PaStreamCallbackTimeInfo* timeInfo, PaStreamCallbackFlags statusFlags,
+	void* userData)
 {
 	(void)outputBuffer;
 	(void)timeInfo;
@@ -71,18 +68,18 @@ int SA_AudioServerCallback(
 	(void)framesPerBuffer;
 	if (audioDataFrame == NULL)
 	{
-		audioDataFrame = SA_DataCreateDataFrame((float *)inputBuffer, userData, testMode);
+		audioDataFrame = SA_DataCreateDataFrame((float*)inputBuffer, userData, testMode);
 	}
 	return 0;
 }
 
-void SA_AudioStopStream(PaStream *stream)
+void SA_AudioStopStream(PaStream* stream)
 {
 	SA_AudioCheckError(Pa_StopStream(stream));
 	SA_Log("Stream stopped", LOG_AUDIO, LOG_CLASS_INFO, logOutputMethod);
 }
 
-void SA_AudioStartStream(PaStream *stream)
+void SA_AudioStartStream(PaStream* stream)
 {
 	SA_AudioCheckError(Pa_StartStream(stream));
 	SA_Log("Stream started", LOG_AUDIO, LOG_CLASS_INFO, logOutputMethod);
@@ -111,46 +108,24 @@ audioDevices SA_GetAllDevices()
 	{
 		SA_Log("No devices found", LOG_AUDIO, LOG_CLASS_ERROR, logOutputMethod);
 	}
-	const PaDeviceInfo **devices = (const PaDeviceInfo **)malloc(sizeof(const PaDeviceInfo *) * (numDevices + 1));
+	const PaDeviceInfo** devices = (const PaDeviceInfo**)malloc(sizeof(const PaDeviceInfo*) * (numDevices + 1));
 	if (devices == NULL)
 	{
 		SA_Log("Failed to allocate memory", LOG_AUDIO, LOG_CLASS_ERROR, logOutputMethod);
 	}
-	for (int i = 0; i < numDevices; i++)
+	else
 	{
-		devices[i] = Pa_GetDeviceInfo(i);
+		for (int i = 0; i < numDevices; i++)
+		{
+			devices[i] = Pa_GetDeviceInfo(i);
+		}
+		devices[numDevices] = NULL;
 	}
-	devices[numDevices] = NULL;
-	audioDevices devicesData = {devices, numDevices};
+	audioDevices devicesData = { devices, numDevices };
 	return devicesData;
 }
 
-void SA_AudioListAllDevices()
-{
-	audioDevices devicesData = SA_GetAllDevices();
-	printf_s("Found %d devices\n\n", devicesData.numDevices);
-	for (int i = 0;; i++)
-	{
-		if (devicesData.devices[i] != NULL)
-		{
-			printf_s("Device %d:\n\t%s\n\tSample Rate:%f\n", i,
-					 devicesData.devices[i]->name,
-					 devicesData.devices[i]->defaultSampleRate);
-			if (devicesData.devices[i]->maxInputChannels > 0)
-				printf_s("\tChannels Int:%d\n", devicesData.devices[i]->maxInputChannels);
-			if (devicesData.devices[i]->maxOutputChannels > 0)
-				printf_s("\tChannels Out:%d\n", devicesData.devices[i]->maxOutputChannels);
-			printf_s("\n");
-		}
-		else
-		{
-			break;
-		}
-	}
-	free(devicesData.devices);
-}
-
-PaStream *SA_AudioOpenStream(size_t device, size_t lchannel, double sampleRate, size_t waveSize, unsigned short asServer, void *configs)
+PaStream* SA_AudioOpenStream(size_t device, size_t lchannel, double sampleRate, size_t waveSize, unsigned short asServer, void* configs)
 {
 	PaStreamParameters parms;
 	memset(&parms, 0, sizeof(parms));
@@ -159,8 +134,8 @@ PaStream *SA_AudioOpenStream(size_t device, size_t lchannel, double sampleRate, 
 	parms.hostApiSpecificStreamInfo = NULL;
 	parms.sampleFormat = paFloat32;
 	parms.suggestedLatency = Pa_GetDeviceInfo((int)device)->defaultLowInputLatency;
-	PaStream *stream;
-	char *msg = SA_DataConcatString("Using device: ", Pa_GetDeviceInfo((int)device)->name);
+	PaStream* stream;
+	char* msg = SA_DataConcatString("Using device: ", Pa_GetDeviceInfo((int)device)->name);
 	SA_Log(msg, LOG_AUDIO, LOG_CLASS_INFO, logOutputMethod);
 	free(msg);
 	asServer ? SA_Log("Server mode", LOG_AUDIO, LOG_CLASS_INFO, logOutputMethod) : SA_Log("Client mode", LOG_AUDIO, LOG_CLASS_INFO, logOutputMethod);
@@ -191,7 +166,7 @@ PaStream *SA_AudioOpenStream(size_t device, size_t lchannel, double sampleRate, 
 	return stream;
 }
 
-void SA_AudioCloseStream(PaStream *stream)
+void SA_AudioCloseStream(PaStream* stream)
 {
 	SA_AudioCheckError(Pa_CloseStream(stream));
 	SA_Log("Stream shutdowner", LOG_AUDIO, LOG_CLASS_INFO, logOutputMethod);

@@ -1,4 +1,5 @@
-#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
+#include "config.h"
+#if defined(WINDOWS)
 #include <windows.h>
 void* SA_ThreadCreate(void* func, void* param)
 {
@@ -20,10 +21,10 @@ void SA_ProcessSetPriority()
 	HANDLE hProcess = GetCurrentProcess();
 	SetPriorityClass(hProcess, REALTIME_PRIORITY_CLASS);
 }
-void SA_Sleep(unsigned int ms) {
+void SA_Sleep(size_t ms) {
 	Sleep((DWORD)ms);
 }
-#else
+#else if defined(LINUX)
 #include <pthread.h>
 #include <unistd.h>
 void* SA_ThreadCreate(void* func, void* param)
@@ -46,7 +47,7 @@ void SA_ProcessSetPriority()
 {
 	nice(-20);
 }
-void SA_Sleep(unsigned int ms) {
+void SA_Sleep(size_t ms) {
 	usleep(ms * 1000);
 }
 #endif
