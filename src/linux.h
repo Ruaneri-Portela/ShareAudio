@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
-#if !(defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__))
+#include "config.h"
+#if defined(LINUX)
 
 void memcpy_s(void* dest, size_t destsz, const void* src, size_t count);
 
