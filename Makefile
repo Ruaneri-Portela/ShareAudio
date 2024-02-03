@@ -1,8 +1,8 @@
 CC := gcc
 CFLAGS := -Wall -Wextra -pedantic
 LIBS := -lportaudio
-WINRES = ""
-WINRES_O = ""
+WINRES =
+WINRES_O =
 BUILD_DIR := build/
 SRC_DIR = src/
 
