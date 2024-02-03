@@ -11,7 +11,6 @@
 #define LINUX
 #define ISWIN 0
 #include "linux.h"
-#define __USE_XOPEN2K
 #endif
 
 #include "VERSION.h"

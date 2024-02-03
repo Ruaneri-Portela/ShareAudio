@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
 			{
 				SA_AudioInit();
 				SA_ListAllAudioDevices();
-
+				SA_AudioClose();
 				goto EXIT;
 			}
 			else if (strcmp(argv[i], "-v") == 0)

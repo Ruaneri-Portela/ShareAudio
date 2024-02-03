@@ -7,9 +7,9 @@
 #include <stdio.h>
 
 #if defined(DLL_EXPORT)
-__declspec(dllexport) void SA_Init(saConnection* conn)
+__declspec(dllexport) void SA_Init(saConnection *conn)
 #else
-void SA_Init(saConnection* conn)
+void SA_Init(saConnection *conn)
 #endif
 {
 	SA_AudioInit();
@@ -21,13 +21,13 @@ void SA_Init(saConnection* conn)
 	if (conn->device == -1 && conn->mode == 1 && ISWIN)
 	{
 		int defaultOutDevice = Pa_GetDefaultOutputDevice();
-		const char* defaultOutDeviceName = Pa_GetDeviceInfo(defaultOutDevice)->name;
+		const char *defaultOutDeviceName = Pa_GetDeviceInfo(defaultOutDevice)->name;
 		int loopbackDevice = -1;
 		for (int i = 0;; i++)
 		{
 			if (deviceList.devices[i] != NULL)
 			{
-				const char* searchName = deviceList.devices[i]->name;
+				const char *searchName = deviceList.devices[i]->name;
 				if (strstr(searchName, defaultOutDeviceName) != NULL && strstr(searchName, "[Loopback]"))
 				{
 					loopbackDevice = i;
@@ -53,7 +53,7 @@ void SA_Init(saConnection* conn)
 		(conn->device == -1 && conn->mode == 2) ? conn->device = Pa_GetDefaultOutputDevice() : conn->device;
 		(conn->device == -1 && conn->mode == 1) ? conn->device = Pa_GetDefaultInputDevice() : conn->device;
 	}
-	(conn->dh->sampleRate == -1 && conn->device != -1) ? conn->dh->sampleRate = Pa_GetDeviceInfo(conn->device)->defaultSampleRate : conn->dh->sampleRate;
+	(conn->dh->sampleRate == -1 && conn->device > -1) ? conn->dh->sampleRate = Pa_GetDeviceInfo(conn->device)->defaultSampleRate : conn->dh->sampleRate;
 	if (conn->host == NULL)
 	{
 		conn->host = "127.0.0.1";
@@ -62,9 +62,9 @@ void SA_Init(saConnection* conn)
 }
 
 #if defined(DLL_EXPORT)
-__declspec(dllexport) void SA_Server(saConnection* conn)
+__declspec(dllexport) void SA_Server(saConnection *conn)
 #else
-void SA_Server(saConnection* conn)
+void SA_Server(saConnection *conn)
 #endif
 {
 	SA_Log("Server", LOG_MAIN, LOG_CLASS_INFO, logOutputMethod);
@@ -78,9 +78,9 @@ void SA_Server(saConnection* conn)
 }
 
 #if defined(DLL_EXPORT)
-__declspec(dllexport) void SA_Client(saConnection* conn)
+__declspec(dllexport) void SA_Client(saConnection *conn)
 #else
-void SA_Client(saConnection* conn)
+void SA_Client(saConnection *conn)
 #endif
 {
 	SA_Log("Client", LOG_MAIN, LOG_CLASS_INFO, logOutputMethod);
@@ -92,9 +92,9 @@ void SA_Client(saConnection* conn)
 }
 
 #if defined(DLL_EXPORT)
-__declspec(dllexport) void SA_Close(saConnection* conn)
+__declspec(dllexport) void SA_Close(saConnection *conn)
 #else
-void SA_Close(saConnection* conn)
+void SA_Close(saConnection *conn)
 #endif
 {
 	if (conn->audio)
@@ -104,18 +104,18 @@ void SA_Close(saConnection* conn)
 }
 
 #if defined(DLL_EXPORT)
-__declspec(dllexport) void SA_SetVolumeModifier(float vol, saConnection* conn)
+__declspec(dllexport) void SA_SetVolumeModifier(float vol, saConnection *conn)
 #else
-void SA_SetVolumeModifier(float vol, saConnection* conn)
+void SA_SetVolumeModifier(float vol, saConnection *conn)
 #endif
 {
 	conn->dh->volMod = vol;
 }
 
 #if defined(DLL_EXPORT)
-__declspec(dllexport) float SA_GetVolumeModifier(saConnection* conn)
+__declspec(dllexport) float SA_GetVolumeModifier(saConnection *conn)
 #else
-float SA_GetVolumeModifier(saConnection* conn)
+float SA_GetVolumeModifier(saConnection *conn)
 #endif
 {
 	return conn->dh->volMod;
@@ -127,7 +127,6 @@ __declspec(dllexport) void SA_ListAllAudioDevices()
 void SA_ListAllAudioDevices()
 #endif
 {
-
 	audioDevices devicesData = SA_GetAllDevices();
 	printf_s("Found %d devices\n\n", devicesData.numDevices);
 	for (int i = 0;; i++)
@@ -135,8 +134,8 @@ void SA_ListAllAudioDevices()
 		if (devicesData.devices[i] != NULL)
 		{
 			printf_s("Device %d:\n\t%s\n\tSample Rate:%f\n", i,
-				devicesData.devices[i]->name,
-				devicesData.devices[i]->defaultSampleRate);
+					 devicesData.devices[i]->name,
+					 devicesData.devices[i]->defaultSampleRate);
 			if (devicesData.devices[i]->maxInputChannels > 0)
 				printf_s("\tChannels Int:%d\n", devicesData.devices[i]->maxInputChannels);
 			if (devicesData.devices[i]->maxOutputChannels > 0)
@@ -152,12 +151,12 @@ void SA_ListAllAudioDevices()
 }
 
 #if defined(DLL_EXPORT)
-__declspec(dllexport) saConnection* SA_Setup(int device, const char* host, int mode, int port, int testMode, int channel, float volMod, int waveSize, double sampleRate)
+__declspec(dllexport) saConnection *SA_Setup(int device, const char *host, int mode, int port, int testMode, int channel, float volMod, int waveSize, double sampleRate)
 #else
-saConnection* SA_Setup(int device, const char* host, int mode, int port, int testMode, int channel, float volMod, int waveSize, double sampleRate)
+saConnection *SA_Setup(int device, const char *host, int mode, int port, int testMode, int channel, float volMod, int waveSize, double sampleRate)
 #endif
 {
-	saConnection* conn = malloc(sizeof(saConnection));
+	saConnection *conn = malloc(sizeof(saConnection));
 	if (conn == NULL)
 	{
 		SA_Log("Failed to allocate memory", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
@@ -194,9 +193,9 @@ saConnection* SA_Setup(int device, const char* host, int mode, int port, int tes
 }
 
 #if defined(DLL_EXPORT)
-__declspec(dllexport) void SA_Shutdown(saConnection* conn)
+__declspec(dllexport) void SA_Shutdown(saConnection *conn)
 #else
-void SA_Shutdown(saConnection* conn)
+void SA_Shutdown(saConnection *conn)
 #endif
 {
 	SA_Close(conn);
@@ -204,18 +203,17 @@ void SA_Shutdown(saConnection* conn)
 }
 
 #if defined(DLL_EXPORT)
-__declspec(dllexport) const char* SA_GetStats(saConnection* conn)
+__declspec(dllexport) const char *SA_GetStats(saConnection *conn)
 #else
-const char* SA_GetStats(saConnection* conn)
+const char *SA_GetStats(saConnection *conn)
 #endif
 {
-	//UNSECURE CODE
+	// UNSECURE CODE
 	char stats[250];
-	sprintf_s(stats, 250, "%zd,%zd,%d,%lf,%d,%s,%s,%d", conn->dh->totalPacketSrv, conn->dh->totalPacketSrv, conn->dh->channel, 
-		conn->dh->sampleRate, conn->dh->waveSize, Pa_GetDeviceInfo(conn->device)->name,conn->host,conn->port);
+	sprintf_s(stats, 250, "%zd,%zd,%d,%lf,%d,%s,%s,%d", conn->dh->totalPacketSrv, conn->dh->totalPacketSrv, conn->dh->channel,
+			  conn->dh->sampleRate, conn->dh->waveSize, Pa_GetDeviceInfo(conn->device)->name, conn->host, conn->port);
 	return stats;
 }
-
 
 #if defined(DLL_EXPORT)
 __declspec(dllexport) void SA_TestDLL()
@@ -223,4 +221,3 @@ __declspec(dllexport) void SA_TestDLL()
 	SA_Log("Test DLL", LOG_MAIN, LOG_CLASS_INFO, LOG_OUTPUT_CONSOLE);
 }
 #endif
-
