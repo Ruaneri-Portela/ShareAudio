@@ -289,8 +289,11 @@ static void SA_NetServer(void *parms)
 				audioDataFrame != NULL ? free(audioDataFrame) : (void)0;
 				audioDataFrame = NULL;
 			}
-			SA_Sleep(localParm->delay);
 		};
+		if (ISWIN)
+		{
+			SA_Sleep(localParm->delay);
+		}
 	}
 	SA_WinNetEnd(parms);
 }
