@@ -1,1 +1,1 @@
-#define VERSION "alpha3-6-ga202fd3"
+#define VERSION "alpha3-7-g64f1b42"
