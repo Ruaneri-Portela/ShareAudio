@@ -3,8 +3,8 @@
 
 #include "../portaudio/include/portaudio.h"
 #include "config.h"
-#include "data.h"
 #include "log.h"
+#include "data.h"
 
 typedef struct audioDevices
 {
@@ -22,8 +22,6 @@ typedef struct audioBuffer
 char* audioDataFrame = NULL;
 
 audioBuffer* head = NULL;
-
-unsigned short int testMode = 0;
 
 static void SA_AudioCheckError(PaError err)
 {
@@ -45,7 +43,7 @@ int SA_AudioClientCallback(
 	{
 		audioBuffer* temp = head;
 		float* data = SA_DataGetWaveData(temp->data);
-		SA_DataCopyAudio(data, (float*)outputBuffer, framesPerBuffer * ((dataHandshake*)userData)->channel, ((dataHandshake*)userData)->volMod, testMode);
+		SA_DataCopyAudio(data, (float*)outputBuffer, framesPerBuffer * ((dataHandshake*)userData)->channel, ((dataHandshake*)userData)->volMod, 0);
 		head = temp->next;
 		free(temp->data);
 		free(temp);
@@ -68,7 +66,7 @@ int SA_AudioServerCallback(
 	(void)framesPerBuffer;
 	if (audioDataFrame == NULL)
 	{
-		audioDataFrame = SA_DataCreateDataFrame((float*)inputBuffer, userData, testMode);
+		audioDataFrame = SA_DataCreateDataFrame((float*)inputBuffer, userData, ((dataHandshake*)userData)->testMode);
 	}
 	return 0;
 }
@@ -125,12 +123,12 @@ audioDevices SA_GetAllDevices()
 	return devicesData;
 }
 
-PaStream* SA_AudioOpenStream(size_t device, size_t lchannel, double sampleRate, size_t waveSize, unsigned short asServer, void* configs)
+PaStream* SA_AudioOpenStream(int device, unsigned short asServer, dataHandshake* configs)
 {
 	PaStreamParameters parms;
 	memset(&parms, 0, sizeof(parms));
-	parms.channelCount = (int)lchannel;
-	parms.device = (int)device;
+	parms.channelCount = configs->channel;
+	parms.device = device;
 	parms.hostApiSpecificStreamInfo = NULL;
 	parms.sampleFormat = paFloat32;
 	parms.suggestedLatency = Pa_GetDeviceInfo((int)device)->defaultLowInputLatency;
@@ -145,8 +143,8 @@ PaStream* SA_AudioOpenStream(size_t device, size_t lchannel, double sampleRate, 
 			&stream,
 			&parms,
 			NULL,
-			(int)sampleRate,
-			(int)waveSize,
+			configs->sampleRate,
+			configs->waveSize,
 			paNoFlag,
 			SA_AudioServerCallback,
 			configs));
@@ -157,8 +155,8 @@ PaStream* SA_AudioOpenStream(size_t device, size_t lchannel, double sampleRate, 
 			&stream,
 			NULL,
 			&parms,
-			(int)sampleRate,
-			(int)waveSize,
+			configs->sampleRate,
+			configs->waveSize,
 			paNoFlag,
 			SA_AudioClientCallback,
 			configs));

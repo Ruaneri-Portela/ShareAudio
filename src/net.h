@@ -19,12 +19,15 @@ typedef struct netCtx
 
 typedef struct connectParam
 {
-	int asServer;
-	int port;
+	unsigned short int asServer;
+	unsigned int port;
 	char* host;
-	int dataSize;
+	short int device;
+	size_t dataSize;
 	size_t delay;
 	netCtx* ctx;
+	dataHandshake* dh;
+	void* thread;
 } connectParam;
 
 extern size_t sessionPacket;
@@ -35,6 +38,6 @@ extern void* closeThread;
 
 unsigned short int SA_NetSetupClient(connectParam* parms);
 
-void* SA_NetInit(unsigned int port, const char* host, unsigned short int asClient, short int device);
+void* SA_NetInit(int port, const char* host, int asClient, int device, dataHandshake * dh);
 
 void SA_NetClose(void* thread);

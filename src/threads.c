@@ -24,7 +24,7 @@ void SA_ProcessSetPriority()
 void SA_Sleep(size_t ms) {
 	Sleep((DWORD)ms);
 }
-#else if defined(LINUX)
+#elif defined(LINUX)
 #include <pthread.h>
 #include <unistd.h>
 void* SA_ThreadCreate(void* func, void* param)

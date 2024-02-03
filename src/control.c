@@ -1,60 +1,80 @@
 #include "audio.h"
 #include "config.h"
-#include "data.h"
 #include "log.h"
+#include "data.h"
 #include "net.h"
 #include <stdio.h>
 
-typedef struct saConnection
-{
-	void* thread;
-	void* audio;
-} saConnection;
-
-saConnection* SA_Server(int device, int port, const char* host)
-{
-	saConnection* conn = malloc(sizeof(saConnection));
-	if (conn == NULL)
+void SA_Init(saConnection* conn) {
+	SA_AudioInit();
+	audioDevices deviceList = SA_GetAllDevices();
+	if (deviceList.numDevices < conn->device)
 	{
-		SA_Log("Failed to allocate memory", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
-		return NULL;
+		SA_Log("Device out of range", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
 	}
-	else {
-		memset(conn, 0, sizeof(saConnection));
-		SA_Log("Server", LOG_MAIN, LOG_CLASS_INFO, logOutputMethod);
-		if (dh->volMod == -1)
-			dh->volMod = 1;
-		const PaDeviceInfo* info = Pa_GetDeviceInfo(device);
-		conn->audio = SA_AudioOpenStream(device, info->maxInputChannels, dh->sampleRate, dh->waveSize, 1, dh);
-		SA_AudioStartStream(conn->audio);
-		conn->thread = SA_NetInit(port, host, 0, device);
-		if (conn->thread == NULL)
+	if (conn->device == -1 && conn->mode == 1 && ISWIN)
+	{
+		int defaultOutDevice = Pa_GetDefaultOutputDevice();
+		const char* defaultOutDeviceName = Pa_GetDeviceInfo(defaultOutDevice)->name;
+		int loopbackDevice = -1;
+		for (int i = 0;; i++)
 		{
-			SA_Log("Failed to init net", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
+			if (deviceList.devices[i] != NULL)
+			{
+				const char* searchName = deviceList.devices[i]->name;
+				if (strstr(searchName, defaultOutDeviceName) != NULL && strstr(searchName, "[Loopback]"))
+				{
+					loopbackDevice = i;
+					break;
+				}
+			}
+			else
+			{
+				break;
+			}
+		}
+		if (loopbackDevice != -1)
+		{
+			conn->device = loopbackDevice;
+		}
+		else
+		{
+			SA_Log("Loopback device not found It's is cause by using old DLL or MSYS2 version...", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
 		}
 	}
-	return conn;
+	else
+	{
+		(conn->device == -1 && conn->mode == 2) ? conn->device = Pa_GetDefaultOutputDevice() : conn->device;
+		(conn->device == -1 && conn->mode == 1) ? conn->device = Pa_GetDefaultInputDevice() : conn->device;
+	}
+	(conn->dh->sampleRate == -1 && conn->device != -1) ? conn->dh->sampleRate = Pa_GetDeviceInfo(conn->device)->defaultSampleRate : conn->dh->sampleRate;
+	if (conn->host == NULL)
+	{
+		conn->host = "127.0.0.1";
+	}
+	conn->dh->volMod == -1 ? conn->dh->volMod = 1 : conn->dh->volMod;
 }
 
-saConnection* SA_Client(int device, int port, const char* host)
+void SA_Server(saConnection* conn)
 {
-	saConnection* conn = malloc(sizeof(saConnection));
-	if (conn == NULL)
+	SA_Log("Server", LOG_MAIN, LOG_CLASS_INFO, logOutputMethod);
+	conn->audio = SA_AudioOpenStream(conn->device, 1, conn->dh);
+	SA_AudioStartStream(conn->audio);
+	conn->thread = SA_NetInit(conn->port, conn->host, 0, conn->device, conn->dh);
+	if (conn->thread == NULL)
 	{
-		SA_Log("Failed to allocate memory", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
-		return NULL;
+		SA_Log("Failed to init net", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
 	}
-	else {
-		memset(conn, 0, sizeof(saConnection));
-		SA_Log("Client", LOG_MAIN, LOG_CLASS_INFO, logOutputMethod);
-		conn->thread = SA_NetInit(port, host, 1, device);
-		if (conn->thread == NULL)
-		{
-			SA_Log("Failed to init net", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
-			return NULL;
-		}
+}
+
+void SA_Client(saConnection* conn)
+{
+	SA_Log("Client", LOG_MAIN, LOG_CLASS_INFO, logOutputMethod);
+	conn->thread = SA_NetInit(conn->port, conn->host, 1, conn->device, conn->dh);
+	if (conn->thread == NULL)
+	{
+		SA_Log("Failed to init net", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
 	}
-	return conn;
 }
 
 void SA_Close(saConnection* conn)
@@ -65,14 +85,14 @@ void SA_Close(saConnection* conn)
 	free(conn);
 }
 
-void SA_SetVolumeModifier(float vol)
+void SA_SetVolumeModifier(float vol,saConnection *conn)
 {
-	dh->volMod = vol;
+	conn->dh->volMod = vol;
 }
 
-float SA_GetVolumeModifier()
+float SA_GetVolumeModifier(saConnection* conn)
 {
-	return dh->volMod;
+	return conn->dh->volMod;
 }
 
 void SA_ListAllAudioDevices()

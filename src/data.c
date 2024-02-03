@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-enum enumHeader
+typedef enum dataHeader
 {
 	NULLHEADER = 0x00,
 	HANDSHAKE = 0x01,
@@ -14,20 +14,30 @@ enum enumHeader
 	AUTHCHANGE = 0xFD,
 	DISCONNECT = 0xFE,
 	END = 0xFF,
-};
-
-typedef enum enumHeader dataHeader;
+} dataHeader;
 
 typedef struct dataHandshake
 {
 	dataHeader header;
-	size_t channel;
+	int channel;
 	double sampleRate;
-	size_t waveSize;
+	int waveSize;
 	float volMod;
+	int testMode;
+	size_t sessionPacket;
+	size_t totalPacketSrv;
 } dataHandshake;
 
-dataHandshake* dh = NULL;
+typedef struct saConnection
+{
+	void* thread;
+	void* audio;
+	int port;
+	int device;
+	const char* host;
+	int mode;
+	dataHandshake* dh;
+} saConnection;
 
 void SA_DataCopyAudio(float* in, float* out, size_t size, float volMod, size_t testMode)
 {
@@ -52,7 +62,7 @@ void SA_DataCopyAudio(float* in, float* out, size_t size, float volMod, size_t t
 
 size_t SA_DataGetDataFrameSize(dataHandshake* dhData)
 {
-	return (sizeof(dataHeader) + (sizeof(size_t) * 2) + ((sizeof(float) * dhData->waveSize) * dhData->channel));
+	return (sizeof(*dhData) + (sizeof(size_t) * 2) + ((sizeof(float) * dhData->waveSize) * dhData->channel));
 }
 
 void SA_DataPutOrderDataFrame(char* dataFrame, size_t value, dataHandshake* dhData)
@@ -69,7 +79,7 @@ size_t SA_DataGetOrderDataFrame(char* dataFrame, dataHandshake* dhData)
 
 char* SA_DataCreateDataFrame(const float* data, dataHandshake* dhData, unsigned short int testmode)
 {
-	size_t memorySize = SA_DataGetDataFrameSize(dh);
+	size_t memorySize = SA_DataGetDataFrameSize(dhData);
 	size_t audioPadding = dhData->waveSize * dhData->channel;
 	char* dataFrame = (char*)malloc(memorySize);
 	if (dataFrame != NULL)

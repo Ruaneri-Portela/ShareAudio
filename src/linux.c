@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#if define LINUX
+#if defined(LINUX)
 void memcpy_s(void* dest, size_t destsz, const void* src, size_t count)
 {
 	if (destsz < count)

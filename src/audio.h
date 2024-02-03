@@ -39,6 +39,6 @@ void SA_AudioClose();
 
 audioDevices SA_GetAllDevices();
 
-PaStream* SA_AudioOpenStream(size_t device, size_t lchannel, double sampleRate, size_t waveSize, unsigned short asServer, void* configs);
+PaStream* SA_AudioOpenStream(size_t device, unsigned short asServer, void* configs);
 
 void SA_AudioCloseStream(PaStream* stream);

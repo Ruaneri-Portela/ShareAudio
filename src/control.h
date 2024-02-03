@@ -1,12 +1,9 @@
-typedef struct saConnection
-{
-	void* thread;
-	void* audio;
-} saConnection;
 
-saConnection* SA_Server(int device, int port, const char* host);
+void SA_Init(saConnection* conn);
 
-saConnection* SA_Client(int device, int port, const char* host);
+void SA_Server(saConnection* conn);
+
+void SA_Client(saConnection* conn);
 
 void SA_Close(saConnection* conn);
 
