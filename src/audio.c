@@ -69,12 +69,10 @@ int SA_AudioServerCallback(
 	(void)timeInfo;
 	(void)statusFlags;
 	(void)framesPerBuffer;
-	if (audioDataFrame != NULL)
+	if (audioDataFrame == NULL)
 	{
-		free(audioDataFrame);
-		audioDataFrame = NULL;
+		audioDataFrame = SA_DataCreateDataFrame((float *)inputBuffer, userData, testMode);
 	}
-	audioDataFrame = SA_DataCreateDataFrame((float *)inputBuffer, userData, testMode);
 	return 0;
 }
 

@@ -276,7 +276,7 @@ static void SA_NetServer(void *parms)
 			if (audioDataFrame != NULL)
 			{
 				SA_DataPutOrderDataFrame((char *)audioDataFrame, sessionPacket, dh);
-				if (send(localParm->ctx->clientSocket, (char *)audioDataFrame, (int)localParm->dataSize, 0) == SOCKET_ERROR)
+				if (send(localParm->ctx->clientSocket, (char *)audioDataFrame, (int)localParm->dataSize, MSG_CONFIRM) == SOCKET_ERROR)
 				{
 					tolerance++;
 					SA_Sleep(1000);

@@ -21,14 +21,14 @@
 #include "log.h"
 #include "net.h"
 
-void server(int device, int port, const char* host);
+void server(int device, int port, const char *host);
 
-void client(int device, int port, const char* host);
+void client(int device, int port, const char *host);
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
 	unsigned short int mode = 0;
-	const char* host = NULL;
+	const char *host = NULL;
 	int deviceAudio = -1;
 	int port = 9950;
 
@@ -169,16 +169,18 @@ int main(int argc, char* argv[])
 		return EXIT_SUCCESS;
 	}
 	SA_AudioInit();
-
-	if (deviceAudio == -1 && mode == 1 && ISWIN) {
+	audioDevices deviceList = SA_GetAllDevices();
+	if (deviceAudio == -1 && mode == 1 && ISWIN)
+	{
 		int defaultOutDevice = Pa_GetDefaultOutputDevice();
-		const char* defaultOutDeviceName = Pa_GetDeviceInfo(defaultOutDevice)->name;
-		audioDevices deviceList = SA_GetAllDevices();
+		const char *defaultOutDeviceName = Pa_GetDeviceInfo(defaultOutDevice)->name;
+
 		int loopbackDevice = -1;
-		for (int i = 0;; i++) {
+		for (int i = 0;; i++)
+		{
 			if (deviceList.devices[i] != NULL)
 			{
-				const char* searchName = deviceList.devices[i]->name;
+				const char *searchName = deviceList.devices[i]->name;
 				if (strstr(searchName, defaultOutDeviceName) != NULL && strstr(searchName, "[Loopback]"))
 				{
 					loopbackDevice = i;
@@ -199,7 +201,13 @@ int main(int argc, char* argv[])
 			SA_Log("Loopback device not found It's is cause by using old DLL or MSYS2 version...", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
 		}
 	}
-	else {
+	else
+	{
+		if(deviceList.numDevices < deviceAudio)
+		{
+			SA_Log("Device out of range", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
+			return EXIT_FAILURE;
+		}
 		(deviceAudio == -1 && mode == 2) ? deviceAudio = Pa_GetDefaultOutputDevice() : deviceAudio;
 		(deviceAudio == -1 && mode == 1) ? deviceAudio = Pa_GetDefaultInputDevice() : deviceAudio;
 	}
@@ -226,15 +234,15 @@ int main(int argc, char* argv[])
 	return EXIT_SUCCESS;
 }
 
-void server(int device, int port, const char* host)
+void server(int device, int port, const char *host)
 {
 	SA_Log("Server", LOG_MAIN, LOG_CLASS_INFO, logOutputMethod);
 	if (dh->volMod == -1)
 		dh->volMod = 1;
-	const PaDeviceInfo* info = Pa_GetDeviceInfo(device);
-	PaStream* stream = SA_AudioOpenStream(device, info->maxInputChannels, dh->sampleRate, dh->waveSize, 1, dh);
+	const PaDeviceInfo *info = Pa_GetDeviceInfo(device);
+	PaStream *stream = SA_AudioOpenStream(device, info->maxInputChannels, dh->sampleRate, dh->waveSize, 1, dh);
 	SA_AudioStartStream(stream);
-	void* nThread = SA_NetInit(port, host, 0, device);
+	void *nThread = SA_NetInit(port, host, 0, device);
 	if (nThread == NULL)
 	{
 		SA_Log("Failed to init net", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
@@ -246,10 +254,10 @@ void server(int device, int port, const char* host)
 	SA_NetClose(nThread);
 }
 
-void client(int device, int port, const char* host)
+void client(int device, int port, const char *host)
 {
 	SA_Log("Client", LOG_MAIN, LOG_CLASS_INFO, logOutputMethod);
-	void* nThread = SA_NetInit(port, host, 1, device);
+	void *nThread = SA_NetInit(port, host, 1, device);
 	if (nThread == NULL)
 	{
 		SA_Log("Failed to init net", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
