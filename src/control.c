@@ -209,8 +209,8 @@ const char *SA_GetStats(saConnection *conn)
 #endif
 {
 	// UNSECURE CODE
-	char stats[250];
-	sprintf_s(stats, 250, "%zd,%zd,%d,%lf,%d,%s,%s,%d", conn->dh->totalPacketSrv, conn->dh->totalPacketSrv, conn->dh->channel,
+	char stats[500];
+	sprintf_s(stats, 500, "%zd,%zd,%d,%lf,%d,%s,%s,%d", conn->dh->totalPacketSrv, conn->dh->totalPacketSrv, conn->dh->channel,
 			  conn->dh->sampleRate, conn->dh->waveSize, Pa_GetDeviceInfo(conn->device)->name, conn->host, conn->port);
 	return stats;
 }
