@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <string.h>
-
-#include "../portaudio/include/portaudio.h"
+#include <portaudio.h>
 #include "config.h"
 #include "log.h"
 #include "data.h"

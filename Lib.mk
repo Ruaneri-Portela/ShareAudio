@@ -5,6 +5,15 @@ SRC_DIR = src/
 LIBS := -lportaudio
 DLLEXPORT =
 NAME = libShareAudio
+
+PORTAUDIO := ../portaudio/include/portaudio.h
+
+ifeq ($(wildcard $(PORTAUDIO)),)
+    $("O arquivo $(PORTAUDIO) não foi encontrado.")
+else
+	CFLAGS += -I./portaudio/include/
+endif
+
 ifeq ($(OS),Windows_NT)
     LIBS += -lws2_32
 	TARGET := $(BUILD_DIR)$(NAME).dll
