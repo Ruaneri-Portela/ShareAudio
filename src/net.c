@@ -68,11 +68,11 @@ static void SA_WinNetEnd(void *parms)
 	free(parms);
 	if (WSACleanup() != 0)
 	{
-		SA_Log("WSA End failed!", LOG_NET, LOG_CLASS_WARNING, logOutputMethod);
+		SA_Log("WSA End failed!", LOG_NET, LOG_CLASS_WARNING);
 	}
 	else
 	{
-		SA_Log("WSA End", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
+		SA_Log("WSA End", LOG_NET, LOG_CLASS_INFO);
 	}
 }
 
@@ -80,11 +80,11 @@ static void SA_WinNetOpen()
 {
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
 	{
-		SA_Log("Winsock2 failled!", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
+		SA_Log("Winsock2 failled!", LOG_NET, LOG_CLASS_INFO);
 	}
 	else
 	{
-		SA_Log("WSA Start", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
+		SA_Log("WSA Start", LOG_NET, LOG_CLASS_INFO);
 	}
 }
 #else
@@ -104,13 +104,13 @@ static void SA_NetResolveHost(connectParam *parm, ADDRESS_FAMILY family)
 	switch (detectIp)
 	{
 	case 0:
-		SA_Log("Try Resolve by host", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
+		SA_Log("Try Resolve by host", LOG_NET, LOG_CLASS_INFO);
 		break;
 	case 1:
-		SA_Log("IPv4 Detected", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
+		SA_Log("IPv4 Detected", LOG_NET, LOG_CLASS_INFO);
 		break;
 	case 2:
-		SA_Log("IP Forbbiden on Client", LOG_NET, LOG_CLASS_ERROR, logOutputMethod);
+		SA_Log("IP Forbbiden on Client", LOG_NET, LOG_CLASS_ERROR);
 		break;
 	}
 	const char *hostLocal = parm->host;
@@ -121,7 +121,7 @@ static void SA_NetResolveHost(connectParam *parm, ADDRESS_FAMILY family)
 		hostLocal = NULL;
 		int tam = sizeof(char) * 16;
 		char *ip = malloc(tam);
-		ip == NULL ? SA_Log("Failed to allocate memory", LOG_NET, LOG_CLASS_ERROR, logOutputMethod) : (void)0;
+		ip == NULL ? SA_Log("Failed to allocate memory", LOG_NET, LOG_CLASS_ERROR) : (void)0;
 		getaddrinfo(parm->host, 0, 0, &res);
 		for (struct addrinfo *ptr = res; ptr != NULL; ptr = ptr->ai_next)
 		{
@@ -149,7 +149,7 @@ static void SA_NetResolveHost(connectParam *parm, ADDRESS_FAMILY family)
 		{
 			free(ip);
 		}
-		SA_Log("Invalid host address", LOG_NET, LOG_CLASS_ERROR, logOutputMethod);
+		SA_Log("Invalid host address", LOG_NET, LOG_CLASS_ERROR);
 	}
 	else
 	{
@@ -163,7 +163,7 @@ static void SA_NetResolveHost(connectParam *parm, ADDRESS_FAMILY family)
 			msgPrefix = "Connect to host: ";
 		}
 		char *logMsg = SA_DataConcatString(msgPrefix, parm->host);
-		SA_Log(logMsg, LOG_NET, LOG_CLASS_INFO, logOutputMethod);
+		SA_Log(logMsg, LOG_NET, LOG_CLASS_INFO);
 		free(logMsg);
 	}
 }
@@ -175,33 +175,33 @@ static void SA_NetSetupServer(connectParam *parms)
 	parms->ctx->srvSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (parms->ctx->srvSocket == INVALID_SOCKET)
 	{
-		SA_Log("Socket failed!", LOG_NET, LOG_CLASS_ERROR, logOutputMethod);
+		SA_Log("Socket failed!", LOG_NET, LOG_CLASS_ERROR);
 	}
 	else
 	{
-		SA_Log("Socket ok", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
+		SA_Log("Socket ok", LOG_NET, LOG_CLASS_INFO);
 	}
 	if (bind(parms->ctx->srvSocket, (SOCKADDR *)&parms->ctx->srvAddr, sizeof(parms->ctx->srvAddr)) != 0)
 	{
-		SA_Log("Bind failed!", LOG_NET, LOG_CLASS_ERROR, logOutputMethod);
+		SA_Log("Bind failed!", LOG_NET, LOG_CLASS_ERROR);
 	}
 	else
 	{
-		SA_Log("Bind ok", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
+		SA_Log("Bind ok", LOG_NET, LOG_CLASS_INFO);
 	}
 	if (listen(parms->ctx->srvSocket, 1) != 0)
 	{
-		SA_Log("Listen failed!", LOG_NET, LOG_CLASS_ERROR, logOutputMethod);
+		SA_Log("Listen failed!", LOG_NET, LOG_CLASS_ERROR);
 	}
 	else
 	{
-		SA_Log("Listen ok", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
+		SA_Log("Listen ok", LOG_NET, LOG_CLASS_INFO);
 	}
 }
 
 static unsigned short int SA_NetServerGetHandhake(connectParam *localParm)
 {
-	SA_Log("Waiting for client...", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
+	SA_Log("Waiting for client...", LOG_NET, LOG_CLASS_INFO);
 	localParm->ctx->clientSocket = SOCKET_ERROR;
 	localParm->dataSize = SA_DataGetDataFrameSize(localParm->dh);
 	localParm->delay = SA_DataGetDelayInterFrames(localParm->dh);
@@ -210,33 +210,33 @@ static unsigned short int SA_NetServerGetHandhake(connectParam *localParm)
 		localParm->ctx->clientSocket = accept(localParm->ctx->srvSocket, NULL, NULL);
 		SA_Sleep(localParm->delay);
 	}
-	SA_Log("Client connected! (1/3)", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
+	SA_Log("Client connected! (1/3)", LOG_NET, LOG_CLASS_INFO);
 	dataHandshake localDh = {0xff, 0, 0, 0, 0, 0, 0, 0};
 	if (recv(localParm->ctx->clientSocket, (char *)&localDh, sizeof(dataHandshake), 0) == SOCKET_ERROR)
 	{
-		SA_Log("Recv failed!", LOG_NET, LOG_CLASS_WARNING, logOutputMethod);
+		SA_Log("Recv failed!", LOG_NET, LOG_CLASS_WARNING);
 	}
 	else
 	{
-		SA_Log("Recived 'hello' code (2/3)", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
+		SA_Log("Recived 'hello' code (2/3)", LOG_NET, LOG_CLASS_INFO);
 		localParm->dh->header = HANDSHAKE;
 		if (send(localParm->ctx->clientSocket, (char *)localParm->dh, sizeof(dataHandshake), 0) == SOCKET_ERROR)
 		{
-			SA_Log("Send failed!", LOG_NET, LOG_CLASS_WARNING, logOutputMethod);
+			SA_Log("Send failed!", LOG_NET, LOG_CLASS_WARNING);
 		}
 		else
 		{
 			if (recv(localParm->ctx->clientSocket, data, 1028, 0) == SOCKET_ERROR)
 			{
-				SA_Log("Recv failed!", LOG_NET, LOG_CLASS_WARNING, logOutputMethod);
+				SA_Log("Recv failed!", LOG_NET, LOG_CLASS_WARNING);
 			}
 			if (strcmp((char *)confirmConn, data) == 0)
 			{
-				SA_Log("Handshake complete (3/3)", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
+				SA_Log("Handshake complete (3/3)", LOG_NET, LOG_CLASS_INFO);
 				return 1;
 			}
 		}
-		SA_Log("Handshake failled", LOG_NET, LOG_CLASS_WARNING, logOutputMethod);
+		SA_Log("Handshake failled", LOG_NET, LOG_CLASS_WARNING);
 	}
 	return 0;
 }
@@ -248,7 +248,7 @@ static void SA_NetServer(void *parms)
 	{
 		while (!SA_NetServerGetHandhake((connectParam *)parms))
 			;
-		SA_Log("Audio connection established", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
+		SA_Log("Audio connection established", LOG_NET, LOG_CLASS_INFO);
 		int tolerance = 0;
 		localParm->dh->sessionPacket = 0;
 		time_t lastPacket = time(NULL);
@@ -277,7 +277,7 @@ static void SA_NetServer(void *parms)
 					tolerance++;
 					SA_Sleep(1000);
 					if (tolerance > 5)
-						SA_Log("Send failed!", LOG_NET, LOG_CLASS_WARNING, logOutputMethod);
+						SA_Log("Send failed!", LOG_NET, LOG_CLASS_WARNING);
 					break;
 				}
 				else
@@ -300,11 +300,11 @@ static unsigned short int SA_NetSetupClient(connectParam *parms)
 	parms->ctx->srvSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (parms->ctx->srvSocket == INVALID_SOCKET)
 	{
-		SA_Log("Socket failed!", LOG_NET, LOG_CLASS_ERROR, logOutputMethod);
+		SA_Log("Socket failed!", LOG_NET, LOG_CLASS_ERROR);
 	}
 	else
 	{
-		SA_Log("Socket ok", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
+		SA_Log("Socket ok", LOG_NET, LOG_CLASS_INFO);
 		if (head != NULL)
 		{
 			if (head->next == NULL)
@@ -331,36 +331,36 @@ static unsigned short int SA_NetSetupClient(connectParam *parms)
 			head = NULL;
 		}
 		SA_NetResolveHost(parms, AF_INET);
-		SA_Log("Connecting...", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
+		SA_Log("Connecting...", LOG_NET, LOG_CLASS_INFO);
 		if (connect(parms->ctx->srvSocket, (SOCKADDR *)&parms->ctx->srvAddr, sizeof(parms->ctx->srvAddr)) != 0)
 		{
-			SA_Log("Connect failed!", LOG_NET, LOG_CLASS_WARNING, logOutputMethod);
+			SA_Log("Connect failed!", LOG_NET, LOG_CLASS_WARNING);
 		}
 		else
 		{
-			SA_Log("Host connected, sending 'hello' code (1/3)", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
+			SA_Log("Host connected, sending 'hello' code (1/3)", LOG_NET, LOG_CLASS_INFO);
 			if (send(parms->ctx->srvSocket, (char *)parms->dh, sizeof(*parms->dh), 0) == SOCKET_ERROR)
 			{
-				SA_Log("Send failed!", LOG_NET, LOG_CLASS_WARNING, logOutputMethod);
+				SA_Log("Send failed!", LOG_NET, LOG_CLASS_WARNING);
 			}
 			else
 			{
-				SA_Log("Hello send... Wait Handshake (2/3)", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
+				SA_Log("Hello send... Wait Handshake (2/3)", LOG_NET, LOG_CLASS_INFO);
 				if (recv(parms->ctx->srvSocket, (char *)parms->dh, sizeof(*parms->dh), 0) == SOCKET_ERROR)
 				{
-					SA_Log("Recv failed!", LOG_NET, LOG_CLASS_WARNING, logOutputMethod);
+					SA_Log("Recv failed!", LOG_NET, LOG_CLASS_WARNING);
 				}
 				else
 				{
 					if (send(parms->ctx->srvSocket, (char *)confirmConn, 2, 0) == SOCKET_ERROR)
 					{
-						SA_Log("Send failed!", LOG_NET, LOG_CLASS_WARNING, logOutputMethod);
+						SA_Log("Send failed!", LOG_NET, LOG_CLASS_WARNING);
 					}
 					else
 					{
-						SA_Log("Handshake completed (3/3)", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
+						SA_Log("Handshake completed (3/3)", LOG_NET, LOG_CLASS_INFO);
 						parms->dataSize = SA_DataGetDataFrameSize(parms->dh);
-						SA_Log("Audio connection established", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
+						SA_Log("Audio connection established", LOG_NET, LOG_CLASS_INFO);
 						return 1;
 					}
 				}
@@ -394,7 +394,7 @@ static void SA_NetClient(void *parms)
 					err++;
 					if (err > 10)
 					{
-						SA_Log("Close connection", LOG_NET, LOG_CLASS_WARNING, logOutputMethod);
+						SA_Log("Close connection", LOG_NET, LOG_CLASS_WARNING);
 						SA_AudioCloseStream(stream);
 						stream = NULL;
 						free(localData);
@@ -414,11 +414,11 @@ static void SA_NetClient(void *parms)
 						chunckWaveSize = SA_DataGetWaveSize(localData);
 						if (chunckWaveSize != localParm.dh->waveSize * (size_t)localParm.dh->channel)
 						{
-							SA_Log("Invalid data size", LOG_NET, LOG_CLASS_WARNING, logOutputMethod);
+							SA_Log("Invalid data size", LOG_NET, LOG_CLASS_WARNING);
 							break;
 						}
 						audioDataFrame = malloc(localParm.dataSize);
-						audioDataFrame == NULL ? SA_Log("Failed to allocate memory", LOG_NET, LOG_CLASS_ERROR, logOutputMethod) : (void)0;
+						audioDataFrame == NULL ? SA_Log("Failed to allocate memory", LOG_NET, LOG_CLASS_ERROR) : (void)0;
 						if (audioDataFrame != NULL)
 						{
 							memcpy_s(audioDataFrame, localParm.dataSize, localData, localParm.dataSize);
@@ -470,14 +470,14 @@ static void SA_NetClient(void *parms)
 							}
 							else
 							{
-								SA_Log("Failed to allocate memory", LOG_NET, LOG_CLASS_ERROR, logOutputMethod);
+								SA_Log("Failed to allocate memory", LOG_NET, LOG_CLASS_ERROR);
 							}
 						}
 						chunckWaveSize = 0;
 						localParm.dh->sessionPacket++;
 						break;
 					case END:
-						SA_Log("Connection closed", LOG_NET, LOG_CLASS_INFO, logOutputMethod);
+						SA_Log("Connection closed", LOG_NET, LOG_CLASS_INFO);
 						closesocket(localParm.ctx->srvSocket);
 						SA_AudioCloseStream(stream);
 						stream = NULL;
@@ -485,7 +485,7 @@ static void SA_NetClient(void *parms)
 					case NULLDATA:
 						break;
 					default:
-						SA_Log("Invalid header", LOG_NET, LOG_CLASS_WARNING, logOutputMethod);
+						SA_Log("Invalid header", LOG_NET, LOG_CLASS_WARNING);
 						break;
 					}
 				}
@@ -494,7 +494,7 @@ static void SA_NetClient(void *parms)
 		}
 		else
 		{
-			SA_Log("Failed to allocate memory", LOG_NET, LOG_CLASS_ERROR, logOutputMethod);
+			SA_Log("Failed to allocate memory", LOG_NET, LOG_CLASS_ERROR);
 		}
 	}
 	if (stream != NULL)
@@ -513,7 +513,7 @@ void *SA_NetInit(int port, const char *host, int asClient, int device, dataHands
 	if (dataParm != NULL)
 	{
 		dataParm->ctx = malloc(sizeof(netCtx));
-		dataParm->ctx == NULL ? SA_Log("Failed to allocate memory", LOG_NET, LOG_CLASS_ERROR, logOutputMethod) : (void)0;
+		dataParm->ctx == NULL ? SA_Log("Failed to allocate memory", LOG_NET, LOG_CLASS_ERROR) : (void)0;
 		dataParm->host = host;
 		dataParm->port = port;
 		dataParm->device = device;
@@ -529,13 +529,13 @@ void *SA_NetInit(int port, const char *host, int asClient, int device, dataHands
 			SA_NetSetupServer(dataParm);
 			netThread = SA_ThreadCreate(SA_NetServer, (void *)dataParm);
 		}
-		netThread == NULL ? SA_Log("Failed to create thread", LOG_NET, LOG_CLASS_ERROR, logOutputMethod) : (void)0;
+		netThread == NULL ? SA_Log("Failed to create thread", LOG_NET, LOG_CLASS_ERROR) : (void)0;
 		dataParm->thread = netThread;
 		return netThread;
 	}
 	else
 	{
-		SA_Log("Failed to allocate memory", LOG_NET, LOG_CLASS_ERROR, logOutputMethod);
+		SA_Log("Failed to allocate memory", LOG_NET, LOG_CLASS_ERROR);
 	}
 	return NULL;
 }

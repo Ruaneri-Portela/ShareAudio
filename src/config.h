@@ -13,4 +13,10 @@
 #include "linux.h"
 #endif
 
+#if defined(DLL_EXPORT)
+#define EXPORT __declspec(dllexport)
+#else
+#define EXPORT
+#endif
+
 #include "VERSION.h"

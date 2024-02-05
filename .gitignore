@@ -400,3 +400,4 @@ FodyWeavers.xsd
 .vscode
 build/*
 asio/*  
+ShareAudio.lnk

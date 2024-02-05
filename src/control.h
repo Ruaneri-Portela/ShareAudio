@@ -18,3 +18,9 @@ saConnection *SA_Setup(int device, const char *host, int mode, int port, int tes
 void SA_Shutdown(saConnection *conn);
 
 const char *SA_GetStats(saConnection *conn);
+
+void SA_SetLogNULL();
+
+void SA_SetLogFILE(const char *filename);
+
+void SA_SetLogCONSOLE();

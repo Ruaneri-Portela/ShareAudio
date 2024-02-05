@@ -2,11 +2,13 @@
 Copy-Item -Path ".\x64\Release\*.exe" -Destination "Y:/" -Force
 Copy-Item -Path ".\x64\Release\*.dll" -Destination "Y:/" -Force
 
+# Copy build/*.exe to /y/ShareAudio_GCC.exe
+New-Item -ItemType Directory -Force -Path "Y:/GCC/"
+Copy-Item -Path ".\build\*.exe" -Destination "Y:/GCC/" -Force
+Copy-Item -Path ".\build\*.dll" -Destination "Y:/GCC/" -Force
+
 # Copy libportaudio.dll to destination
 $paDLL = Get-Command libportaudio.dll | ForEach-Object { $_.Source }
-Copy-Item -Path $paDLL -Destination "Y:/" -Force
-
-# Copy build/*.exe to /y/ShareAudio_GCC.exe
-Copy-Item -Path ".\build\*.exe" -Destination "Y:/ShareAudio_GCC.exe" -Force
+Copy-Item -Path $paDLL -Destination "Y:/GCC/" -Force
 
 Write-Host "Deployed to Y:/"

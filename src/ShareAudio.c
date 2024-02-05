@@ -1,17 +1,12 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "audio.h"
-#include "config.h"
-#include "data.h"
-#include "control.h"
-#include "log.h"
-#include "net.h"
-#include "threads.h"
+#include "ShareAudio.h"
 
 int main(int argc, char *argv[])
 {
 	saConnection *conn = SA_Setup(-1, NULL, 0, 9950, 0, 2, -1, 2048, -1);
+	SA_SetLogCONSOLE();
 	if (argc > 1)
 	{
 		for (int i = 1; i < argc; i++)
@@ -45,7 +40,7 @@ int main(int argc, char *argv[])
 			}
 			else if (strcmp(argv[i], "-l") == 0)
 			{
-				logOutputMethod = LOG_OUTPUT_FILE;
+				SA_SetLogFILE("shareaudio.log");
 			}
 			else if (strcmp(argv[i], "-i") == 0)
 			{
@@ -122,13 +117,13 @@ int main(int argc, char *argv[])
 	}
 	else
 	{
-		SA_Log("Needs a comand line args", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
+		SA_Log("Needs a comand line args", LOG_MAIN, LOG_CLASS_ERROR);
 		goto EXIT;
 	}
 	switch (conn->mode)
 	{
 	case 0:
-		SA_Log("No mode selected", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
+		SA_Log("No mode selected", LOG_MAIN, LOG_CLASS_ERROR);
 		break;
 	case 1:
 		SA_Init(conn);
@@ -144,7 +139,7 @@ int main(int argc, char *argv[])
 		getchar();
 	}
 	SA_Shutdown(conn);
-	SA_Log("Program exit", LOG_MAIN, LOG_CLASS_INFO, logOutputMethod);
+	SA_Log("Program exit", LOG_MAIN, LOG_CLASS_INFO);
 EXIT:
 	return EXIT_SUCCESS;
 }

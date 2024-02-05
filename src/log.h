@@ -14,14 +14,15 @@ enum logLevelEnum
 enum logOutputEnum
 {
 	LOG_OUTPUT_CONSOLE,
-	LOG_OUTPUT_FILE
+	LOG_OUTPUT_FILE,
+	LOG_OUTPUT_NULL
 };
 typedef enum logClassEnum logClass;
 typedef enum logLevelEnum logLevel;
 typedef enum logOutputEnum logOutput;
 
-extern char *fileLogName;
+extern char* fileLogName;
 
 extern logOutput logOutputMethod;
 
-void SA_Log(const char *msg, logClass class, logLevel level, logOutput method);
+void SA_Log(const char* msg, logClass class, logLevel level);

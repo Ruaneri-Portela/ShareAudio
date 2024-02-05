@@ -18,7 +18,8 @@ enum logLevelEnum
 enum logOutputEnum
 {
 	LOG_OUTPUT_CONSOLE,
-	LOG_OUTPUT_FILE
+	LOG_OUTPUT_FILE,
+	LOG_OUTPUT_NULL
 };
 typedef enum logClassEnum logClass;
 typedef enum logLevelEnum logLevel;
@@ -81,9 +82,9 @@ static const char *SA_LogEnumToLevel(logLevel level, int toTerminal)
 	}
 }
 
-void SA_Log(const char *msg, logClass class, logLevel level, logOutput method)
+EXPORT void SA_Log(const char *msg, logClass class, logLevel level)
 {
-	switch (method)
+	switch (logOutputMethod)
 	{
 	case LOG_OUTPUT_CONSOLE:
 		printf_s("%s][%s] %s\n\x1B[0m", SA_LogEnumToLevel(level, 1), SA_LogEnumClass(class), msg);
@@ -97,7 +98,6 @@ void SA_Log(const char *msg, logClass class, logLevel level, logOutput method)
 		else
 		{
 			printf_s("Error opening file %s\n", fileLogName);
-			SA_Log("Error opening file", LOG_MAIN, LOG_CLASS_ERROR, LOG_OUTPUT_CONSOLE);
 		}
 		break;
 	default:

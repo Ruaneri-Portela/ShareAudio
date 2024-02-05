@@ -6,28 +6,24 @@
 #include "threads.h"
 #include <stdio.h>
 
-#if defined(DLL_EXPORT)
-__declspec(dllexport) void SA_Init(saConnection *conn)
-#else
-void SA_Init(saConnection *conn)
-#endif
+EXPORT void SA_Init(saConnection* conn)
 {
 	SA_AudioInit();
 	audioDevices deviceList = SA_GetAllDevices();
 	if (deviceList.numDevices < conn->device)
 	{
-		SA_Log("Device out of range", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
+		SA_Log("Device out of range", LOG_MAIN, LOG_CLASS_ERROR);
 	}
 	if (conn->device == -1 && conn->mode == 1 && ISWIN)
 	{
 		int defaultOutDevice = Pa_GetDefaultOutputDevice();
-		const char *defaultOutDeviceName = Pa_GetDeviceInfo(defaultOutDevice)->name;
+		const char* defaultOutDeviceName = Pa_GetDeviceInfo(defaultOutDevice)->name;
 		int loopbackDevice = -1;
 		for (int i = 0;; i++)
 		{
 			if (deviceList.devices[i] != NULL)
 			{
-				const char *searchName = deviceList.devices[i]->name;
+				const char* searchName = deviceList.devices[i]->name;
 				if (strstr(searchName, defaultOutDeviceName) != NULL && strstr(searchName, "[Loopback]"))
 				{
 					loopbackDevice = i;
@@ -45,7 +41,7 @@ void SA_Init(saConnection *conn)
 		}
 		else
 		{
-			SA_Log("Loopback device not found It's is cause by using old DLL or MSYS2 version...", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
+			SA_Log("Loopback device not found It's is cause by using old DLL or MSYS2 version...", LOG_MAIN, LOG_CLASS_ERROR);
 		}
 	}
 	else
@@ -61,41 +57,29 @@ void SA_Init(saConnection *conn)
 	conn->dh->volMod == -1 ? conn->dh->volMod = 1 : conn->dh->volMod;
 }
 
-#if defined(DLL_EXPORT)
-__declspec(dllexport) void SA_Server(saConnection *conn)
-#else
-void SA_Server(saConnection *conn)
-#endif
+EXPORT void SA_Server(saConnection* conn)
 {
-	SA_Log("Server", LOG_MAIN, LOG_CLASS_INFO, logOutputMethod);
+	SA_Log("Server", LOG_MAIN, LOG_CLASS_INFO);
 	conn->audio = SA_AudioOpenStream(conn->device, 1, conn->dh);
 	SA_AudioStartStream(conn->audio);
 	conn->thread = SA_NetInit(conn->port, conn->host, 0, conn->device, conn->dh);
 	if (conn->thread == NULL)
 	{
-		SA_Log("Failed to init net", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
+		SA_Log("Failed to init net", LOG_MAIN, LOG_CLASS_ERROR);
 	}
 }
 
-#if defined(DLL_EXPORT)
-__declspec(dllexport) void SA_Client(saConnection *conn)
-#else
-void SA_Client(saConnection *conn)
-#endif
+EXPORT void SA_Client(saConnection* conn)
 {
-	SA_Log("Client", LOG_MAIN, LOG_CLASS_INFO, logOutputMethod);
+	SA_Log("Client", LOG_MAIN, LOG_CLASS_INFO);
 	conn->thread = SA_NetInit(conn->port, conn->host, 1, conn->device, conn->dh);
 	if (conn->thread == NULL)
 	{
-		SA_Log("Failed to init net", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
+		SA_Log("Failed to init net", LOG_MAIN, LOG_CLASS_ERROR);
 	}
 }
 
-#if defined(DLL_EXPORT)
-__declspec(dllexport) void SA_Close(saConnection *conn)
-#else
-void SA_Close(saConnection *conn)
-#endif
+EXPORT void SA_Close(saConnection* conn)
 {
 	if (conn->audio)
 		SA_AudioCloseStream(conn->audio);
@@ -103,29 +87,17 @@ void SA_Close(saConnection *conn)
 	free(conn);
 }
 
-#if defined(DLL_EXPORT)
-__declspec(dllexport) void SA_SetVolumeModifier(float vol, saConnection *conn)
-#else
-void SA_SetVolumeModifier(float vol, saConnection *conn)
-#endif
+EXPORT void SA_SetVolumeModifier(float vol, saConnection* conn)
 {
 	conn->dh->volMod = vol;
 }
 
-#if defined(DLL_EXPORT)
-__declspec(dllexport) float SA_GetVolumeModifier(saConnection *conn)
-#else
-float SA_GetVolumeModifier(saConnection *conn)
-#endif
+EXPORT float SA_GetVolumeModifier(saConnection* conn)
 {
 	return conn->dh->volMod;
 }
 
-#if defined(DLL_EXPORT)
-__declspec(dllexport) void SA_ListAllAudioDevices()
-#else
-void SA_ListAllAudioDevices()
-#endif
+EXPORT void SA_ListAllAudioDevices()
 {
 	audioDevices devicesData = SA_GetAllDevices();
 	printf_s("Found %d devices\n\n", devicesData.numDevices);
@@ -134,8 +106,8 @@ void SA_ListAllAudioDevices()
 		if (devicesData.devices[i] != NULL)
 		{
 			printf_s("Device %d:\n\t%s\n\tSample Rate:%f\n", i,
-					 devicesData.devices[i]->name,
-					 devicesData.devices[i]->defaultSampleRate);
+				devicesData.devices[i]->name,
+				devicesData.devices[i]->defaultSampleRate);
 			if (devicesData.devices[i]->maxInputChannels > 0)
 				printf_s("\tChannels Int:%d\n", devicesData.devices[i]->maxInputChannels);
 			if (devicesData.devices[i]->maxOutputChannels > 0)
@@ -150,16 +122,12 @@ void SA_ListAllAudioDevices()
 	free(devicesData.devices);
 }
 
-#if defined(DLL_EXPORT)
-__declspec(dllexport) saConnection *SA_Setup(int device, const char *host, int mode, int port, int testMode, int channel, float volMod, int waveSize, double sampleRate)
-#else
-saConnection *SA_Setup(int device, const char *host, int mode, int port, int testMode, int channel, float volMod, int waveSize, double sampleRate)
-#endif
+EXPORT saConnection* SA_Setup(int device, const char* host, int mode, int port, int testMode, int channel, float volMod, int waveSize, double sampleRate)
 {
-	saConnection *conn = malloc(sizeof(saConnection));
+	saConnection* conn = malloc(sizeof(saConnection));
 	if (conn == NULL)
 	{
-		SA_Log("Failed to allocate memory", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
+		SA_Log("Failed to allocate memory", LOG_MAIN, LOG_CLASS_ERROR);
 	}
 	else
 	{
@@ -171,7 +139,7 @@ saConnection *SA_Setup(int device, const char *host, int mode, int port, int tes
 		conn->dh = malloc(sizeof(dataHandshake));
 		if (conn->dh == NULL)
 		{
-			SA_Log("Failed to allocate memory", LOG_MAIN, LOG_CLASS_ERROR, logOutputMethod);
+			SA_Log("Failed to allocate memory", LOG_MAIN, LOG_CLASS_ERROR);
 		}
 		else
 		{
@@ -184,40 +152,45 @@ saConnection *SA_Setup(int device, const char *host, int mode, int port, int tes
 			conn->dh->channel = channel;
 			SA_ProcessSetPriority();
 			logOutputMethod = LOG_OUTPUT_CONSOLE;
-			SA_Log("Program start. Build on " COMPILE ". Binary version " VERSION, LOG_MAIN, LOG_CLASS_INFO, logOutputMethod);
-			SA_Log(Pa_GetVersionText(), LOG_MAIN, LOG_CLASS_INFO, logOutputMethod);
+			SA_Log("Program start. Build on " COMPILE ". Binary version " VERSION, LOG_MAIN, LOG_CLASS_INFO);
+			SA_Log(Pa_GetVersionText(), LOG_MAIN, LOG_CLASS_INFO);
 		}
 		SA_AudioInit();
 	}
 	return conn;
 }
 
-#if defined(DLL_EXPORT)
-__declspec(dllexport) void SA_Shutdown(saConnection *conn)
-#else
-void SA_Shutdown(saConnection *conn)
-#endif
+EXPORT void SA_Shutdown(saConnection* conn)
 {
 	SA_Close(conn);
 	SA_AudioClose();
 }
 
-#if defined(DLL_EXPORT)
-__declspec(dllexport) const char *SA_GetStats(saConnection *conn)
-#else
-const char *SA_GetStats(saConnection *conn)
-#endif
+EXPORT const char* SA_GetStats(saConnection* conn)
 {
 	// UNSECURE CODE
 	char stats[500];
 	sprintf_s(stats, 500, "%zd,%zd,%d,%lf,%d,%s,%s,%d", conn->dh->totalPacketSrv, conn->dh->totalPacketSrv, conn->dh->channel,
-			  conn->dh->sampleRate, conn->dh->waveSize, Pa_GetDeviceInfo(conn->device)->name, conn->host, conn->port);
+		conn->dh->sampleRate, conn->dh->waveSize, Pa_GetDeviceInfo(conn->device)->name, conn->host, conn->port);
 	return stats;
 }
 
-#if defined(DLL_EXPORT)
-__declspec(dllexport) void SA_TestDLL()
+EXPORT int SA_TestDLL()
 {
-	SA_Log("Test DLL", LOG_MAIN, LOG_CLASS_INFO, LOG_OUTPUT_CONSOLE);
+	SA_Log("OK DLL", LOG_MAIN, LOG_CLASS_INFO);
+	return 1;
 }
-#endif
+
+EXPORT void SA_SetLogNULL() {
+	logOutputMethod = LOG_OUTPUT_NULL;
+}
+
+EXPORT void SA_SetLogFILE(const char* filename) {
+	logOutputMethod = LOG_OUTPUT_FILE;
+	fileLogName = filename;
+}
+
+EXPORT void SA_SetLogCONSOLE()
+{
+	logOutputMethod = LOG_OUTPUT_CONSOLE;
+}

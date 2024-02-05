@@ -27,7 +27,7 @@ static void SA_AudioCheckError(PaError err)
 {
 	if (err != paNoError)
 	{
-		SA_Log(Pa_GetErrorText(err), LOG_AUDIO, LOG_CLASS_ERROR, logOutputMethod);
+		SA_Log(Pa_GetErrorText(err), LOG_AUDIO, LOG_CLASS_ERROR);
 	}
 }
 
@@ -74,13 +74,13 @@ int SA_AudioServerCallback(
 void SA_AudioStopStream(PaStream *stream)
 {
 	SA_AudioCheckError(Pa_StopStream(stream));
-	SA_Log("Stream stopped", LOG_AUDIO, LOG_CLASS_INFO, logOutputMethod);
+	SA_Log("Stream stopped", LOG_AUDIO, LOG_CLASS_INFO);
 }
 
 void SA_AudioStartStream(PaStream *stream)
 {
 	SA_AudioCheckError(Pa_StartStream(stream));
-	SA_Log("Stream started", LOG_AUDIO, LOG_CLASS_INFO, logOutputMethod);
+	SA_Log("Stream started", LOG_AUDIO, LOG_CLASS_INFO);
 }
 
 #if defined(DLL_EXPORT)
@@ -90,7 +90,7 @@ void SA_AudioInit()
 #endif
 {
 	SA_AudioCheckError(Pa_Initialize());
-	SA_Log("PortAudio initialized", LOG_AUDIO, LOG_CLASS_INFO, logOutputMethod);
+	SA_Log("PortAudio initialized", LOG_AUDIO, LOG_CLASS_INFO);
 }
 
 #if defined(DLL_EXPORT)
@@ -100,7 +100,7 @@ void SA_AudioClose()
 #endif
 {
 	SA_AudioCheckError(Pa_Terminate());
-	SA_Log("PortAudio terminated", LOG_AUDIO, LOG_CLASS_INFO, logOutputMethod);
+	SA_Log("PortAudio terminated", LOG_AUDIO, LOG_CLASS_INFO);
 }
 
 audioDevices SA_GetAllDevices()
@@ -112,12 +112,12 @@ audioDevices SA_GetAllDevices()
 	}
 	else if (numDevices == 0)
 	{
-		SA_Log("No devices found", LOG_AUDIO, LOG_CLASS_ERROR, logOutputMethod);
+		SA_Log("No devices found", LOG_AUDIO, LOG_CLASS_ERROR);
 	}
 	const PaDeviceInfo **devices = (const PaDeviceInfo **)malloc(sizeof(const PaDeviceInfo *) * (numDevices + 1));
 	if (devices == NULL)
 	{
-		SA_Log("Failed to allocate memory", LOG_AUDIO, LOG_CLASS_ERROR, logOutputMethod);
+		SA_Log("Failed to allocate memory", LOG_AUDIO, LOG_CLASS_ERROR);
 	}
 	else
 	{
@@ -142,9 +142,9 @@ PaStream *SA_AudioOpenStream(int device, unsigned short asServer, dataHandshake 
 	parms.suggestedLatency = Pa_GetDeviceInfo((int)device)->defaultLowInputLatency;
 	PaStream *stream;
 	char *msg = SA_DataConcatString("Using device: ", Pa_GetDeviceInfo((int)device)->name);
-	SA_Log(msg, LOG_AUDIO, LOG_CLASS_INFO, logOutputMethod);
+	SA_Log(msg, LOG_AUDIO, LOG_CLASS_INFO);
 	free(msg);
-	asServer ? SA_Log("Server mode", LOG_AUDIO, LOG_CLASS_INFO, logOutputMethod) : SA_Log("Client mode", LOG_AUDIO, LOG_CLASS_INFO, logOutputMethod);
+	asServer ? SA_Log("Server mode", LOG_AUDIO, LOG_CLASS_INFO) : SA_Log("Client mode", LOG_AUDIO, LOG_CLASS_INFO);
 	if (asServer)
 	{
 		SA_AudioCheckError(Pa_OpenStream(
@@ -175,5 +175,5 @@ PaStream *SA_AudioOpenStream(int device, unsigned short asServer, dataHandshake 
 void SA_AudioCloseStream(PaStream *stream)
 {
 	SA_AudioCheckError(Pa_CloseStream(stream));
-	SA_Log("Stream shutdowner", LOG_AUDIO, LOG_CLASS_INFO, logOutputMethod);
+	SA_Log("Stream shutdowner", LOG_AUDIO, LOG_CLASS_INFO);
 }

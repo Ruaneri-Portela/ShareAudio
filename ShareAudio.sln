@@ -10,7 +10,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ShareAudio", "ShareAudio.vc
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "portaudio", "msvc\portaudio\portaudio.vcxproj", "{0A18A071-125E-442F-AFF7-A3F68ABECF99}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libShareAudio", "libShareAudio\libShareAudio.vcxproj", "{08D89CDD-0E4A-4B29-B206-E72F3FA96291}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libShareAudio", "msvc\libShareAudio\libShareAudio.vcxproj", "{08D89CDD-0E4A-4B29-B206-E72F3FA96291}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
