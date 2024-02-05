@@ -21,7 +21,7 @@ typedef enum logClassEnum logClass;
 typedef enum logLevelEnum logLevel;
 typedef enum logOutputEnum logOutput;
 
-extern char* fileLogName;
+extern const char * fileLogName;
 
 extern logOutput logOutputMethod;
 

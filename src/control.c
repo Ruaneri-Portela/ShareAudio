@@ -175,12 +175,6 @@ EXPORT const char* SA_GetStats(saConnection* conn)
 	return stats;
 }
 
-EXPORT int SA_TestDLL()
-{
-	SA_Log("OK DLL", LOG_MAIN, LOG_CLASS_INFO);
-	return 1;
-}
-
 EXPORT void SA_SetLogNULL() {
 	logOutputMethod = LOG_OUTPUT_NULL;
 }
@@ -194,3 +188,12 @@ EXPORT void SA_SetLogCONSOLE()
 {
 	logOutputMethod = LOG_OUTPUT_CONSOLE;
 }
+
+#if defined(DLL_EXPORT)
+EXPORT int SA_TestDLL()
+{
+	SA_SetLogCONSOLE();
+	SA_Log("OK DLL", LOG_MAIN, LOG_CLASS_INFO);
+	return 1;
+}
+#endif

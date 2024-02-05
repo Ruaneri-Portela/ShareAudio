@@ -27,7 +27,7 @@ typedef enum logOutputEnum logOutput;
 
 logOutput logOutputMethod;
 
-char *fileLogName = "log.txt";
+const char *fileLogName = "log.txt";
 
 static FILE *fileLog = NULL;
 
