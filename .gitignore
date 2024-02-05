@@ -401,6 +401,7 @@ FodyWeavers.xsd
 build/*
 asio/*  
 ShareAudio.lnk
-/wrappers/python/libShareAudio.dll
-/wrappers/python/portaudio_x64.dll
-/wrappers/python/libShareAudio.so
+**/libShareAudio.dll
+**/python/portaudio_x64.dll
+**/python/portaudio_x86.dll
+**/libShareAudio.so
