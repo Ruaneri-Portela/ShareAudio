@@ -11,7 +11,7 @@ ifeq ($(OS),Windows_NT)
 	DLLEXPORT = -D'DLL_EXPORT'
 else
     LIBS += -lpthread
-	TARGET := $(BUILD_DIR)$(NAME)..so
+	TARGET := $(BUILD_DIR)$(NAME).so
 endif
 
 SRCS := $(wildcard $(SRC_DIR)*.c)
