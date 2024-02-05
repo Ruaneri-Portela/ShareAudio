@@ -403,3 +403,4 @@ asio/*
 ShareAudio.lnk
 /wrappers/python/libShareAudio.dll
 /wrappers/python/portaudio_x64.dll
+/wrappers/python/libShareAudio.so
