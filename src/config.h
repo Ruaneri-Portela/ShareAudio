@@ -20,3 +20,5 @@
 #endif
 
 #include "VERSION.h"
+
+#define DATASIZE 1024

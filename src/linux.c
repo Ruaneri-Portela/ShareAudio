@@ -5,7 +5,7 @@
 #include <string.h>
 
 #if defined(LINUX)
-void memcpy_s(void *dest, size_t destsz, const void *src, size_t count)
+void memcpy_s(void* dest, size_t destsz, const void* src, size_t count)
 {
 	if (destsz < count)
 	{
@@ -14,7 +14,7 @@ void memcpy_s(void *dest, size_t destsz, const void *src, size_t count)
 	memcpy(dest, src, count);
 }
 
-unsigned short int fopen_s(FILE **file, const char *filename, const char *mode)
+unsigned short int fopen_s(FILE** file, const char* filename, const char* mode)
 {
 	*file = fopen(filename, mode);
 	if (file == NULL)
@@ -24,7 +24,7 @@ unsigned short int fopen_s(FILE **file, const char *filename, const char *mode)
 	return 1;
 }
 
-void printf_s(const char *format, ...)
+void printf_s(const char* format, ...)
 {
 	va_list args;
 	va_start(args, format);
@@ -32,7 +32,7 @@ void printf_s(const char *format, ...)
 	va_end(args);
 }
 
-void strcpy_s(char *dest, size_t destsz, const char *src)
+void strcpy_s(char* dest, size_t destsz, const char* src)
 {
 	if (destsz < strlen(src))
 	{
@@ -41,7 +41,7 @@ void strcpy_s(char *dest, size_t destsz, const char *src)
 	strcpy(dest, src);
 }
 
-void sscanf_s(const char *str, const char *format, ...)
+void sscanf_s(const char* str, const char* format, ...)
 {
 	va_list args;
 	va_start(args, format);
@@ -49,7 +49,7 @@ void sscanf_s(const char *str, const char *format, ...)
 	va_end(args);
 }
 
-void sprintf_s(char *dest, size_t destsz, const char *format, ...)
+void sprintf_s(char* dest, size_t destsz, const char* format, ...)
 {
 	va_list args;
 	va_start(args, format);

@@ -1,5 +1,7 @@
 from ctypes import *
+import time
 import os
+kill = False
 if os.name == 'nt':
     execDll = cdll.LoadLibrary ("./libShareAudio.dll")
 else:
@@ -11,9 +13,7 @@ def SA_Setup(device = -1, host = None, mode = 0, port = 9950, testMode = 0, chan
     return execDll.SA_Setup(device, host, mode, port, testMode, channel, volMod, waveSize, sampleRate)
     
 def SA_ListDevices():
-    execDll.SA_AudioInit()
     execDll.SA_ListAllAudioDevices()
-    execDll.SA_AudioClose()
 
 def SA_GetVolume(conn):
     execDll.SA_GetVolumeModifier.argtypes = [c_void_p]
@@ -23,6 +23,10 @@ def SA_GetVolume(conn):
 def SA_SetVolume(conn, vol):
     execDll.SA_SetVolumeModifier.argtypes = [c_float,c_void_p]
     execDll.SA_SetVolumeModifier(vol,conn)
+
+def SA_Close(conn):
+    execDll.SA_Close.argtypes = [c_void_p]
+    execDll.SA_Close(conn)
 
 def SA_Shutdown(conn):
     execDll.SA_Shutdown.argtypes = [c_void_p]
@@ -62,11 +66,35 @@ def SA_GetStats(conn):
 def SA_SetLogNULL():
     execDll.SA_SetLogNULL()
 
-def SA_SetLogCONSOLE():
-    execDll.SA_SetLogCONSOLE()
+def SA_SetLogCONSOLE(debug = 0):
+    execDll.SA_SetLogCONSOLE.argtypes = [c_int]
+    execDll.SA_SetLogCONSOLE(debug)
 
-def SA_SetLogFILE(filename = "log.txt"):
+def SA_SetLogFILE(filename = "log.txt",debug = 0):
     filename = filename.encode("UTF-8")
-    execDll.SA_SetLogFILE.argtypes = [c_char_p]
-    execDll.SA_SetLogFILE(bytes(filename))
+    execDll.SA_SetLogFILE.argtypes = [c_char_p,c_int]
+    execDll.SA_SetLogFILE(bytes(filename),debug)
     
+def SA_SendMsg(msg):
+    execDll.SA_SendMsg.argtypes = [c_char_p]
+    execDll.SA_SendMsg.restype = c_int
+    execDll.SA_SendMsg(msg)
+    time.sleep(0.1)
+
+def SA_ReadLastMsg():
+    execDll.SA_ReadLastMsg.restype = c_char_p   
+    return execDll.SA_ReadLastMsg()
+
+def SA_Kill():
+    global kill
+    kill = True
+
+def SA_AsyncReadLastMsg():
+    msg = SA_ReadLastMsg()
+    global kill
+    while not kill:
+        localMsg = SA_ReadLastMsg()
+        time.sleep(0.1)
+        if msg != localMsg:
+            msg = localMsg
+            print(msg.decode("UTF-8") , end="")

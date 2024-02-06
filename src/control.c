@@ -4,7 +4,9 @@
 #include "log.h"
 #include "net.h"
 #include "threads.h"
+#include <math.h>
 #include <stdio.h>
+#include <string.h>
 
 EXPORT void SA_Init(saConnection* conn)
 {
@@ -81,10 +83,15 @@ EXPORT void SA_Client(saConnection* conn)
 
 EXPORT void SA_Close(saConnection* conn)
 {
-	if (conn->audio)
-		SA_AudioCloseStream(conn->audio);
-	SA_NetClose(conn->thread);
-	free(conn);
+	if (conn != NULL)
+	{
+		if (conn->audio)
+			SA_AudioCloseStream(conn->audio);
+		if (*conn->thread)
+			SA_NetClose(*conn->thread);
+			*conn->thread = NULL;
+		free(conn);
+	}
 }
 
 EXPORT void SA_SetVolumeModifier(float vol, saConnection* conn)
@@ -151,11 +158,9 @@ EXPORT saConnection* SA_Setup(int device, const char* host, int mode, int port, 
 			conn->dh->header = 0x0;
 			conn->dh->channel = channel;
 			SA_ProcessSetPriority();
-			logOutputMethod = LOG_OUTPUT_CONSOLE;
 			SA_Log("Program start. Build on " COMPILE ". Binary version " VERSION, LOG_MAIN, LOG_CLASS_INFO);
 			SA_Log(Pa_GetVersionText(), LOG_MAIN, LOG_CLASS_INFO);
 		}
-		SA_AudioInit();
 	}
 	return conn;
 }
@@ -169,31 +174,75 @@ EXPORT void SA_Shutdown(saConnection* conn)
 EXPORT const char* SA_GetStats(saConnection* conn)
 {
 	// UNSECURE CODE
-	char stats[500];
-	sprintf_s(stats, 500, "%zd,%zd,%d,%lf,%d,%s,%s,%d", conn->dh->totalPacketSrv, conn->dh->totalPacketSrv, conn->dh->channel,
+	char stats[DATASIZE];
+	sprintf_s(stats, DATASIZE, "%zd,%zd,%d,%lf,%d,%s,%s,%d", conn->dh->totalPacketSrv, conn->dh->totalPacketSrv, conn->dh->channel,
 		conn->dh->sampleRate, conn->dh->waveSize, Pa_GetDeviceInfo(conn->device)->name, conn->host, conn->port);
 	return stats;
 }
 
-EXPORT void SA_SetLogNULL() {
+EXPORT void SA_SetLogNULL()
+{
 	logOutputMethod = LOG_OUTPUT_NULL;
 }
 
-EXPORT void SA_SetLogFILE(const char* filename) {
-	logOutputMethod = LOG_OUTPUT_FILE;
-	fileLogName = filename;
-}
-
-EXPORT void SA_SetLogCONSOLE()
+EXPORT void SA_SetLogFILE(const char* filename, int debug)
 {
-	logOutputMethod = LOG_OUTPUT_CONSOLE;
+	if (debug == 0) {
+		logOutputMethod = LOG_OUTPUT_FILE;
+	}
+	else {
+		logOutputMethod = LOG_OUTPUT_FILE_DEBUG;
+		fileLogName = filename;
+	}
+}
+EXPORT void SA_SetLogCONSOLE(int debug)
+{
+	if (debug == 0) {
+		logOutputMethod = LOG_OUTPUT_CONSOLE;
+	}
+	else {
+		logOutputMethod = LOG_OUTPUT_CONSOLE_DEBUG;
+	}
 }
 
-#if defined(DLL_EXPORT)
 EXPORT int SA_TestDLL()
 {
-	SA_SetLogCONSOLE();
-	SA_Log("OK DLL", LOG_MAIN, LOG_CLASS_INFO);
+	logOutput l = logOutputMethod;
+	logOutputMethod = LOG_OUTPUT_CONSOLE;
+	SA_SetLogCONSOLE(1);
+	SA_Log("OK", LOG_MAIN, LOG_CLASS_DEBUG);
+	logOutputMethod = l;
 	return 1;
 }
-#endif
+
+EXPORT const char* SA_ReadLastMsg()
+{
+	return msg;
+}
+
+EXPORT int SA_SendMsg(const char* dataMsg)
+{
+	size_t size = strlen(dataMsg);
+	size_t round = (size_t)ceil((double)size / DATASIZE);
+	const char* str = dataMsg;
+	for (size_t i = 0; i < round; i++)
+	{
+		SA_DataCopyStr(data, str + (i * DATASIZE));
+		if (i == (round - 1))
+		{
+			SA_Log("Parsing Data Last", LOG_MAIN, LOG_CLASS_DEBUG);
+			data[DATASIZE + 1] = 0x01;
+		}
+		else
+		{
+			SA_Log("Parsing Data", LOG_MAIN, LOG_CLASS_DEBUG);
+			data[DATASIZE + 1] = 0x00;
+		}
+		while (data[0] != '\0')
+		{
+			SA_Log("Wait sender on network", LOG_MAIN, LOG_CLASS_DEBUG);
+			SA_Sleep(10);
+		}
+	}
+	return 1;
+}

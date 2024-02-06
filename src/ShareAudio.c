@@ -3,10 +3,11 @@
 
 #include "ShareAudio.h"
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
-	saConnection *conn = SA_Setup(-1, NULL, 0, 9950, 0, 2, -1, 2048, -1);
-	SA_SetLogCONSOLE();
+	SA_TestDLL();
+	SA_SetLogCONSOLE(0);
+	saConnection* conn = SA_Setup(-1, NULL, 0, 9950, 0, 2, -1, 2048, -1);
 	if (argc > 1)
 	{
 		for (int i = 1; i < argc; i++)
@@ -40,7 +41,7 @@ int main(int argc, char *argv[])
 			}
 			else if (strcmp(argv[i], "-l") == 0)
 			{
-				SA_SetLogFILE("shareaudio.log");
+				SA_SetLogFILE("shareaudio.log",0);
 			}
 			else if (strcmp(argv[i], "-i") == 0)
 			{
@@ -136,7 +137,14 @@ int main(int argc, char *argv[])
 	}
 	if (conn != NULL)
 	{
-		getchar();
+		while (conn != NULL) {
+			char a = getchar();
+			if (a == 'q')
+			{
+				SA_Close(conn);
+				conn = NULL;
+			}
+		}
 	}
 	SA_Shutdown(conn);
 	SA_Log("Program exit", LOG_MAIN, LOG_CLASS_INFO);

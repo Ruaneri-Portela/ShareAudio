@@ -1,17 +1,18 @@
 #include "config.h"
 #if defined(WINDOWS)
 #include <windows.h>
-void *SA_ThreadCreate(void *func, void *param)
+void* SA_ThreadCreate(void* func, void* param)
 {
-	return (void *)CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)func, param, 0, NULL);
+	return (void*)CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)func, param, 0, NULL);
 }
 
-void SA_ThreadClose(void *hThread)
+void SA_ThreadClose(void* hThread)
 {
 	CloseHandle((HANDLE)hThread);
+	hThread = NULL;
 }
 
-void SA_ThreadJoin(void *hThread)
+void SA_ThreadJoin(void* hThread)
 {
 	WaitForSingleObject((HANDLE)hThread, INFINITE);
 }
@@ -28,18 +29,18 @@ void SA_Sleep(size_t ms)
 #elif defined(LINUX)
 #include <pthread.h>
 #include <unistd.h>
-void *SA_ThreadCreate(void *func, void *param)
+void* SA_ThreadCreate(void* func, void* param)
 {
 	pthread_t thread;
 	pthread_create(&thread, NULL, func, param);
-	return (void *)thread;
+	return (void*)thread;
 }
-void SA_ThreadClose(void *hThread)
+void SA_ThreadClose(void* hThread)
 {
 	pthread_t thread = (pthread_t)hThread;
 	pthread_cancel(thread);
 }
-void SA_ThreadJoin(void *hThread)
+void SA_ThreadJoin(void* hThread)
 {
 	pthread_t thread = (pthread_t)hThread;
 	pthread_join(thread, NULL);
