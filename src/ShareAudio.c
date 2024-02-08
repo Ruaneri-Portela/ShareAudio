@@ -50,7 +50,7 @@ int main(int argc, char* argv[])
 				printf_s("ShareAudio\n\tA easy and light way to share your between your computers\n\tVer: %s\n", VERSION);
 			}
 			else if (strcmp(argv[i], "-r") == 0)
-			{			
+			{
 				SA_ListAllAudioDevices(NULL);
 				goto EXIT;
 			}
@@ -155,6 +155,16 @@ int main(int argc, char* argv[])
 			case 'r':
 				printf("Show last message: ");
 				printf("%s\n", SA_ReadLastMsg());
+				break;
+			case 'z':
+				if (SA_GetWavFileP() == NULL) {
+					printf("Start record\n");
+					SA_InitWavRecord(conn, "record.wav");
+				}
+				else {
+					printf("Stop record\n");
+					SA_CloseWavRecord();
+				}
 				break;
 			default:
 				break;

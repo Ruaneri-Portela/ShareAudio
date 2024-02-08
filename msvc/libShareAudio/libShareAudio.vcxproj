@@ -36,6 +36,7 @@
     <ClInclude Include="..\..\src\net.h" />
     <ClInclude Include="..\..\src\threads.h" />
     <ClInclude Include="..\..\src\VERSION.h" />
+    <ClInclude Include="..\..\src\wav.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\audio.c" />
@@ -45,6 +46,7 @@
     <ClCompile Include="..\..\src\log.c" />
     <ClCompile Include="..\..\src\net.c" />
     <ClCompile Include="..\..\src\threads.c" />
+    <ClCompile Include="..\..\src\wav.c" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\portaudio\portaudio.vcxproj">

@@ -1,4 +1,3 @@
-#include <stdlib.h>
 typedef enum dataHeader
 {
 	NULLHEADER = 0x00,

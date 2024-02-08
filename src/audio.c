@@ -1,8 +1,10 @@
 #include "config.h"
 #include "data.h"
 #include "log.h"
+#include "wav.h"
 #include <portaudio.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 typedef struct audioDevices
@@ -43,6 +45,10 @@ int SA_AudioClientCallback(
 		audioBuffer* temp = head;
 		float* data = SA_DataGetWaveData(temp->data);
 		SA_DataCopyAudio(data, (float*)outputBuffer, framesPerBuffer * ((dataHandshake*)userData)->channel, ((dataHandshake*)userData)->volMod, 0);
+		if (wavFile != NULL)
+		{
+			SA_WavWriteData(wavFile, data, framesPerBuffer * ((dataHandshake*)userData)->channel);
+		}
 		head = temp->next;
 		free(temp->data);
 		free(temp);
@@ -65,6 +71,10 @@ int SA_AudioServerCallback(
 	(void)framesPerBuffer;
 	if (audioDataFrame == NULL)
 	{
+		if (wavFile != NULL)
+		{
+			SA_WavWriteData(wavFile, (float*)inputBuffer, framesPerBuffer * ((dataHandshake*)userData)->channel);
+		}
 		audioDataFrame = SA_DataCreateDataFrame((float*)inputBuffer, userData, ((dataHandshake*)userData)->testMode);
 	}
 	return 0;

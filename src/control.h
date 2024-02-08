@@ -29,3 +29,11 @@ int SA_TestDLL();
 const char* SA_ReadLastMsg();
 
 int SA_SendMsg(const char* msg);
+
+void SA_InitWavRecord(saConnection* conn, const char* path);
+
+void SA_CloseWavRecord();
+
+void* SA_GetWavFileP();
+
+void SA_SetWavFileP(FILE* file);

@@ -42,6 +42,9 @@
     <ClInclude Include="..\..\src\VERSION.h">
       <Filter>Arquivos de Cabeçalho</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\wav.h">
+      <Filter>Arquivos de Cabeçalho</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\audio.c">
@@ -63,6 +66,9 @@
       <Filter>Arquivos de Origem</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\threads.c">
+      <Filter>Arquivos de Origem</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\wav.c">
       <Filter>Arquivos de Origem</Filter>
     </ClCompile>
   </ItemGroup>

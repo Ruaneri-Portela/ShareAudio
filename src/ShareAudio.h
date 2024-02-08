@@ -5,3 +5,4 @@
 #include "log.h"
 #include "net.h"
 #include "threads.h"
+#include "wav.h"

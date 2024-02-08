@@ -406,3 +406,4 @@ ShareAudio.lnk
 **/python/portaudio_x86.dll
 **/libShareAudio.so
 **/libShareAudioW.so
+*.wav

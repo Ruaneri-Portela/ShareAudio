@@ -1,9 +1,10 @@
-#include "config.h"
 #include "audio.h"
+#include "config.h"
 #include "data.h"
 #include "log.h"
 #include "net.h"
 #include "threads.h"
+#include "wav.h"
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
@@ -265,4 +266,23 @@ EXPORT int SA_SendMsg(const char* dataMsg)
 		SA_Log("Packet has sender", LOG_MAIN, LOG_CLASS_DEBUG);
 	}
 	return 1;
+}
+
+EXPORT void SA_InitWavRecord(saConnection* conn, const char* path) {
+	wavHeader* headData = SA_WavCreateHeader(conn->dh->sampleRate, 32, conn->dh->channel, conn->dh->waveSize);
+	wavFile = SA_WavCreateFile(headData, path);
+	free(headData);
+}
+
+EXPORT void SA_CloseWavRecord() {
+	SA_WavCloseFile(wavFile);
+	wavFile = NULL;
+}
+
+EXPORT void* SA_GetWavFileP(){
+	return wavFile;
+}
+
+EXPORT void SA_SetWavFileP(FILE* file) {
+	wavFile = file;
 }
