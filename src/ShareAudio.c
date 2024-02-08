@@ -3,6 +3,8 @@
 
 #include "ShareAudio.h"
 
+char input[2048];
+
 int main(int argc, char* argv[])
 {
 	SA_TestDLL();
@@ -145,7 +147,6 @@ int main(int argc, char* argv[])
 				conn = NULL;
 				break;
 			case 'm':
-				char input[2048];
 				printf("Enter a message: ");
 				getchar();
 				fgets(input, 2048, stdin);
