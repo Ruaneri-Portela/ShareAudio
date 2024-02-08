@@ -252,11 +252,11 @@ static void SA_NetServer(void* parms)
 	connectParam* localParm = (connectParam*)parms;
 	while (localParm->thread != NULL)
 	{
+		localParm->dh->sessionPacket = 0;
 		while (!SA_NetServerGetHandhake((connectParam*)parms))
 			;
 		SA_Log("Audio connection established", LOG_NET, LOG_CLASS_INFO);
 		int tolerance = 0;
-		localParm->dh->sessionPacket = 0;
 		time_t lastPacket = time(NULL);
 		time_t lastTry;
 		void* revcThread = SA_ThreadCreate(SA_NetServerRecv, parms);

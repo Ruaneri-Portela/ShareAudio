@@ -141,6 +141,13 @@ int main(int argc, char* argv[])
 			char a = getchar();
 			switch (a)
 			{
+			case 's':
+				printf("Stats:");
+				printf("Bytes rev: %zd\n", conn->dh->sessionPacket - 1);
+				printf("Bytes send by server: %zd\n", conn->dh->totalPacketSrv);
+				printf("Packets lost: %zd\n", conn->dh->totalPacketSrv - (conn->dh->sessionPacket - 1));
+				printf("Packets percent lost: %.2lf\n", (double)(conn->dh->totalPacketSrv - (conn->dh->sessionPacket - 1)) / (double)(conn->dh->totalPacketSrv));
+				break;
 			case 'q':
 				printf("Quit...");
 				SA_Close(conn);
