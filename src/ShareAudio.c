@@ -143,10 +143,11 @@ int main(int argc, char* argv[])
 			{
 			case 's':
 				printf("Stats:");
-				printf("Bytes rev: %zd\n", conn->dh->sessionPacket - 1);
+				printf("Bytes played: %zd\n", conn->dh->sessionPacket - 1);
 				printf("Bytes send by server: %zd\n", conn->dh->totalPacketSrv);
 				printf("Packets lost: %zd\n", conn->dh->totalPacketSrv - (conn->dh->sessionPacket - 1));
 				printf("Packets percent lost: %.2lf\n", (double)(conn->dh->totalPacketSrv - (conn->dh->sessionPacket - 1)) / (double)(conn->dh->totalPacketSrv));
+				printf("Bandwidth: %.2f MB\n", ((conn->dh->sessionPacket - 1) * sizeof(float)) / 1024.0f);
 				break;
 			case 'q':
 				printf("Quit...");

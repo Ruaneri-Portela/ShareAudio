@@ -513,6 +513,7 @@ static void SA_NetClient(void* parms)
 												free(i);
 												break;
 											}
+											localParm->dh->sessionPacket--;
 										}
 										else if (i->next == NULL)
 										{
