@@ -3,38 +3,19 @@
 #include <string.h>
 #include <time.h>
 
-#if defined(WINDOWS)
-
-#include <winsock2.h>
-#include <WS2tcpip.h>
-
-#elif defined(LINUX)
-
+#if defined(LINUX)
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <sys/time.h>
 #include <unistd.h>
 #include <netdb.h>
-#define SOCKET int
-#define INVALID_SOCKET -1
-#define SOCKET_ERROR -1
-#define SOCKADDR_IN struct sockaddr_in
-#define SOCKADDR struct sockaddr
-#define ADDRESS_FAMILY int
-#define closesocket close
-#define __USE_XOPEN2K
-
 #endif
 
 #include "threads.h"
 #include "audio.h"
 #include "log.h"
 #include "data.h"
-
-#ifdef _MSC_VER
-#pragma comment(lib, "ws2_32.lib")
-#endif
 
 typedef struct netCtx
 {
@@ -303,7 +284,7 @@ static void SA_NetServer(void* parms)
 				audioDataFrame = SA_DataCreateDataFrame((float*)data, localParm->dh, 0);
 				dataHeader* header = (dataHeader*)audioDataFrame;
 				*header = DATAMSG;
-				memcpy_s((char*)(header + 1), DATASIZE+2, data, DATASIZE+2);
+				memcpy_s((char*)(header + 1), DATASIZE + 2, data, DATASIZE + 2);
 				delayed = 0;
 				SA_Log("Msg send", LOG_NET, LOG_CLASS_DEBUG);
 			}

@@ -1,6 +1,5 @@
 #include "config.h"
 #if defined(WINDOWS)
-#include <windows.h>
 void* SA_ThreadCreate(void* func, void* param)
 {
 	return (void*)CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)func, param, 0, NULL);
