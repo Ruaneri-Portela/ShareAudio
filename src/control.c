@@ -105,8 +105,12 @@ EXPORT float SA_GetVolumeModifier(saConnection *conn)
 	return conn->dh->volMod;
 }
 
-EXPORT void SA_ListAllAudioDevices()
+EXPORT void SA_ListAllAudioDevices(saConnection *conn)
 {
+	if(conn == NULL)
+	{
+		SA_AudioInit();
+	}
 	audioDevices devicesData = SA_GetAllDevices();
 	printf_s("Found %d devices\n\n", devicesData.numDevices);
 	for (int i = 0;; i++)
@@ -128,6 +132,10 @@ EXPORT void SA_ListAllAudioDevices()
 		}
 	}
 	free(devicesData.devices);
+	if(conn == NULL)
+	{
+		SA_AudioClose();
+	}
 }
 
 EXPORT saConnection *SA_Setup(int device, const char *host, int mode, int port, int testMode, int channel, float volMod, int waveSize, double sampleRate)

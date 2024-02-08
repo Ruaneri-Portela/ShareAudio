@@ -5,15 +5,16 @@ kill = False
 if os.name == 'nt':
     execDll = cdll.LoadLibrary ("./libShareAudio.dll")
 else:
-    execDll = cdll.LoadLibrary ("./libShareAudio.so")
+    execDll = cdll.LoadLibrary ("./libShareAudioW.so")
 
 def SA_Setup(device = -1, host = None, mode = 0, port = 9950, testMode = 0, channel =2, volMod = -1, waveSize = 2048, sampleRate = -1):
     execDll.SA_Setup.argtypes = [c_int,c_char_p,c_int,c_int,c_int,c_int,c_float,c_int,c_double]
     execDll.SA_Setup.restype = c_void_p
     return execDll.SA_Setup(device, host, mode, port, testMode, channel, volMod, waveSize, sampleRate)
     
-def SA_ListDevices():
-    execDll.SA_ListAllAudioDevices()
+def SA_ListDevices(conn = None):
+    execDll.SA_ListDevices.argtypes = [c_void_p]
+    execDll.SA_ListAllAudioDevices(conn)
 
 def SA_GetVolume(conn):
     execDll.SA_GetVolumeModifier.argtypes = [c_void_p]

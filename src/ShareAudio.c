@@ -48,10 +48,8 @@ int main(int argc, char* argv[])
 				printf_s("ShareAudio\n\tA easy and light way to share your between your computers\n\tVer: %s\n", VERSION);
 			}
 			else if (strcmp(argv[i], "-r") == 0)
-			{
-				SA_AudioInit();
-				SA_ListAllAudioDevices();
-				SA_AudioClose();
+			{			
+				SA_ListAllAudioDevices(NULL);
 				goto EXIT;
 			}
 			else if (strcmp(argv[i], "-v") == 0)
