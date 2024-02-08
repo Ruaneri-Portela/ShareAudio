@@ -142,7 +142,7 @@ int main(int argc, char* argv[])
 			switch (a)
 			{
 			case 's':
-				printf("Stats:");
+				printf("Stats:\n");
 				printf("Bytes played: %zd\n", conn->dh->sessionPacket - 1);
 				printf("Bytes send by server: %zd\n", conn->dh->totalPacketSrv);
 				printf("Packets lost: %zd\n", conn->dh->totalPacketSrv - (conn->dh->sessionPacket - 1));
