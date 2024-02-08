@@ -6,7 +6,7 @@
 int main(int argc, char* argv[])
 {
 	SA_TestDLL();
-	SA_SetLogCONSOLE(0);
+	SA_SetLogCONSOLE(1);
 	saConnection* conn = SA_Setup(-1, NULL, 0, 9950, 0, 2, -1, 2048, -1);
 	if (argc > 1)
 	{
@@ -41,7 +41,7 @@ int main(int argc, char* argv[])
 			}
 			else if (strcmp(argv[i], "-l") == 0)
 			{
-				SA_SetLogFILE("shareaudio.log",0);
+				SA_SetLogFILE("shareaudio.log", 0);
 			}
 			else if (strcmp(argv[i], "-i") == 0)
 			{
@@ -139,10 +139,26 @@ int main(int argc, char* argv[])
 	{
 		while (conn != NULL) {
 			char a = getchar();
-			if (a == 'q')
+			switch (a)
 			{
+			case 'q':
+				printf("Quit...");
 				SA_Close(conn);
 				conn = NULL;
+				break;
+			case 'm':
+				char input[2048];
+				printf("Enter a message: ");
+				getchar();
+				fgets(input, 2048, stdin);
+				SA_SendMsg(input);
+				break;
+			case 'r':
+				printf("Show last message: ");
+				printf("%s\n", SA_ReadLastMsg());
+				break;
+			default:
+				break;
 			}
 		}
 	}

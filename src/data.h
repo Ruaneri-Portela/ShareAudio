@@ -56,3 +56,5 @@ char* SA_DataConcatString(const char* original, const char* toCat);
 unsigned short int SA_DataDetectIsIp(const char* host, size_t asServer);
 
 void SA_DataCopyStr(char* target, const char* input);
+
+void SA_DataRevcProcess(int* rounds, char** msgStream, char* msgLocal, char** msg);

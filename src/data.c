@@ -11,7 +11,7 @@ typedef enum dataHeader
 	AUTH = 0x02,
 	DATA = 0x03,
 	NULLDATA = 0x04,
-	MSG = 0x05,
+	DATAMSG = 0x05,
 	AUTHCHANGE = 0xFD,
 	DISCONNECT = 0xFE,
 	END = 0xFF,
@@ -197,4 +197,26 @@ void SA_DataCopyStr(char* target, const char* input)
 		target[i] = input[i];
 	}
 	target[size] = '\0';
+}
+
+void SA_DataRevcProcess(int* rounds, char** msgStream, char* msgLocal, char** msg) {
+	char* dataBuffer = malloc(DATASIZE * ((*rounds) + 1));
+	if (*msgStream == NULL)
+	{
+		*msgStream = dataBuffer;
+	}
+	else
+	{
+		memcpy_s(dataBuffer, DATASIZE * (*rounds), *msgStream, DATASIZE * (*rounds));
+		free(*msgStream);
+		*msgStream = dataBuffer;
+	}
+	memcpy_s(*msgStream + (DATASIZE * (*rounds)), DATASIZE, msgLocal, DATASIZE);
+	(*rounds)++;
+	if (msgLocal[DATASIZE + 1] == 0x00) {
+		*msg == NULL ? (void)0 : free(*msg);
+		*msg = *msgStream;
+		*msgStream = NULL;
+		*rounds = 0;
+	}
 }

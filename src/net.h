@@ -30,9 +30,9 @@ typedef struct connectParam
 	void* thread;
 } connectParam;
 
-extern char data[DATASIZE + 2];
+extern char data[DATASIZE + 3];
 
-extern char msg[DATASIZE + 2];
+extern char *msg;
 
 unsigned short int SA_NetSetupClient(connectParam* parms);
 

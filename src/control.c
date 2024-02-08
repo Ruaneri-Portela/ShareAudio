@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <string.h>
 
-EXPORT void SA_Init(saConnection* conn)
+EXPORT void SA_Init(saConnection *conn)
 {
 	SA_AudioInit();
 	audioDevices deviceList = SA_GetAllDevices();
@@ -19,13 +19,13 @@ EXPORT void SA_Init(saConnection* conn)
 	if (conn->device == -1 && conn->mode == 1 && ISWIN)
 	{
 		int defaultOutDevice = Pa_GetDefaultOutputDevice();
-		const char* defaultOutDeviceName = Pa_GetDeviceInfo(defaultOutDevice)->name;
+		const char *defaultOutDeviceName = Pa_GetDeviceInfo(defaultOutDevice)->name;
 		int loopbackDevice = -1;
 		for (int i = 0;; i++)
 		{
 			if (deviceList.devices[i] != NULL)
 			{
-				const char* searchName = deviceList.devices[i]->name;
+				const char *searchName = deviceList.devices[i]->name;
 				if (strstr(searchName, defaultOutDeviceName) != NULL && strstr(searchName, "[Loopback]"))
 				{
 					loopbackDevice = i;
@@ -59,7 +59,7 @@ EXPORT void SA_Init(saConnection* conn)
 	conn->dh->volMod == -1 ? conn->dh->volMod = 1 : conn->dh->volMod;
 }
 
-EXPORT void SA_Server(saConnection* conn)
+EXPORT void SA_Server(saConnection *conn)
 {
 	SA_Log("Server", LOG_MAIN, LOG_CLASS_INFO);
 	conn->audio = SA_AudioOpenStream(conn->device, 1, conn->dh);
@@ -71,7 +71,7 @@ EXPORT void SA_Server(saConnection* conn)
 	}
 }
 
-EXPORT void SA_Client(saConnection* conn)
+EXPORT void SA_Client(saConnection *conn)
 {
 	SA_Log("Client", LOG_MAIN, LOG_CLASS_INFO);
 	conn->thread = SA_NetInit(conn->port, conn->host, 1, conn->device, conn->dh);
@@ -81,25 +81,26 @@ EXPORT void SA_Client(saConnection* conn)
 	}
 }
 
-EXPORT void SA_Close(saConnection* conn)
+EXPORT void SA_Close(saConnection *conn)
 {
 	if (conn != NULL)
 	{
-		if (conn->audio)
+		if (conn->audio != NULL)
 			SA_AudioCloseStream(conn->audio);
-		if (*conn->thread)
+		if (*conn->thread != NULL)
 			SA_NetClose(*conn->thread);
-			*conn->thread = NULL;
+		*conn->thread = NULL;
+		conn->audio = NULL;
 		free(conn);
 	}
 }
 
-EXPORT void SA_SetVolumeModifier(float vol, saConnection* conn)
+EXPORT void SA_SetVolumeModifier(float vol, saConnection *conn)
 {
 	conn->dh->volMod = vol;
 }
 
-EXPORT float SA_GetVolumeModifier(saConnection* conn)
+EXPORT float SA_GetVolumeModifier(saConnection *conn)
 {
 	return conn->dh->volMod;
 }
@@ -113,8 +114,8 @@ EXPORT void SA_ListAllAudioDevices()
 		if (devicesData.devices[i] != NULL)
 		{
 			printf_s("Device %d:\n\t%s\n\tSample Rate:%f\n", i,
-				devicesData.devices[i]->name,
-				devicesData.devices[i]->defaultSampleRate);
+					 devicesData.devices[i]->name,
+					 devicesData.devices[i]->defaultSampleRate);
 			if (devicesData.devices[i]->maxInputChannels > 0)
 				printf_s("\tChannels Int:%d\n", devicesData.devices[i]->maxInputChannels);
 			if (devicesData.devices[i]->maxOutputChannels > 0)
@@ -129,9 +130,9 @@ EXPORT void SA_ListAllAudioDevices()
 	free(devicesData.devices);
 }
 
-EXPORT saConnection* SA_Setup(int device, const char* host, int mode, int port, int testMode, int channel, float volMod, int waveSize, double sampleRate)
+EXPORT saConnection *SA_Setup(int device, const char *host, int mode, int port, int testMode, int channel, float volMod, int waveSize, double sampleRate)
 {
-	saConnection* conn = malloc(sizeof(saConnection));
+	saConnection *conn = malloc(sizeof(saConnection));
 	if (conn == NULL)
 	{
 		SA_Log("Failed to allocate memory", LOG_MAIN, LOG_CLASS_ERROR);
@@ -165,18 +166,24 @@ EXPORT saConnection* SA_Setup(int device, const char* host, int mode, int port, 
 	return conn;
 }
 
-EXPORT void SA_Shutdown(saConnection* conn)
+EXPORT void SA_Shutdown(saConnection *conn)
 {
 	SA_Close(conn);
 	SA_AudioClose();
 }
 
-EXPORT const char* SA_GetStats(saConnection* conn)
+EXPORT const char *SA_GetStats(saConnection *conn)
 {
 	// UNSECURE CODE
-	char stats[DATASIZE];
-	sprintf_s(stats, DATASIZE, "%zd,%zd,%d,%lf,%d,%s,%s,%d", conn->dh->totalPacketSrv, conn->dh->totalPacketSrv, conn->dh->channel,
-		conn->dh->sampleRate, conn->dh->waveSize, Pa_GetDeviceInfo(conn->device)->name, conn->host, conn->port);
+	char *stats = malloc(DATASIZE);
+	if(stats == NULL)
+	{
+		SA_Log("Failed to allocate memory", LOG_MAIN, LOG_CLASS_ERROR);
+	}
+	else {
+		sprintf_s(stats, DATASIZE, "%zd,%zd,%d,%lf,%d,%s,%s,%d", conn->dh->totalPacketSrv, conn->dh->totalPacketSrv, conn->dh->channel,
+			conn->dh->sampleRate, conn->dh->waveSize, Pa_GetDeviceInfo(conn->device)->name, conn->host, conn->port);
+	}
 	return stats;
 }
 
@@ -185,22 +192,26 @@ EXPORT void SA_SetLogNULL()
 	logOutputMethod = LOG_OUTPUT_NULL;
 }
 
-EXPORT void SA_SetLogFILE(const char* filename, int debug)
+EXPORT void SA_SetLogFILE(const char *filename, int debug)
 {
-	if (debug == 0) {
+	if (debug == 0)
+	{
 		logOutputMethod = LOG_OUTPUT_FILE;
 	}
-	else {
+	else
+	{
 		logOutputMethod = LOG_OUTPUT_FILE_DEBUG;
 		fileLogName = filename;
 	}
 }
 EXPORT void SA_SetLogCONSOLE(int debug)
 {
-	if (debug == 0) {
+	if (debug == 0)
+	{
 		logOutputMethod = LOG_OUTPUT_CONSOLE;
 	}
-	else {
+	else
+	{
 		logOutputMethod = LOG_OUTPUT_CONSOLE_DEBUG;
 	}
 }
@@ -215,34 +226,35 @@ EXPORT int SA_TestDLL()
 	return 1;
 }
 
-EXPORT const char* SA_ReadLastMsg()
+EXPORT const char *SA_ReadLastMsg()
 {
 	return msg;
 }
 
-EXPORT int SA_SendMsg(const char* dataMsg)
+EXPORT int SA_SendMsg(const char *dataMsg)
 {
 	size_t size = strlen(dataMsg);
 	size_t round = (size_t)ceil((double)size / DATASIZE);
-	const char* str = dataMsg;
 	for (size_t i = 0; i < round; i++)
 	{
-		SA_DataCopyStr(data, str + (i * DATASIZE));
 		if (i == (round - 1))
 		{
 			SA_Log("Parsing Data Last", LOG_MAIN, LOG_CLASS_DEBUG);
-			data[DATASIZE + 1] = 0x01;
+			data[DATASIZE + 1] = 0x00;
 		}
 		else
 		{
 			SA_Log("Parsing Data", LOG_MAIN, LOG_CLASS_DEBUG);
-			data[DATASIZE + 1] = 0x00;
+			data[DATASIZE + 1] = 0x01;
 		}
-		while (data[0] != '\0')
+		SA_DataCopyStr(data, dataMsg + (i * DATASIZE));
+		data[DATASIZE + 2] = 0x01;
+		SA_Log("Wait sender on network", LOG_MAIN, LOG_CLASS_DEBUG);
+		while (data[DATASIZE + 2] != 0x00)
 		{
-			SA_Log("Wait sender on network", LOG_MAIN, LOG_CLASS_DEBUG);
-			SA_Sleep(10);
+			continue;
 		}
+		SA_Log("Packet has sender", LOG_MAIN, LOG_CLASS_DEBUG);
 	}
 	return 1;
 }

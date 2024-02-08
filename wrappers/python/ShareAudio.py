@@ -2,7 +2,7 @@ import threading
 from libShareAudio import *
 
 SA_SetLogCONSOLE(1)
-host = "nero-pc.lan"
+host = "localhost"
 bhost = host.encode("UTF-8")
 
 def main():

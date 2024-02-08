@@ -56,9 +56,9 @@ typedef struct connectParam
 	void* thread;
 } connectParam;
 
-char data[DATASIZE + 2];
+char data[DATASIZE + 3];
 
-char msg[DATASIZE + 2];
+char* msg = NULL;
 
 static const unsigned char confirmConn[2] = { 0xFF, '\0' };
 
@@ -172,8 +172,11 @@ static void SA_NetResolveHost(connectParam* parm, ADDRESS_FAMILY family)
 
 static void SA_NetServerRecv(connectParam* parms) {
 	int failCount = 0;
+	char msgLocal[DATASIZE + 3];
+	char* msgStream = NULL;
+	int rounds = 0;
 	while (parms->thread != NULL && parms->ctx->clientSocket != 0) {
-		if (recv(parms->ctx->clientSocket, msg, DATASIZE + 1, 0) == SOCKET_ERROR)
+		if (recv(parms->ctx->clientSocket, msgLocal, DATASIZE + 2, 0) == SOCKET_ERROR)
 		{
 			SA_Log("Revc failed!", LOG_NET, LOG_CLASS_DEBUG);
 			if (failCount > 10) {
@@ -184,6 +187,7 @@ static void SA_NetServerRecv(connectParam* parms) {
 		}
 		else
 		{
+			SA_DataRevcProcess(&rounds, &msgStream, msgLocal, &msg);
 			SA_Log("Data Revc", LOG_NET, LOG_CLASS_DEBUG);
 			failCount = 0;
 		}
@@ -276,7 +280,7 @@ static void SA_NetServer(void* parms)
 		time_t lastPacket = time(NULL);
 		time_t lastTry;
 		SA_ThreadCreate(SA_NetServerRecv, parms);
-		data[0] = '\0';
+		data[DATASIZE + 2] = 0x00;
 		while (1)
 		{
 			int delayed = 1;
@@ -294,14 +298,13 @@ static void SA_NetServer(void* parms)
 				dataHeader* header = (dataHeader*)audioDataFrame;
 				*header = NULLDATA;
 			}
-			if (data[0] != '\0' && localParm->thread != NULL)
+			if (data[DATASIZE + 2] != 0x00 && localParm->thread != NULL)
 			{
 				audioDataFrame = SA_DataCreateDataFrame((float*)data, localParm->dh, 0);
 				dataHeader* header = (dataHeader*)audioDataFrame;
 				*header = DATAMSG;
-				SA_DataCopyStr((char*)(header + 1), data);
+				memcpy_s((char*)(header + 1), DATASIZE+2, data, DATASIZE+2);
 				delayed = 0;
-				data[0] = '\0';
 				SA_Log("Msg send", LOG_NET, LOG_CLASS_DEBUG);
 			}
 			if (audioDataFrame != NULL)
@@ -317,6 +320,7 @@ static void SA_NetServer(void* parms)
 				}
 				else
 				{
+					data[DATASIZE + 2] = 0x00;
 					lastPacket = time(NULL);
 					localParm->dh->sessionPacket++;
 					tolerance = 0;
@@ -411,11 +415,11 @@ static unsigned short int SA_NetSetupClient(connectParam* parms)
 
 static void SA_NetClientSend(connectParam* parms)
 {
-	data[0] = '\0';
+	data[DATASIZE + 2] = 0x00;
 	size_t count = 0;
 	while (parms->thread != NULL && parms->ctx->clientSocket != 0) {
-		if (data[0] != '\0') {
-			if (send(parms->ctx->srvSocket, data, DATASIZE + 1, 0) == SOCKET_ERROR)
+		if (data[DATASIZE + 2] != 0x00) {
+			if (send(parms->ctx->srvSocket, data, DATASIZE + 2, 0) == SOCKET_ERROR)
 			{
 				SA_Log("Msg failed!", LOG_NET, LOG_CLASS_DEBUG);
 				if (count > 10) {
@@ -427,7 +431,7 @@ static void SA_NetClientSend(connectParam* parms)
 			else
 			{
 				SA_Log("Msg send!", LOG_NET, LOG_CLASS_DEBUG);
-				data[0] = '\0';
+				data[DATASIZE + 2] = 0x00;
 			}
 		}
 		SA_Sleep(10);
@@ -436,11 +440,13 @@ static void SA_NetClientSend(connectParam* parms)
 
 static void SA_NetClient(void* parms)
 {
-	connectParam *localParm = (connectParam*)parms;
+	connectParam* localParm = (connectParam*)parms;
 	PaStream* stream = NULL;
 	char* localData = NULL;
 	size_t chunckWaveSize = 0;
 	size_t err = 0;
+	char* msgStream = NULL;
+	int rounds = 0;
 	SA_WinNetOpen();
 	while (localParm->thread != NULL)
 	{
@@ -451,7 +457,7 @@ static void SA_NetClient(void* parms)
 		{
 			stream = SA_AudioOpenStream(localParm->device, 0, (void*)localParm->dh);
 			SA_AudioStartStream(stream);
-			void * sendThread =  SA_ThreadCreate(SA_NetClientSend, localParm);
+			void* sendThread = SA_ThreadCreate(SA_NetClientSend, localParm);
 			while (localParm->thread != NULL && localParm->dataSize > sizeof(dataHandshake) + sizeof(size_t) * 2)
 			{
 				if (recv(localParm->ctx->srvSocket, (char*)localData, (int)localParm->dataSize, MSG_WAITALL) == SOCKET_ERROR)
@@ -542,7 +548,7 @@ static void SA_NetClient(void* parms)
 						localParm->dh->sessionPacket++;
 						break;
 					case DATAMSG:
-						SA_DataCopyStr(msg, (const char*)(header + 1));
+						SA_DataRevcProcess(&rounds, &msgStream, (char*)(header + 1), &msg);
 						SA_Log("Msg revc!", LOG_NET, LOG_CLASS_DEBUG);
 						break;
 					case END:
