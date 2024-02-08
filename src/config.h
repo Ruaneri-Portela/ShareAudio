@@ -13,6 +13,7 @@
 #define ISWIN 1
 #elif defined(__linux__)
 #include "linux.h"
+#include <netinet/in.h>
 #define LINUX
 #define ISWIN 0
 #define SOCKET int
@@ -22,7 +23,6 @@
 #define SOCKADDR struct sockaddr
 #define ADDRESS_FAMILY int
 #define closesocket close
-#define __USE_XOPEN2K
 #endif
 
 #if defined(DLL_EXPORT)

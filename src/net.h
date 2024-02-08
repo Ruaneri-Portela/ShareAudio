@@ -1,3 +1,4 @@
+
 typedef struct netCtx
 {
 	SOCKET clientSocket;

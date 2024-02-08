@@ -12,6 +12,7 @@ ifeq ($(wildcard $(PORTAUDIO)),)
     $("O arquivo $(PORTAUDIO) não foi encontrado.")
 else
 	CFLAGS += -I./portaudio/include/
+	LIBS += -lm
 endif
 
 ifeq ($(OS),Windows_NT)

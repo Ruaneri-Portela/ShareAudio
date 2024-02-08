@@ -1,5 +1,5 @@
-#include "audio.h"
 #include "config.h"
+#include "audio.h"
 #include "data.h"
 #include "log.h"
 #include "net.h"

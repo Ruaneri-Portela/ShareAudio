@@ -7,11 +7,9 @@ WINRES =
 WINRES_O =
 DLLEXPORT =
 ifeq ($(OS),Windows_NT)
-    LIBS += -lws2_32
     WINRES_O = $(BUILD_DIR)res.o
     WINRES = windres $(SRC_DIR)Resource.rc -O coff -o $(WINRES_O)
 else
-    LIBS += -lpthread
 endif
 
 SRCS :=  $(BUILD_DIR)ShareAudio.c
