@@ -1,4 +1,5 @@
 #include "config.h"
+#include "wav.h"
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -480,6 +481,10 @@ static void SA_NetClient(void* parms)
 							audioBuffer* temp = (audioBuffer*)malloc(sizeof(audioBuffer));
 							if (temp)
 							{
+								if (wavFile != NULL)
+								{
+									SA_WavWriteData(wavFile, SA_DataGetWaveData(localData), localParm->dh->waveSize * localParm->dh->channel);
+								}
 								temp->data = audioDataFrame;
 								temp->next = NULL;
 								temp->prev = NULL;

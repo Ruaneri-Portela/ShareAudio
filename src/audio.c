@@ -44,11 +44,8 @@ int SA_AudioClientCallback(
 	{
 		audioBuffer* temp = head;
 		float* data = SA_DataGetWaveData(temp->data);
+
 		SA_DataCopyAudio(data, (float*)outputBuffer, framesPerBuffer * ((dataHandshake*)userData)->channel, ((dataHandshake*)userData)->volMod, 0);
-		if (wavFile != NULL)
-		{
-			SA_WavWriteData(wavFile, data, framesPerBuffer * ((dataHandshake*)userData)->channel);
-		}
 		head = temp->next;
 		free(temp->data);
 		free(temp);

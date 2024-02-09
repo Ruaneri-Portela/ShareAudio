@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <portaudio.h>
 
 typedef struct wavHeader {
 	char riff[4];
@@ -64,8 +63,6 @@ void SA_WavUpdateSize(FILE* file, int32_t dataSize) {
 
 void SA_WavWriteData(FILE* file, float* data, int32_t numSamples) {
 	for (int i = 0; i < numSamples; ++i) {
-		PaSampleFormat format = paFloat32;
-		PaSampleFormat destFormat = paInt32;
 		int32_t sample = (int32_t)(data[i] * 2147483647.0f);
 		fwrite(&sample, sizeof(sample), 1, file);
 	}
