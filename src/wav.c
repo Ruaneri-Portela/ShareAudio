@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include "linux.h"
 typedef struct wavHeader {
 	char riff[4];
 	int32_t size;
