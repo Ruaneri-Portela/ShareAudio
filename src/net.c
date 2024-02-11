@@ -35,6 +35,7 @@ typedef struct connectParam
 	netCtx* ctx;
 	dataHandshake* dh;
 	void* thread;
+	int* exit;
 } connectParam;
 
 char data[DATASIZE + 3];
@@ -156,7 +157,7 @@ static void SA_NetServerRecv(connectParam* parms) {
 	char msgLocal[DATASIZE + 3];
 	char* msgStream = NULL;
 	int rounds = 0;
-	while (parms->thread != NULL && parms->dh->header != NULLHEADER) {
+	while (1) {
 		if (recv(parms->ctx->clientSocket, msgLocal, DATASIZE + 2, MSG_WAITALL) == SOCKET_ERROR)
 		{
 			SA_Log("Revc failed!", LOG_NET, LOG_CLASS_DEBUG);
@@ -251,9 +252,10 @@ static unsigned short int SA_NetServerGetHandhake(connectParam* localParm)
 static void SA_NetServer(void* parms)
 {
 	connectParam* localParm = (connectParam*)parms;
-	while (localParm->thread != NULL)
+	while (*localParm->exit != -1)
 	{
 		localParm->dh->sessionPacket = 0;
+		(*localParm->exit) = 1;
 		while (!SA_NetServerGetHandhake((connectParam*)parms))
 			;
 		SA_Log("Audio connection established", LOG_NET, LOG_CLASS_INFO);
@@ -262,16 +264,19 @@ static void SA_NetServer(void* parms)
 		time_t lastTry;
 		void* revcThread = SA_ThreadCreate(SA_NetServerRecv, parms);
 		data[DATASIZE + 2] = 0x00;
+		(*localParm->exit) = 2;
+		int exitSender = 0;
 		while (1)
 		{
 			int delayed = 1;
 			lastTry = time(NULL) - lastPacket;
-			if (localParm->thread == NULL)
+			if ((*localParm->exit) == -1)
 			{
+				SA_ThreadClose(revcThread);
 				audioDataFrame = SA_DataCreateDataFrame(NULL, localParm->dh, 1);
 				dataHeader* header = (dataHeader*)audioDataFrame;
 				*header = END;
-				break;
+				exitSender = 1;
 			}
 			if (lastTry > 10)
 			{
@@ -316,8 +321,11 @@ static void SA_NetServer(void* parms)
 			if (delayed) {
 				SA_Sleep(localParm->delay);
 			}
+			if (exitSender) {
+				break;
+			}
 		}
-		SA_ThreadClose(revcThread);
+		closesocket(localParm->ctx->clientSocket);
 		localParm->dh->header = NULLHEADER;
 	}
 	SA_WinNetEnd(parms);
@@ -402,7 +410,7 @@ static void SA_NetClientSend(connectParam* parms)
 {
 	data[DATASIZE + 2] = 0x00;
 	size_t count = 0;
-	while (parms->thread != NULL && parms->dh->header != NULLHEADER) {
+	while (1) {
 		if (data[DATASIZE + 2] != 0x00) {
 			if (send(parms->ctx->srvSocket, data, DATASIZE + 2, 0) == SOCKET_ERROR)
 			{
@@ -433,17 +441,23 @@ static void SA_NetClient(void* parms)
 	char* msgStream = NULL;
 	int rounds = 0;
 	SA_WinNetOpen();
-	while (localParm->thread != NULL)
+	while (*localParm->exit != -1)
 	{
-		while (localParm->thread != NULL && !(SA_NetSetupClient(localParm)))
+		(*localParm->exit) = 1;
+		while (*localParm->exit != -1 && !(SA_NetSetupClient(localParm)))
 			;
+		if(*localParm->exit == -1)
+		{
+			break;
+		}
 		void* sendThread = SA_ThreadCreate(SA_NetClientSend, parms);
 		localData = malloc(localParm->dataSize);
 		if (localData)
 		{
 			stream = SA_AudioOpenStream(localParm->device, 0, (void*)localParm->dh);
 			SA_AudioStartStream(stream);
-			while (localParm->thread != NULL && localParm->dataSize > sizeof(dataHandshake) + sizeof(size_t) * 2)
+			(*localParm->exit) = 2;
+			while (*localParm->exit != -1 && localParm->dataSize > sizeof(dataHandshake) + sizeof(size_t) * 2)
 			{
 				if (recv(localParm->ctx->srvSocket, (char*)localData, (int)localParm->dataSize, MSG_WAITALL) == SOCKET_ERROR)
 				{
@@ -574,7 +588,7 @@ static void SA_NetClient(void* parms)
 	SA_WinNetEnd(parms);
 }
 
-void* SA_NetInit(int port, const char* host, int asClient, int device, dataHandshake* dh)
+void* SA_NetInit(int port, const char* host, int asClient, int device, int* exitCode, dataHandshake* dh)
 {
 	void* netThread;
 	connectParam* dataParm = NULL;
@@ -587,6 +601,7 @@ void* SA_NetInit(int port, const char* host, int asClient, int device, dataHands
 		dataParm->port = port;
 		dataParm->device = device;
 		dataParm->dh = dh;
+		dataParm->exit = exitCode;
 		if (asClient)
 		{
 			dataParm->asServer = 0;
@@ -609,7 +624,12 @@ void* SA_NetInit(int port, const char* host, int asClient, int device, dataHands
 	return NULL;
 }
 
-void SA_NetClose(void* thread)
+void SA_NetClose(void* thread, saConnection* conn)
 {
-	SA_ThreadClose(thread);
+	if (conn->exit == 1 && conn->mode == 1) {
+		SA_ThreadClose(thread);
+		return;
+	}
+	conn->exit = -1;
+	SA_ThreadJoin(thread);
 }

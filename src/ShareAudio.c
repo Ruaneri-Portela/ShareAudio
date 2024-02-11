@@ -8,7 +8,7 @@ char input[2048];
 int main(int argc, char* argv[])
 {
 	SA_TestDLL();
-	SA_SetLogCONSOLE(1);
+	SA_SetLogFILE("shareaudio.log", 1);
 	saConnection* conn = SA_Setup(-1, NULL, 0, 9950, 0, 2, -1, 2048, -1);
 	if (argc > 1)
 	{
@@ -135,9 +135,10 @@ int main(int argc, char* argv[])
 		SA_Client(conn);
 		break;
 	}
-	if (conn != NULL)
+	int exit = 0;
+	if (conn != NULL && !exit)
 	{
-		while (conn != NULL) {
+		while (conn != NULL && !exit) {
 			char a = getchar();
 			switch (a)
 			{
@@ -151,8 +152,7 @@ int main(int argc, char* argv[])
 				break;
 			case 'q':
 				printf("Quit...");
-				SA_Close(conn);
-				conn = NULL;
+				exit = 1;
 				break;
 			case 'm':
 				printf("Enter a message: ");
@@ -174,12 +174,22 @@ int main(int argc, char* argv[])
 					SA_CloseWavRecord();
 				}
 				break;
+			// Teste
+			case 'y':
+				printf("%s",SA_ListAllAudioDevicesStr(conn));
+				break;
+			case 'k':
+				printf("%s",SA_Version());
+				break;
+			case 'j':
+				printf("%s",SA_GetStats(conn));
+				break;
 			default:
 				break;
 			}
 		}
 	}
-	SA_Shutdown(conn);
+	SA_Close(conn);
 	SA_Log("Program exit", LOG_MAIN, LOG_CLASS_INFO);
 EXIT:
 	return EXIT_SUCCESS;

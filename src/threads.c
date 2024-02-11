@@ -7,6 +7,7 @@ void* SA_ThreadCreate(void* func, void* param)
 
 void SA_ThreadClose(void* hThread)
 {
+	TerminateThread((HANDLE)hThread, 0);
 	CloseHandle((HANDLE)hThread);
 	hThread = NULL;
 }

@@ -25,6 +25,6 @@ extern char* msg;
 
 unsigned short int SA_NetSetupClient(connectParam* parms);
 
-void* SA_NetInit(int port, const char* host, int asClient, int device, dataHandshake* dh);
+void* SA_NetInit(int port, const char* host, int asClient, int device, int* exitCode, dataHandshake* dh);
 
-void SA_NetClose(void* thread);
+void SA_NetClose(void* thread, saConnection* conn);

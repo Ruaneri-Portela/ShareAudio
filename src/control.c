@@ -65,7 +65,7 @@ EXPORT void SA_Server(saConnection* conn)
 	SA_Log("Server", LOG_MAIN, LOG_CLASS_INFO);
 	conn->audio = SA_AudioOpenStream(conn->device, 1, conn->dh);
 	SA_AudioStartStream(conn->audio);
-	conn->thread = SA_NetInit(conn->port, conn->host, 0, conn->device, conn->dh);
+	conn->thread = SA_NetInit(conn->port, conn->host, 0, conn->device, &conn->exit, conn->dh);
 	if (conn->thread == NULL)
 	{
 		SA_Log("Failed to init net", LOG_MAIN, LOG_CLASS_ERROR);
@@ -75,7 +75,7 @@ EXPORT void SA_Server(saConnection* conn)
 EXPORT void SA_Client(saConnection* conn)
 {
 	SA_Log("Client", LOG_MAIN, LOG_CLASS_INFO);
-	conn->thread = SA_NetInit(conn->port, conn->host, 1, conn->device, conn->dh);
+	conn->thread = SA_NetInit(conn->port, conn->host, 1, conn->device, &conn->exit, conn->dh);
 	if (conn->thread == NULL)
 	{
 		SA_Log("Failed to init net", LOG_MAIN, LOG_CLASS_ERROR);
@@ -89,7 +89,7 @@ EXPORT void SA_Close(saConnection* conn)
 		if (conn->audio != NULL)
 			SA_AudioCloseStream(conn->audio);
 		if (*conn->thread != NULL)
-			SA_NetClose(*conn->thread);
+			SA_NetClose(*conn->thread, conn);
 		*conn->thread = NULL;
 		conn->audio = NULL;
 		free(conn);
@@ -139,6 +139,71 @@ EXPORT void SA_ListAllAudioDevices(saConnection* conn)
 	}
 }
 
+EXPORT const char* SA_ListAllAudioDevicesStr(saConnection* conn)
+{
+	char* temp = malloc(DATASIZE);
+	if (temp == NULL)
+	{
+		SA_Log("Failed to allocate memory", LOG_MAIN, LOG_CLASS_ERROR);
+	}
+	else {
+		temp[0] = '\0';
+		char* tempLocal;
+		char stringValue[20];
+		if (conn == NULL)
+		{
+			SA_AudioInit();
+		}
+		audioDevices devicesData = SA_GetAllDevices();
+		for (int i = 0;; i++)
+		{
+			if (devicesData.devices[i] != NULL)
+			{
+				tempLocal = temp;
+				temp = SA_DataConcatString(temp, devicesData.devices[i]->name);
+				free(tempLocal);
+				sprintf_s(stringValue, 20, ",%.0lf", devicesData.devices[i]->defaultSampleRate);
+				tempLocal = temp;
+				temp = SA_DataConcatString(temp, stringValue);
+				sprintf_s(stringValue, 20, ",%d", devicesData.devices[i]->maxInputChannels);
+				tempLocal = temp;
+				temp = SA_DataConcatString(temp, stringValue);
+				free(tempLocal);
+				sprintf_s(stringValue, 20, ",%d,%d\n", devicesData.devices[i]->maxOutputChannels, i);
+				tempLocal = temp;
+				temp = SA_DataConcatString(temp, stringValue);
+				free(tempLocal);
+			}
+			else
+			{
+				break;
+			}
+		}
+		free(devicesData.devices);
+		if (conn == NULL)
+		{
+			SA_AudioClose();
+		}
+	}
+	return temp;
+}
+
+EXPORT void SA_Free(void* data)
+{
+	free(data);
+}
+
+EXPORT const char* SA_Version()
+{
+	char* temp = SA_DataConcatString(VERSION, ",");
+	char* temp2 = SA_DataConcatString(temp, COMPILE);
+	free(temp);
+	temp = SA_DataConcatString(temp2, ",");
+	temp2 = SA_DataConcatString(temp, Pa_GetVersionText());
+	free(temp);
+	return temp2;
+}
+
 EXPORT saConnection* SA_Setup(int device, const char* host, int mode, int port, int testMode, int channel, float volMod, int waveSize, double sampleRate)
 {
 	saConnection* conn = malloc(sizeof(saConnection));
@@ -153,6 +218,7 @@ EXPORT saConnection* SA_Setup(int device, const char* host, int mode, int port, 
 		conn->host = host;
 		conn->mode = mode;
 		conn->port = port;
+		conn->exit = 0;
 		conn->dh = malloc(sizeof(dataHandshake));
 		if (conn->dh == NULL)
 		{
@@ -175,12 +241,6 @@ EXPORT saConnection* SA_Setup(int device, const char* host, int mode, int port, 
 	return conn;
 }
 
-EXPORT void SA_Shutdown(saConnection* conn)
-{
-	SA_Close(conn);
-	SA_AudioClose();
-}
-
 EXPORT const char* SA_GetStats(saConnection* conn)
 {
 	// UNSECURE CODE
@@ -190,8 +250,8 @@ EXPORT const char* SA_GetStats(saConnection* conn)
 		SA_Log("Failed to allocate memory", LOG_MAIN, LOG_CLASS_ERROR);
 	}
 	else {
-		sprintf_s(stats, DATASIZE, "%zd,%zd,%d,%lf,%d,%s,%s,%d", conn->dh->totalPacketSrv, conn->dh->totalPacketSrv, conn->dh->channel,
-			conn->dh->sampleRate, conn->dh->waveSize, Pa_GetDeviceInfo(conn->device)->name, conn->host, conn->port);
+		sprintf_s(stats, DATASIZE, "%zd,%zd,%d,%0.lf,%d,%s,%s,%d,%d", conn->dh->totalPacketSrv + 1, conn->dh->sessionPacket, conn->dh->channel,
+			conn->dh->sampleRate, conn->dh->waveSize, Pa_GetDeviceInfo(conn->device)->name, conn->host, conn->port,conn->exit);
 	}
 	return stats;
 }
@@ -279,7 +339,7 @@ EXPORT void SA_CloseWavRecord() {
 	wavFile = NULL;
 }
 
-EXPORT void* SA_GetWavFileP(){
+EXPORT void* SA_GetWavFileP() {
 	return wavFile;
 }
 

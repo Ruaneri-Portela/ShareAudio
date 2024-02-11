@@ -1,1 +1,1 @@
-#define VERSION "alpha4-20-g1e1f262"
+#define VERSION "alpha4-22-gf2fdf36"

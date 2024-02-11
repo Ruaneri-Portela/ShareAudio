@@ -12,9 +12,13 @@ float SA_GetVolumeModifier();
 
 void SA_ListAllAudioDevices();
 
-saConnection* SA_Setup(int device, const char* host, int mode, int port, int testMode, int channel, float volMod, int waveSize, double sampleRate);
+const char* SA_ListAllAudioDevicesStr(saConnection* conn);
 
-void SA_Shutdown(saConnection* conn);
+void SA_Free(void* data);
+
+const char *SA_Version();
+
+saConnection* SA_Setup(int device, const char* host, int mode, int port, int testMode, int channel, float volMod, int waveSize, double sampleRate);
 
 const char* SA_GetStats(saConnection* conn);
 

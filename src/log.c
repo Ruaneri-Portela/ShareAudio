@@ -114,6 +114,8 @@ EXPORT void SA_Log(const char* msg, logClass class, logLevel level)
 			{
 				printf_s("Error opening file %s\n", fileLogName);
 			}
+			fclose(fileLog);
+			fileLog = NULL;
 		}
 		break;
 	default:

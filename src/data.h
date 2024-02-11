@@ -31,6 +31,7 @@ typedef struct saConnection
 	int device;
 	const char* host;
 	int mode;
+	int exit;
 	dataHandshake* dh;
 } saConnection;
 
