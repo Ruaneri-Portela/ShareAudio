@@ -8,7 +8,7 @@ char input[2048];
 int main(int argc, char* argv[])
 {
 	SA_TestDLL();
-	SA_SetLogFILE("shareaudio.log", 1);
+	SA_SetLogCONSOLE(0);
 	saConnection* conn = SA_Setup(-1, NULL, 0, 9950, 0, 2, -1, 2048, -1);
 	if (argc > 1)
 	{
