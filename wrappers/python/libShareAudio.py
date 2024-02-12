@@ -53,7 +53,7 @@ def SA_GetStats(conn):
     execDll.SA_GetStats.argtypes = [c_void_p]
     execDll.SA_GetStats.restype = c_char_p
     data =  execDll.SA_GetStats(conn).decode("UTF-8")
-    dataList = data.split(",");
+    dataList = data.split(",")
     dataList[0] = int(dataList[0])
     dataList[1] = int(dataList[1])
     dataList[2] = int(dataList[2])

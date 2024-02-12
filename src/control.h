@@ -6,11 +6,11 @@ void SA_Client(saConnection* conn);
 
 void SA_Close(saConnection* conn);
 
-void SA_SetVolumeModifier(float vol);
+void SA_SetVolumeModifier(float vol,saConnection* conn);
 
 float SA_GetVolumeModifier();
 
-void SA_ListAllAudioDevices();
+void SA_ListAllAudioDevices(saConnection* conn);
 
 const char* SA_ListAllAudioDevicesStr(saConnection* conn);
 
