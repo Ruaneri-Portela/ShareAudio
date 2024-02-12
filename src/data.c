@@ -1,8 +1,13 @@
-#include "config.h"
-#include "log.h"
+#include <portaudio.h>
 #include <ctype.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
+#include <stdint.h>
+#include "config.h"
+#include "log.h"
+#include "wav.h"
+
 
 typedef enum dataHeader
 {
@@ -16,6 +21,20 @@ typedef enum dataHeader
 	DISCONNECT = 0xFE,
 	END = 0xFF,
 } dataHeader;
+
+typedef struct audioDevices
+{
+	const PaDeviceInfo** devices;
+	int numDevices;
+} audioDevices;
+
+typedef struct audioBuffer
+{
+	void* data;
+	struct audioBuffer* next;
+	struct audioBuffer* prev;
+} audioBuffer;
+
 
 typedef struct dataHandshake
 {
@@ -31,14 +50,27 @@ typedef struct dataHandshake
 
 typedef struct saConnection
 {
-	void** thread;
-	void* audio;
-	int port;
-	int device;
-	const char* host;
-	int mode;
+	char data[DATASIZE + 3];
+	char* msg;
+
+	FILE* wavFile;
+	wavHeader* headerWav;
+	int rounds;
+
+	char* audioDataFrame;
+	audioBuffer* head;
+
 	dataHandshake* dh;
+	const char* host;
+	void* thread;
+	void* audio;
+	int device;
+	int port;
+	int mode;
+	int runCode;
 } saConnection;
+
+const unsigned char confirmConn[2] = { 0xFF, '\0' };
 
 void SA_DataCopyAudio(float* in, float* out, size_t size, float volMod, size_t testMode)
 {
@@ -199,7 +231,7 @@ void SA_DataCopyStr(char* target, const char* input)
 	target[size] = '\0';
 }
 
-void SA_DataRevcProcess(int* rounds, char** msgStream, char* msgLocal, char** msg) {
+void SA_DataRevcProcess(size_t* rounds, char** msgStream, char* msgLocal, char** msg) {
 	char* dataBuffer = malloc(DATASIZE * ((*rounds) + 1));
 	if (*msgStream == NULL)
 	{

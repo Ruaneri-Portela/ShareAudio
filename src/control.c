@@ -1,13 +1,18 @@
-#include "audio.h"
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <math.h>
+#include <stdint.h>
+#include <portaudio.h>
+
 #include "config.h"
+#include "wav.h"
 #include "data.h"
+#include "audio.h"
 #include "log.h"
 #include "net.h"
 #include "threads.h"
-#include "wav.h"
-#include <math.h>
-#include <stdio.h>
-#include <string.h>
+#include "encrypt.h"
 
 EXPORT void SA_Init(saConnection* conn)
 {
@@ -17,7 +22,7 @@ EXPORT void SA_Init(saConnection* conn)
 	{
 		SA_Log("Device out of range", LOG_MAIN, LOG_CLASS_ERROR);
 	}
-	if (conn->device == -1 && conn->mode == 1 && ISWIN)
+	if (conn->device == -1 && conn->mode == 0 && ISWIN)
 	{
 		int defaultOutDevice = Pa_GetDefaultOutputDevice();
 		const char* defaultOutDeviceName = Pa_GetDeviceInfo(defaultOutDevice)->name;
@@ -49,8 +54,8 @@ EXPORT void SA_Init(saConnection* conn)
 	}
 	else
 	{
-		(conn->device == -1 && conn->mode == 2) ? conn->device = Pa_GetDefaultOutputDevice() : conn->device;
-		(conn->device == -1 && conn->mode == 1) ? conn->device = Pa_GetDefaultInputDevice() : conn->device;
+		(conn->device == -1 && conn->mode == 1) ? conn->device = Pa_GetDefaultOutputDevice() : conn->device;
+		(conn->device == -1 && conn->mode == 0) ? conn->device = Pa_GetDefaultInputDevice() : conn->device;
 	}
 	(conn->dh->sampleRate == -1 && conn->device > -1) ? conn->dh->sampleRate = Pa_GetDeviceInfo(conn->device)->defaultSampleRate : conn->dh->sampleRate;
 	if (conn->host == NULL)
@@ -63,9 +68,9 @@ EXPORT void SA_Init(saConnection* conn)
 EXPORT void SA_Server(saConnection* conn)
 {
 	SA_Log("Server", LOG_MAIN, LOG_CLASS_INFO);
-	conn->audio = SA_AudioOpenStream(conn->device, 1, conn->dh);
+	conn->audio = SA_AudioOpenStream(conn->device, 1, conn);
 	SA_AudioStartStream(conn->audio);
-	conn->thread = SA_NetInit(conn->port, conn->host, 0, conn->device, &conn->exit, conn->dh);
+	SA_NetInit(conn);
 	if (conn->thread == NULL)
 	{
 		SA_Log("Failed to init net", LOG_MAIN, LOG_CLASS_ERROR);
@@ -75,7 +80,7 @@ EXPORT void SA_Server(saConnection* conn)
 EXPORT void SA_Client(saConnection* conn)
 {
 	SA_Log("Client", LOG_MAIN, LOG_CLASS_INFO);
-	conn->thread = SA_NetInit(conn->port, conn->host, 1, conn->device, &conn->exit, conn->dh);
+	SA_NetInit(conn);
 	if (conn->thread == NULL)
 	{
 		SA_Log("Failed to init net", LOG_MAIN, LOG_CLASS_ERROR);
@@ -88,9 +93,9 @@ EXPORT void SA_Close(saConnection* conn)
 	{
 		if (conn->audio != NULL)
 			SA_AudioCloseStream(conn->audio);
-		if (*conn->thread != NULL)
-			SA_NetClose(*conn->thread, conn);
-		*conn->thread = NULL;
+		if (conn->thread != NULL)
+			SA_NetClose(conn->thread, conn);
+		conn->thread = NULL;
 		conn->audio = NULL;
 		free(conn);
 	}
@@ -204,7 +209,7 @@ EXPORT const char* SA_Version()
 	return temp2;
 }
 
-EXPORT saConnection* SA_Setup(int device, const char* host, int mode, int port, int testMode, int channel, float volMod, int waveSize, double sampleRate)
+EXPORT saConnection* SA_Setup(int device, const char* host, int port, int testMode, int channel, float volMod, int waveSize, double sampleRate)
 {
 	saConnection* conn = malloc(sizeof(saConnection));
 	if (conn == NULL)
@@ -214,11 +219,10 @@ EXPORT saConnection* SA_Setup(int device, const char* host, int mode, int port, 
 	else
 	{
 		memset(conn, 0, sizeof(saConnection));
+		memset(conn->data, 0, DATASIZE + 3);
 		conn->device = device;
 		conn->host = host;
-		conn->mode = mode;
 		conn->port = port;
-		conn->exit = 0;
 		conn->dh = malloc(sizeof(dataHandshake));
 		if (conn->dh == NULL)
 		{
@@ -231,7 +235,6 @@ EXPORT saConnection* SA_Setup(int device, const char* host, int mode, int port, 
 			conn->dh->sampleRate = sampleRate;
 			conn->dh->waveSize = waveSize;
 			conn->dh->volMod = volMod;
-			conn->dh->header = 0x0;
 			conn->dh->channel = channel;
 			SA_ProcessSetPriority();
 			SA_Log("Program start. Build on " COMPILE ". Binary version " VERSION, LOG_MAIN, LOG_CLASS_INFO);
@@ -251,7 +254,7 @@ EXPORT const char* SA_GetStats(saConnection* conn)
 	}
 	else {
 		sprintf_s(stats, DATASIZE, "%zd,%zd,%d,%0.lf,%d,%s,%s,%d,%d", conn->dh->totalPacketSrv + 1, conn->dh->sessionPacket, conn->dh->channel,
-			conn->dh->sampleRate, conn->dh->waveSize, Pa_GetDeviceInfo(conn->device)->name, conn->host, conn->port,conn->exit);
+			conn->dh->sampleRate, conn->dh->waveSize, Pa_GetDeviceInfo(conn->device)->name, conn->host, conn->port,conn->runCode);
 	}
 	return stats;
 }
@@ -287,6 +290,7 @@ EXPORT void SA_SetLogCONSOLE(int debug)
 
 EXPORT int SA_TestDLL()
 {
+	test();
 	logOutput l = logOutputMethod;
 	logOutputMethod = LOG_OUTPUT_CONSOLE;
 	SA_SetLogCONSOLE(1);
@@ -295,12 +299,12 @@ EXPORT int SA_TestDLL()
 	return 1;
 }
 
-EXPORT const char* SA_ReadLastMsg()
+EXPORT const char* SA_ReadLastMsg(saConnection* conn)
 {
-	return msg;
+	return conn->msg;
 }
 
-EXPORT int SA_SendMsg(const char* dataMsg)
+EXPORT int SA_SendMsg(const char* dataMsg, saConnection* conn)
 {
 	size_t size = strlen(dataMsg);
 	size_t round = (size_t)ceil((double)size / DATASIZE);
@@ -309,17 +313,17 @@ EXPORT int SA_SendMsg(const char* dataMsg)
 		if (i == (round - 1))
 		{
 			SA_Log("Parsing Data Last", LOG_MAIN, LOG_CLASS_DEBUG);
-			data[DATASIZE + 1] = 0x00;
+			conn->data[DATASIZE + 1] = 0x00;
 		}
 		else
 		{
 			SA_Log("Parsing Data", LOG_MAIN, LOG_CLASS_DEBUG);
-			data[DATASIZE + 1] = 0x01;
+			conn->data[DATASIZE + 1] = 0x01;
 		}
-		SA_DataCopyStr(data, dataMsg + (i * DATASIZE));
-		data[DATASIZE + 2] = 0x01;
+		SA_DataCopyStr(conn->data, dataMsg + (i * DATASIZE));
+		conn->data[DATASIZE + 2] = 0x01;
 		SA_Log("Wait sender on network", LOG_MAIN, LOG_CLASS_DEBUG);
-		while (data[DATASIZE + 2] != 0x00)
+		while (conn->data[DATASIZE + 2] != 0x00)
 		{
 			continue;
 		}
@@ -329,20 +333,16 @@ EXPORT int SA_SendMsg(const char* dataMsg)
 }
 
 EXPORT void SA_InitWavRecord(saConnection* conn, const char* path) {
-	wavHeader* headData = SA_WavCreateHeader(conn->dh->sampleRate, 32, conn->dh->channel, conn->dh->waveSize);
-	wavFile = SA_WavCreateFile(headData, path);
+	wavHeader* headData = SA_WavCreateHeader((int32_t)conn->dh->sampleRate, 32, conn->dh->channel, conn->dh->waveSize);
+	conn->wavFile = SA_WavCreateFile(headData, path);
 	free(headData);
 }
 
-EXPORT void SA_CloseWavRecord() {
-	SA_WavCloseFile(wavFile);
-	wavFile = NULL;
+EXPORT void SA_CloseWavRecord(saConnection* conn) {
+	SA_WavCloseFile(conn->wavFile);
+	conn->wavFile = NULL;
 }
 
-EXPORT void* SA_GetWavFileP() {
-	return wavFile;
-}
-
-EXPORT void SA_SetWavFileP(FILE* file) {
-	wavFile = file;
+EXPORT void* SA_GetWavFilePtr(saConnection* conn) {
+	return conn->wavFile;
 }

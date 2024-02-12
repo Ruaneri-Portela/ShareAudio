@@ -1,8 +1,4 @@
 #include "config.h"
-#include "wav.h"
-#include <stdio.h>
-#include <string.h>
-#include <time.h>
 
 #if defined(LINUX)
 #include <sys/socket.h>
@@ -12,10 +8,15 @@
 #include <netdb.h>
 #endif
 
-#include "threads.h"
+#include <portaudio.h>
+#include <time.h>
+#include <stdint.h>
+#include <stdio.h>
+#include "wav.h"
+#include "data.h"
 #include "audio.h"
 #include "log.h"
-#include "data.h"
+#include "threads.h"
 
 typedef struct netCtx
 {
@@ -26,23 +27,11 @@ typedef struct netCtx
 
 typedef struct connectParam
 {
-	unsigned short int asServer;
-	unsigned int port;
-	const char* host;
-	short int device;
+	saConnection * conn;
 	size_t dataSize;
 	size_t delay;
 	netCtx* ctx;
-	dataHandshake* dh;
-	void* thread;
-	int* exit;
 } connectParam;
-
-char data[DATASIZE + 3];
-
-char* msg = NULL;
-
-static const unsigned char confirmConn[2] = { 0xFF, '\0' };
 
 #if defined(WINDOWS)
 static WSADATA wsaData;
@@ -84,7 +73,7 @@ static void SA_WinNetOpen()
 
 static void SA_NetResolveHost(connectParam* parm, ADDRESS_FAMILY family)
 {
-	unsigned short int detectIp = SA_DataDetectIsIp(parm->host, parm->asServer);
+	unsigned short int detectIp = SA_DataDetectIsIp(parm->conn->host, parm->conn->mode);
 	switch (detectIp)
 	{
 	case 0:
@@ -97,7 +86,7 @@ static void SA_NetResolveHost(connectParam* parm, ADDRESS_FAMILY family)
 		SA_Log("IP Forbbiden on Client", LOG_NET, LOG_CLASS_ERROR);
 		break;
 	}
-	const char* hostLocal = parm->host;
+	const char* hostLocal = parm->conn->host;
 	struct addrinfo* res = NULL;
 	char* ip = NULL;
 	if (detectIp == 0)
@@ -106,7 +95,7 @@ static void SA_NetResolveHost(connectParam* parm, ADDRESS_FAMILY family)
 		int tam = sizeof(char) * 16;
 		char* ip = malloc(tam);
 		ip == NULL ? SA_Log("Failed to allocate memory", LOG_NET, LOG_CLASS_ERROR) : (void)0;
-		getaddrinfo(parm->host, 0, 0, &res);
+		getaddrinfo(parm->conn->host, 0, 0, &res);
 		for (struct addrinfo* ptr = res; ptr != NULL; ptr = ptr->ai_next)
 		{
 			if (ptr->ai_addr->sa_family == AF_INET)
@@ -122,7 +111,7 @@ static void SA_NetResolveHost(connectParam* parm, ADDRESS_FAMILY family)
 		}
 	}
 	parm->ctx->srvAddr.sin_family = family;
-	parm->ctx->srvAddr.sin_port = htons(parm->port);
+	parm->ctx->srvAddr.sin_port = htons(parm->conn->port);
 	if (hostLocal != NULL && inet_pton(AF_INET, hostLocal, &parm->ctx->srvAddr.sin_addr) == 0)
 	{
 		if (res != NULL)
@@ -138,7 +127,7 @@ static void SA_NetResolveHost(connectParam* parm, ADDRESS_FAMILY family)
 	else
 	{
 		const char* msgPrefix;
-		if (parm->asServer == 1)
+		if (parm->conn->mode == 1)
 		{
 			msgPrefix = "Listen on: ";
 		}
@@ -146,17 +135,17 @@ static void SA_NetResolveHost(connectParam* parm, ADDRESS_FAMILY family)
 		{
 			msgPrefix = "Connect to host: ";
 		}
-		char* logMsg = SA_DataConcatString(msgPrefix, parm->host);
+		char* logMsg = SA_DataConcatString(msgPrefix, parm->conn->host);
 		SA_Log(logMsg, LOG_NET, LOG_CLASS_INFO);
 		free(logMsg);
 	}
 }
 
 static void SA_NetServerRecv(connectParam* parms) {
-	int failCount = 0;
+	size_t failCount = 0;
+	size_t rounds = 0;
 	char msgLocal[DATASIZE + 3];
 	char* msgStream = NULL;
-	int rounds = 0;
 	while (1) {
 		if (recv(parms->ctx->clientSocket, msgLocal, DATASIZE + 2, MSG_WAITALL) == SOCKET_ERROR)
 		{
@@ -169,7 +158,7 @@ static void SA_NetServerRecv(connectParam* parms) {
 		}
 		else
 		{
-			SA_DataRevcProcess(&rounds, &msgStream, msgLocal, &msg);
+			SA_DataRevcProcess(&rounds, &msgStream, msgLocal, &parms->conn->msg);
 			SA_Log("Data Revc", LOG_NET, LOG_CLASS_DEBUG);
 			failCount = 0;
 		}
@@ -211,9 +200,9 @@ static unsigned short int SA_NetServerGetHandhake(connectParam* localParm)
 {
 	SA_Log("Waiting for client...", LOG_NET, LOG_CLASS_INFO);
 	localParm->ctx->clientSocket = SOCKET_ERROR;
-	localParm->dataSize = SA_DataGetDataFrameSize(localParm->dh);
-	localParm->delay = SA_DataGetDelayInterFrames(localParm->dh);
-	while ((int)localParm->ctx->clientSocket == SOCKET_ERROR && localParm->thread != NULL)
+	localParm->dataSize = SA_DataGetDataFrameSize(localParm->conn->dh);
+	localParm->delay = SA_DataGetDelayInterFrames(localParm->conn->dh);
+	while ((int)localParm->ctx->clientSocket == SOCKET_ERROR && localParm->conn->thread != NULL)
 	{
 		localParm->ctx->clientSocket = accept(localParm->ctx->srvSocket, NULL, NULL);
 		SA_Sleep(localParm->delay);
@@ -227,18 +216,18 @@ static unsigned short int SA_NetServerGetHandhake(connectParam* localParm)
 	else
 	{
 		SA_Log("Recived 'hello' code (2/3)", LOG_NET, LOG_CLASS_INFO);
-		localParm->dh->header = HANDSHAKE;
-		if (send(localParm->ctx->clientSocket, (char*)localParm->dh, sizeof(dataHandshake), 0) == SOCKET_ERROR)
+		localParm->conn->dh->header = HANDSHAKE;
+		if (send(localParm->ctx->clientSocket, (char*)localParm->conn->dh, sizeof(dataHandshake), 0) == SOCKET_ERROR)
 		{
 			SA_Log("Send failed!", LOG_NET, LOG_CLASS_WARNING);
 		}
 		else
 		{
-			if (recv(localParm->ctx->clientSocket, data, DATASIZE + 1, 0) == SOCKET_ERROR)
+			if (recv(localParm->ctx->clientSocket, localParm->conn->data, DATASIZE + 1, 0) == SOCKET_ERROR)
 			{
 				SA_Log("Recv failed!", LOG_NET, LOG_CLASS_WARNING);
 			}
-			if (strcmp((char*)confirmConn, data) == 0)
+			if (strcmp((char*)confirmConn, localParm->conn->data) == 0)
 			{
 				SA_Log("Handshake complete (3/3)", LOG_NET, LOG_CLASS_INFO);
 				return 1;
@@ -252,10 +241,10 @@ static unsigned short int SA_NetServerGetHandhake(connectParam* localParm)
 static void SA_NetServer(void* parms)
 {
 	connectParam* localParm = (connectParam*)parms;
-	while (*localParm->exit != -1)
+	while (localParm->conn->runCode != -1)
 	{
-		localParm->dh->sessionPacket = 0;
-		(*localParm->exit) = 1;
+		localParm->conn->dh->sessionPacket = 0;
+		localParm->conn->runCode = 1;
 		while (!SA_NetServerGetHandhake((connectParam*)parms))
 			;
 		SA_Log("Audio connection established", LOG_NET, LOG_CLASS_INFO);
@@ -263,60 +252,64 @@ static void SA_NetServer(void* parms)
 		time_t lastPacket = time(NULL);
 		time_t lastTry;
 		void* revcThread = SA_ThreadCreate(SA_NetServerRecv, parms);
-		data[DATASIZE + 2] = 0x00;
-		(*localParm->exit) = 2;
+		localParm->conn->data[DATASIZE + 2] = 0x00;
+		localParm->conn->runCode = 2;
 		int exitSender = 0;
 		while (1)
 		{
 			int delayed = 1;
 			lastTry = time(NULL) - lastPacket;
-			if ((*localParm->exit) == -1)
+			if (localParm->conn->runCode == -1)
 			{
 				SA_ThreadClose(revcThread);
-				audioDataFrame = SA_DataCreateDataFrame(NULL, localParm->dh, 1);
-				dataHeader* header = (dataHeader*)audioDataFrame;
+				localParm->conn->audioDataFrame = SA_DataCreateDataFrame(NULL, localParm->conn->dh, 1);
+				dataHeader* header = (dataHeader*)localParm->conn->audioDataFrame;
 				*header = END;
 				exitSender = 1;
 			}
 			if (lastTry > 10)
 			{
-				audioDataFrame = SA_DataCreateDataFrame(NULL, localParm->dh, 1);
-				dataHeader* header = (dataHeader*)audioDataFrame;
+				localParm->conn->audioDataFrame = SA_DataCreateDataFrame(NULL, localParm->conn->dh, 1);
+				dataHeader* header = (dataHeader*)localParm->conn->audioDataFrame;
 				*header = NULLDATA;
 			}
-			if (data[DATASIZE + 2] != 0x00)
+			if (localParm->conn->data[DATASIZE + 2] != 0x00)
 			{
-				audioDataFrame = SA_DataCreateDataFrame((float*)data, localParm->dh, 0);
-				dataHeader* header = (dataHeader*)audioDataFrame;
+				localParm->conn->audioDataFrame = SA_DataCreateDataFrame((float*)localParm->conn->data, localParm->conn->dh, 0);
+				dataHeader* header = (dataHeader*)localParm->conn->audioDataFrame;
 				*header = DATAMSG;
-				memcpy_s((char*)(header + 1), DATASIZE + 2, data, DATASIZE + 2);
+				memcpy_s((char*)(header + 1), DATASIZE + 2, localParm->conn->data, DATASIZE + 2);
 				delayed = 0;
 			}
-			if (audioDataFrame != NULL)
+			if (localParm->conn->audioDataFrame != NULL)
 			{
-				SA_DataPutOrderDataFrame((char*)audioDataFrame, localParm->dh->sessionPacket, localParm->dh);
-				if (send(localParm->ctx->clientSocket, (char*)audioDataFrame, (int)localParm->dataSize, 0) == SOCKET_ERROR)
+				SA_DataPutOrderDataFrame((char*)localParm->conn->audioDataFrame, localParm->conn->dh->sessionPacket, localParm->conn->dh);
+				if (send(localParm->ctx->clientSocket, (char*)localParm->conn->audioDataFrame, (int)localParm->dataSize, 0) == SOCKET_ERROR)
 				{
 					if (tolerance > 5)
+					{
 						SA_Log("Send failed!", LOG_NET, LOG_CLASS_DEBUG);
+					}
 					tolerance++;
 					SA_Sleep(1000);
 					break;
 				}
 				else
 				{
-					if (data[DATASIZE + 2] != 0x00) {
-						data[DATASIZE + 2] = 0x00;
+					if (localParm->conn->data[DATASIZE + 2] != 0x00) 
+					{
+						localParm->conn->data[DATASIZE + 2] = 0x00;
 						SA_Log("Msg send", LOG_NET, LOG_CLASS_DEBUG);
 					}
-					else {
+					else 
+					{
 						lastPacket = time(NULL);
-						localParm->dh->sessionPacket++;
+						localParm->conn->dh->sessionPacket++;
 					}
 					tolerance = 0;
 				}
-				audioDataFrame != NULL ? free(audioDataFrame) : (void)0;
-				audioDataFrame = NULL;
+				localParm->conn->audioDataFrame != NULL ? free(localParm->conn->audioDataFrame) : (void)0;
+				localParm->conn->audioDataFrame = NULL;
 			}
 			if (delayed) {
 				SA_Sleep(localParm->delay);
@@ -326,8 +319,9 @@ static void SA_NetServer(void* parms)
 			}
 		}
 		closesocket(localParm->ctx->clientSocket);
-		localParm->dh->header = NULLHEADER;
+		localParm->conn->dh->header = NULLHEADER;
 	}
+	closesocket(localParm->ctx->srvSocket);
 	SA_WinNetEnd(parms);
 }
 
@@ -341,16 +335,16 @@ static unsigned short int SA_NetSetupClient(connectParam* parms)
 	else
 	{
 		SA_Log("Socket ok", LOG_NET, LOG_CLASS_INFO);
-		if (head != NULL)
+		if (parms->conn->head != NULL)
 		{
-			if (head->next == NULL)
+			if (parms->conn->head->next == NULL)
 			{
-				free(head->data);
-				free(head);
+				free(parms->conn->head->data);
+				free(parms->conn->head);
 			}
 			else
 			{
-				for (audioBuffer* i = head; i != NULL; i = i->next)
+				for (audioBuffer* i = parms->conn->head; i != NULL; i = i->next)
 				{
 					free(i->data);
 					if (i->next == NULL)
@@ -364,7 +358,7 @@ static unsigned short int SA_NetSetupClient(connectParam* parms)
 					}
 				}
 			}
-			head = NULL;
+			parms->conn->head = NULL;
 		}
 		SA_NetResolveHost(parms, AF_INET);
 		SA_Log("Connecting...", LOG_NET, LOG_CLASS_INFO);
@@ -375,14 +369,14 @@ static unsigned short int SA_NetSetupClient(connectParam* parms)
 		else
 		{
 			SA_Log("Host connected, sending 'hello' code (1/3)", LOG_NET, LOG_CLASS_INFO);
-			if (send(parms->ctx->srvSocket, (char*)parms->dh, sizeof(*parms->dh), 0) == SOCKET_ERROR)
+			if (send(parms->ctx->srvSocket, (char*)parms->conn->dh, sizeof(*parms->conn->dh), 0) == SOCKET_ERROR)
 			{
 				SA_Log("Send failed!", LOG_NET, LOG_CLASS_WARNING);
 			}
 			else
 			{
 				SA_Log("Hello send... Wait Handshake (2/3)", LOG_NET, LOG_CLASS_INFO);
-				if (recv(parms->ctx->srvSocket, (char*)parms->dh, sizeof(*parms->dh), 0) == SOCKET_ERROR)
+				if (recv(parms->ctx->srvSocket, (char*)parms->conn->dh, sizeof(*parms->conn->dh), 0) == SOCKET_ERROR)
 				{
 					SA_Log("Recv failed!", LOG_NET, LOG_CLASS_WARNING);
 				}
@@ -395,7 +389,7 @@ static unsigned short int SA_NetSetupClient(connectParam* parms)
 					else
 					{
 						SA_Log("Handshake completed (3/3)", LOG_NET, LOG_CLASS_INFO);
-						parms->dataSize = SA_DataGetDataFrameSize(parms->dh);
+						parms->dataSize = SA_DataGetDataFrameSize(parms->conn->dh);
 						SA_Log("Audio connection established", LOG_NET, LOG_CLASS_INFO);
 						return 1;
 					}
@@ -408,22 +402,22 @@ static unsigned short int SA_NetSetupClient(connectParam* parms)
 
 static void SA_NetClientSend(connectParam* parms)
 {
-	data[DATASIZE + 2] = 0x00;
+	parms->conn->data[DATASIZE + 2] = 0x00;
 	size_t count = 0;
 	while (1) {
-		if (data[DATASIZE + 2] != 0x00) {
-			if (send(parms->ctx->srvSocket, data, DATASIZE + 2, 0) == SOCKET_ERROR)
+		if (parms->conn->data[DATASIZE + 2] != 0x00) {
+			if (send(parms->ctx->srvSocket, parms->conn->data, DATASIZE + 2, 0) == SOCKET_ERROR)
 			{
 				SA_Log("Msg failed!", LOG_NET, LOG_CLASS_DEBUG);
 				if (count > 10) {
-					break;
 					SA_Log("Msg failed!", LOG_NET, LOG_CLASS_WARNING);
+					break;
 				}
 				count++;
 			}
 			else
 			{
-				data[DATASIZE + 2] = 0x00;
+				parms->conn->data[DATASIZE + 2] = 0x00;
 				SA_Log("Msg send!", LOG_NET, LOG_CLASS_DEBUG);
 			}
 		}
@@ -433,20 +427,19 @@ static void SA_NetClientSend(connectParam* parms)
 
 static void SA_NetClient(void* parms)
 {
-	connectParam* localParm = (connectParam*)parms;
 	PaStream* stream = NULL;
-	char* localData = NULL;
+	connectParam* localParm = (connectParam*)parms;
 	size_t chunckWaveSize = 0;
 	size_t err = 0;
+	char* localData = NULL;
 	char* msgStream = NULL;
-	int rounds = 0;
+	size_t rounds = 0;
 	SA_WinNetOpen();
-	while (*localParm->exit != -1)
+	while (localParm->conn->runCode != -1)
 	{
-		(*localParm->exit) = 1;
-		while (*localParm->exit != -1 && !(SA_NetSetupClient(localParm)))
-			;
-		if(*localParm->exit == -1)
+		(localParm->conn->runCode) = 1;
+		while (localParm->conn->runCode != -1 && !(SA_NetSetupClient(localParm)));
+		if(localParm->conn->runCode == -1)
 		{
 			break;
 		}
@@ -454,10 +447,10 @@ static void SA_NetClient(void* parms)
 		localData = malloc(localParm->dataSize);
 		if (localData)
 		{
-			stream = SA_AudioOpenStream(localParm->device, 0, (void*)localParm->dh);
+			stream = SA_AudioOpenStream(localParm->conn->device, 0, (void*)localParm->conn);
 			SA_AudioStartStream(stream);
-			(*localParm->exit) = 2;
-			while (*localParm->exit != -1 && localParm->dataSize > sizeof(dataHandshake) + sizeof(size_t) * 2)
+			localParm->conn->runCode = 2;
+			while (localParm->conn->runCode != -1 && localParm->dataSize > sizeof(dataHandshake) + sizeof(size_t) * 2)
 			{
 				if (recv(localParm->ctx->srvSocket, (char*)localData, (int)localParm->dataSize, MSG_WAITALL) == SOCKET_ERROR)
 				{
@@ -465,52 +458,48 @@ static void SA_NetClient(void* parms)
 					if (err > 10)
 					{
 						SA_Log("Close connection", LOG_NET, LOG_CLASS_WARNING);
-						SA_AudioCloseStream(stream);
-						stream = NULL;
-						free(localData);
-						localData = NULL;
-						stream = NULL;
-						break;
+						localParm->conn->runCode = -1;
 					}
 				}
 				else
 				{
-					localParm->dh->totalPacketSrv = SA_DataGetOrderDataFrame(localData, localParm->dh);
 					err = 0;
+					localParm->conn->dh->totalPacketSrv = SA_DataGetOrderDataFrame(localData, localParm->conn->dh);
 					dataHeader* header = (dataHeader*)localData;
 					switch (header[0])
 					{
 					case DATA:
 						chunckWaveSize = SA_DataGetWaveSize(localData);
-						if (chunckWaveSize != localParm->dh->waveSize * (size_t)localParm->dh->channel)
+						if (chunckWaveSize != localParm->conn->dh->waveSize * (size_t)localParm->conn->dh->channel)
 						{
 							SA_Log("Invalid data size", LOG_NET, LOG_CLASS_WARNING);
 							break;
 						}
-						audioDataFrame = malloc(localParm->dataSize);
-						audioDataFrame == NULL ? SA_Log("Failed to allocate memory", LOG_NET, LOG_CLASS_ERROR) : (void)0;
-						if (audioDataFrame != NULL)
+						localParm->conn->audioDataFrame = malloc(localParm->dataSize);
+						localParm->conn->audioDataFrame == NULL ? SA_Log("Failed to allocate memory", LOG_NET, LOG_CLASS_ERROR) : (void)0;
+						if (localParm->conn->audioDataFrame != NULL)
 						{
-							memcpy_s(audioDataFrame, localParm->dataSize, localData, localParm->dataSize);
+							memcpy_s(localParm->conn->audioDataFrame, localParm->dataSize, localData, localParm->dataSize);
 							audioBuffer* temp = (audioBuffer*)malloc(sizeof(audioBuffer));
 							if (temp)
 							{
-								if (wavFile != NULL)
+								if (localParm->conn->wavFile != NULL)
 								{
-									SA_WavWriteData(wavFile, SA_DataGetWaveData(localData), localParm->dh->waveSize * localParm->dh->channel);
+									SA_WavWriteData(localParm->conn->wavFile, SA_DataGetWaveData(localData), localParm->conn->dh->waveSize * localParm->conn->dh->channel,localParm->conn->rounds);
+									localParm->conn->rounds++;
 								}
-								temp->data = audioDataFrame;
+								temp->data = localParm->conn->audioDataFrame;
 								temp->next = NULL;
 								temp->prev = NULL;
-								if (head == NULL)
+								if (localParm->conn->head == NULL)
 								{
-									head = temp;
+									localParm->conn->head = temp;
 								}
 								else
 								{
 									int bufferSize = 0;
 									int delete = 0;
-									for (audioBuffer* i = head; i != NULL; i = i->next)
+									for (audioBuffer* i = localParm->conn->head; i != NULL; i = i->next)
 									{
 										bufferSize++;
 										if (bufferSize > 5)
@@ -532,7 +521,7 @@ static void SA_NetClient(void* parms)
 												free(i);
 												break;
 											}
-											localParm->dh->sessionPacket--;
+											localParm->conn->dh->sessionPacket--;
 										}
 										else if (i->next == NULL)
 										{
@@ -548,18 +537,15 @@ static void SA_NetClient(void* parms)
 								SA_Log("Failed to allocate memory", LOG_NET, LOG_CLASS_ERROR);
 							}
 						}
-						chunckWaveSize = 0;
-						localParm->dh->sessionPacket++;
+						localParm->conn->dh->sessionPacket++;
 						break;
 					case DATAMSG:
-						SA_DataRevcProcess(&rounds, &msgStream, (char*)(header + 1), &msg);
+						SA_DataRevcProcess(&rounds, &msgStream, (char*)(header + 1), &localParm->conn->msg);
 						SA_Log("Msg revc!", LOG_NET, LOG_CLASS_DEBUG);
 						break;
 					case END:
 						SA_Log("Connection closed", LOG_NET, LOG_CLASS_INFO);
-						closesocket(localParm->ctx->srvSocket);
-						SA_AudioCloseStream(stream);
-						stream = NULL;
+						localParm->conn->runCode = -1;
 						break;
 					case NULLDATA:
 						break;
@@ -569,67 +555,51 @@ static void SA_NetClient(void* parms)
 					}
 				}
 			}
-			if (stream != NULL)
-			{
-				SA_Sleep(500); //UNSECURE
-				SA_AudioCloseStream(stream);
-			}
-			localParm->ctx->srvSocket = 0;
+			SA_AudioCloseStream(stream);
+			closesocket(localParm->ctx->srvSocket);
+			SA_ThreadClose(sendThread);
 			free(localData);
 		}
 		else
 		{
 			SA_Log("Failed to allocate memory", LOG_NET, LOG_CLASS_ERROR);
 		}
-		localParm->dh->header = NULLHEADER;
-		SA_ThreadClose(sendThread);
-		closesocket(localParm->ctx->srvSocket);
 	}
 	SA_WinNetEnd(parms);
 }
 
-void* SA_NetInit(int port, const char* host, int asClient, int device, int* exitCode, dataHandshake* dh)
+void SA_NetInit(saConnection * conn)
 {
-	void* netThread;
 	connectParam* dataParm = NULL;
 	dataParm = malloc(sizeof(connectParam));
 	if (dataParm != NULL)
 	{
 		dataParm->ctx = malloc(sizeof(netCtx));
 		dataParm->ctx == NULL ? SA_Log("Failed to allocate memory", LOG_NET, LOG_CLASS_ERROR) : (void)0;
-		dataParm->host = host;
-		dataParm->port = port;
-		dataParm->device = device;
-		dataParm->dh = dh;
-		dataParm->exit = exitCode;
-		if (asClient)
+		dataParm->conn = conn;
+		if (conn->mode)
 		{
-			dataParm->asServer = 0;
-			netThread = SA_ThreadCreate(SA_NetClient, (void*)dataParm);
+			conn->thread = SA_ThreadCreate(SA_NetClient, (void*)dataParm);
 		}
 		else
 		{
-			dataParm->asServer = 1;
 			SA_NetSetupServer(dataParm);
-			netThread = SA_ThreadCreate(SA_NetServer, (void*)dataParm);
+			conn->thread = SA_ThreadCreate(SA_NetServer, (void*)dataParm);
 		}
-		netThread == NULL ? SA_Log("Failed to create thread", LOG_NET, LOG_CLASS_ERROR) : (void)0;
-		dataParm->thread = netThread;
-		return &dataParm->thread;
+		conn->thread == NULL ? SA_Log("Failed to create thread", LOG_NET, LOG_CLASS_ERROR) : (void)0;
 	}
 	else
 	{
 		SA_Log("Failed to allocate memory", LOG_NET, LOG_CLASS_ERROR);
 	}
-	return NULL;
 }
 
 void SA_NetClose(void* thread, saConnection* conn)
 {
-	if (conn->exit == 1 && conn->mode == 1) {
+	if (conn->runCode == 1 && conn->mode == 1) {
 		SA_ThreadClose(thread);
 		return;
 	}
-	conn->exit = -1;
+	conn->runCode = -1;
 	SA_ThreadJoin(thread);
 }

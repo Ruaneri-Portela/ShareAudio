@@ -18,7 +18,7 @@ void SA_Free(void* data);
 
 const char *SA_Version();
 
-saConnection* SA_Setup(int device, const char* host, int mode, int port, int testMode, int channel, float volMod, int waveSize, double sampleRate);
+saConnection* SA_Setup(int device, const char* host, int port, int testMode, int channel, float volMod, int waveSize, double sampleRate);
 
 const char* SA_GetStats(saConnection* conn);
 
@@ -30,14 +30,12 @@ void SA_SetLogCONSOLE(int debug);
 
 int SA_TestDLL();
 
-const char* SA_ReadLastMsg();
+const char* SA_ReadLastMsg(saConnection* conn);
 
-int SA_SendMsg(const char* msg);
+int SA_SendMsg(const char* msg , saConnection* conn);
 
 void SA_InitWavRecord(saConnection* conn, const char* path);
 
-void SA_CloseWavRecord();
+void SA_CloseWavRecord(saConnection* conn);
 
-void* SA_GetWavFileP();
-
-void SA_SetWavFileP(FILE* file);
+void* SA_GetWavFilePtr(saConnection* conn);

@@ -19,12 +19,6 @@ typedef struct wavHeader {
 	int32_t dataSize;
 } wavHeader;
 
-FILE* wavFile = NULL;
-
-wavHeader* headerWav = NULL;
-
-int rounds = 1;
-
 wavHeader* SA_WavCreateHeader(int32_t sampleRate, int16_t bitsPerSample, int16_t channels, int32_t dataSize) {
 	wavHeader* header = (wavHeader*)malloc(sizeof(wavHeader));
 	if (header == NULL) {
@@ -61,7 +55,7 @@ void SA_WavUpdateSize(FILE* file, int32_t dataSize) {
 	fseek(file, 0, SEEK_END);
 }
 
-void SA_WavWriteData(FILE* file, float* data, int32_t numSamples) {
+void SA_WavWriteData(FILE* file, float* data, int32_t numSamples,int rounds) {
 	for (int i = 0; i < numSamples; ++i) {
 		int32_t sample = (int32_t)(data[i] * 2147483647.0f);
 		fwrite(&sample, sizeof(sample), 1, file);

@@ -45,6 +45,9 @@
     <ClInclude Include="..\..\src\wav.h">
       <Filter>Arquivos de Cabeçalho</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\encrypt.h">
+      <Filter>Arquivos de Cabeçalho</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\audio.c">
@@ -69,6 +72,9 @@
       <Filter>Arquivos de Origem</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\wav.c">
+      <Filter>Arquivos de Origem</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\encrypt.c">
       <Filter>Arquivos de Origem</Filter>
     </ClCompile>
   </ItemGroup>

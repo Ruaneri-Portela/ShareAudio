@@ -1,6 +1,3 @@
-#include <stdio.h>
-#include <string.h>
-
 #include "ShareAudio.h"
 
 char input[2048];
@@ -9,18 +6,18 @@ int main(int argc, char* argv[])
 {
 	SA_TestDLL();
 	SA_SetLogCONSOLE(0);
-	saConnection* conn = SA_Setup(-1, NULL, 0, 9950, 0, 2, -1, 2048, -1);
+	saConnection* conn = SA_Setup(-1, NULL, 9950, 0, 2, -1, 2048, -1);
 	if (argc > 1)
 	{
 		for (int i = 1; i < argc; i++)
 		{
 			if (strcmp(argv[i], "-s") == 0)
 			{
-				conn->mode = 1;
+				conn->mode = 0;
 			}
 			else if (strcmp(argv[i], "-c") == 0)
 			{
-				conn->mode = 2;
+				conn->mode = 1;
 			}
 			else if (strcmp(argv[i], "-d") == 0)
 			{
@@ -124,15 +121,15 @@ int main(int argc, char* argv[])
 	switch (conn->mode)
 	{
 	case 0:
-		SA_Log("No mode selected", LOG_MAIN, LOG_CLASS_ERROR);
-		break;
-	case 1:
 		SA_Init(conn);
 		SA_Server(conn);
 		break;
-	case 2:
+	case 1:
 		SA_Init(conn);
 		SA_Client(conn);
+		break;
+	default:
+		SA_Log("Mode not set", LOG_MAIN, LOG_CLASS_ERROR);
 		break;
 	}
 	int exit = 0;
@@ -158,20 +155,20 @@ int main(int argc, char* argv[])
 				printf("Enter a message: ");
 				getchar();
 				fgets(input, 2048, stdin);
-				SA_SendMsg(input);
+				SA_SendMsg(input,conn);
 				break;
 			case 'r':
 				printf("Show last message: ");
-				printf("%s\n", SA_ReadLastMsg());
+				printf("%s\n", SA_ReadLastMsg(conn));
 				break;
 			case 'z':
-				if (SA_GetWavFileP() == NULL) {
+				if (SA_GetWavFilePtr(conn) == NULL) {
 					printf("Start record\n");
 					SA_InitWavRecord(conn, "record.wav");
 				}
 				else {
 					printf("Stop record\n");
-					SA_CloseWavRecord();
+					SA_CloseWavRecord(conn);
 				}
 				break;
 			// Teste

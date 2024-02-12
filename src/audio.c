@@ -1,28 +1,12 @@
-#include "config.h"
-#include "data.h"
-#include "log.h"
-#include "wav.h"
 #include <portaudio.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-typedef struct audioDevices
-{
-	const PaDeviceInfo** devices;
-	int numDevices;
-} audioDevices;
-
-typedef struct audioBuffer
-{
-	void* data;
-	struct audioBuffer* next;
-	struct audioBuffer* prev;
-} audioBuffer;
-
-char* audioDataFrame = NULL;
-
-audioBuffer* head = NULL;
+#include <stdint.h>
+#include "config.h"
+#include "wav.h"
+#include "data.h"
+#include "log.h"
 
 static void SA_AudioCheckError(PaError err)
 {
@@ -40,18 +24,18 @@ int SA_AudioClientCallback(
 	(void)inputBuffer;
 	(void)timeInfo;
 	(void)statusFlags;
-	if (head != NULL)
+	if (((saConnection*)userData)->head != NULL)
 	{
-		audioBuffer* temp = head;
+		audioBuffer* temp = ((saConnection*)userData)->head;
 		float* data = SA_DataGetWaveData(temp->data);
 
-		SA_DataCopyAudio(data, (float*)outputBuffer, framesPerBuffer * ((dataHandshake*)userData)->channel, ((dataHandshake*)userData)->volMod, 0);
-		head = temp->next;
+		SA_DataCopyAudio(data, (float*)outputBuffer, framesPerBuffer * ((saConnection*)userData)->dh->channel , ((saConnection*)userData)->dh->volMod, 0);
+		((saConnection*)userData)->head = temp->next;
 		free(temp->data);
 		free(temp);
-		if (head != NULL)
+		if (((saConnection*)userData)->head != NULL)
 		{
-			head->prev = NULL;
+			((saConnection*)userData)->head->prev = NULL;
 		}
 	}
 	return 0;
@@ -66,13 +50,14 @@ int SA_AudioServerCallback(
 	(void)timeInfo;
 	(void)statusFlags;
 	(void)framesPerBuffer;
-	if (audioDataFrame == NULL)
+	if (((saConnection*)userData)->audioDataFrame == NULL)
 	{
-		if (wavFile != NULL)
+		if (((saConnection*)userData)->wavFile != NULL)
 		{
-			SA_WavWriteData(wavFile, (float*)inputBuffer, framesPerBuffer * ((dataHandshake*)userData)->channel);
+			SA_WavWriteData(((saConnection*)userData)->wavFile, (float*)inputBuffer, framesPerBuffer * ((saConnection*)userData)->dh->channel, ((saConnection*)userData)->rounds);
+			((saConnection*)userData)->rounds++;
 		}
-		audioDataFrame = SA_DataCreateDataFrame((float*)inputBuffer, userData, ((dataHandshake*)userData)->testMode);
+		((saConnection*)userData)->audioDataFrame = SA_DataCreateDataFrame((float*)inputBuffer, userData, ((dataHandshake*)userData)->testMode);
 	}
 	return 0;
 }
@@ -129,12 +114,12 @@ audioDevices SA_GetAllDevices()
 	return devicesData;
 }
 
-PaStream* SA_AudioOpenStream(int device, unsigned short asServer, dataHandshake* configs)
+PaStream* SA_AudioOpenStream(size_t device, unsigned short asServer, saConnection* configs)
 {
 	PaStreamParameters parms;
 	memset(&parms, 0, sizeof(parms));
-	parms.channelCount = configs->channel;
-	parms.device = device;
+	parms.channelCount = configs->dh->channel;
+	parms.device = (int)device;
 	parms.hostApiSpecificStreamInfo = NULL;
 	parms.sampleFormat = paFloat32;
 	parms.suggestedLatency = Pa_GetDeviceInfo((int)device)->defaultLowInputLatency;
@@ -149,8 +134,8 @@ PaStream* SA_AudioOpenStream(int device, unsigned short asServer, dataHandshake*
 			&stream,
 			&parms,
 			NULL,
-			configs->sampleRate,
-			configs->waveSize,
+			configs->dh->sampleRate,
+			configs->dh->waveSize,
 			paNoFlag,
 			SA_AudioServerCallback,
 			configs));
@@ -161,8 +146,8 @@ PaStream* SA_AudioOpenStream(int device, unsigned short asServer, dataHandshake*
 			&stream,
 			NULL,
 			&parms,
-			configs->sampleRate,
-			configs->waveSize,
+			configs->dh->sampleRate,
+			configs->dh->waveSize,
 			paNoFlag,
 			SA_AudioClientCallback,
 			configs));

@@ -1,8 +1,14 @@
 #include "config.h"
-#include "audio.h"
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+#include <portaudio.h>
+#include "wav.h"
 #include "data.h"
-#include "control.h"
+#include "audio.h"
 #include "log.h"
 #include "net.h"
 #include "threads.h"
-#include "wav.h"
+#include "control.h"
+
+

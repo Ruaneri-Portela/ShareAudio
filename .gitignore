@@ -407,3 +407,4 @@ ShareAudio.lnk
 **/*.dll
 **/.so
 **.wav
+**/openssl

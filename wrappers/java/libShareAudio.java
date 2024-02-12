@@ -55,7 +55,7 @@ public class libShareAudio {
        System.out.println(SA_Version());
        SA_ListAllAudioDevices(0);
        long ptr = 0;
-       ptr = SA_Setup(-1, "nero-pc.lan", 2, 9950, 0, 2, -1, 2048, -1);
+       ptr = SA_Setup(-1, "hirameki-server.lan", 2, 9950, 0, 2, -1, 2048, -1);
        SA_Init(ptr);
        SA_Client(ptr);
        Scanner scanner = new Scanner(System.in);
