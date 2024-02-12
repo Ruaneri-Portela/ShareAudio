@@ -206,7 +206,7 @@ unsigned short int SA_DataDetectIsIp(const char* host, size_t asClient)
 			}
 			isdigit(host[i]) ? digitCount++ : 0;
 		}
-		if (!asClient && (strcmp(host, "0.0.0.0") == 0))
+		if (asClient && (strcmp(host, "0.0.0.0") == 0))
 		{
 			return 2;
 		}
