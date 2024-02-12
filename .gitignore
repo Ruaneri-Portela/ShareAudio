@@ -397,6 +397,7 @@ FodyWeavers.xsd
 # JetBrains Rider
 *.sln.iml
 
+**.class
 **/.vscode
 include
 build/*
@@ -404,9 +405,5 @@ asio/*
 ShareAudio.lnk
 **/*.a
 **/*.dll
-**/libShareAudio.dll
-**/python/portaudio_x64.dll
-**/python/portaudio_x86.dll
-**/libShareAudio.so
-**/libShareAudioW.so
-*.wav
+**/.so
+**.wav
