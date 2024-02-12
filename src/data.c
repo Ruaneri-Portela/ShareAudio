@@ -168,7 +168,7 @@ char* SA_DataConcatString(const char* original, const char* toCat)
 	return newString;
 }
 
-unsigned short int SA_DataDetectIsIp(const char* host, size_t asServer)
+unsigned short int SA_DataDetectIsIp(const char* host, size_t asClient)
 {
 	size_t hostSize = strlen(host);
 	if (hostSize > 6 && hostSize < 16)
@@ -206,7 +206,7 @@ unsigned short int SA_DataDetectIsIp(const char* host, size_t asServer)
 			}
 			isdigit(host[i]) ? digitCount++ : 0;
 		}
-		if (!asServer && (strcmp(host, "0.0.0.0") == 0))
+		if (!asClient && (strcmp(host, "0.0.0.0") == 0))
 		{
 			return 2;
 		}
