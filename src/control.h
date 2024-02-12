@@ -8,7 +8,7 @@ void SA_Close(saConnection* conn);
 
 void SA_SetVolumeModifier(float vol,saConnection* conn);
 
-float SA_GetVolumeModifier();
+float SA_GetVolumeModifier(saConnection* conn);
 
 void SA_ListAllAudioDevices(saConnection* conn);
 

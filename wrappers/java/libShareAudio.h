@@ -50,10 +50,10 @@ JNIEXPORT void JNICALL Java_libShareAudio_SA_1SetVolumeModifier
 /*
  * Class:     libShareAudio
  * Method:    SA_GetVolumeModifier
- * Signature: ()F
+ * Signature: (J)F
  */
 JNIEXPORT jfloat JNICALL Java_libShareAudio_SA_1GetVolumeModifier
-  (JNIEnv *, jclass);
+  (JNIEnv *, jclass, jlong);
 
 /*
  * Class:     libShareAudio

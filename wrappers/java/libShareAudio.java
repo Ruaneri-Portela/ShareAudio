@@ -1,5 +1,6 @@
+import java.util.Arrays;
+import java.util.List;
 import java.util.Scanner;
-
 public class libShareAudio {
 
     static {
@@ -15,7 +16,7 @@ public class libShareAudio {
 
     private static native void SA_SetVolumeModifier(float vol,long conn);
 
-    private static native float SA_GetVolumeModifier();
+    private static native float SA_GetVolumeModifier(long conn);
 
     private static native void SA_ListAllAudioDevices(long conn);
 
@@ -53,12 +54,13 @@ public class libShareAudio {
        SA_SetLogCONSOLE(1);
        System.out.println(SA_Version());
        SA_ListAllAudioDevices(0);
-       long ptr = SA_Setup(-1, "nero-pc.lan", 2, 9950, 0, 2, -1, 2048, -1);
-       System.out.println(ptr);
+       long ptr = 0;
+       ptr = SA_Setup(-1, "nero-pc.lan", 2, 9950, 0, 2, -1, 2048, -1);
        SA_Init(ptr);
        SA_Client(ptr);
        Scanner scanner = new Scanner(System.in);
        Boolean exit = false;
+       Boolean isRecording = false;
        while(!exit){
             String userInput = scanner.nextLine();
             switch (userInput) {
@@ -67,6 +69,42 @@ public class libShareAudio {
                     userInput = scanner.nextLine();
                     float volMod = Float.parseFloat(userInput);
                     SA_SetVolumeModifier(volMod,ptr);
+                    break;
+                case "s":
+                    String stats = SA_GetStats(ptr);
+                    List<String> statsList = Arrays.asList(stats.split(","));
+                    if(statsList.size() == 9){
+                        switch (statsList.get(8)) 
+                        {
+                            case "2":
+                                System.out.println("Connected");
+                                System.out.println("Packets Sender by Server: "+ statsList.get(0));
+                                System.out.println("Packets Recived by Client: "+ statsList.get(1));
+                                int revc = Integer.parseInt(statsList.get(0));
+                                int sends = Integer.parseInt(statsList.get(1));
+                                System.out.println("Packets Lost: " + (revc - sends));
+                                System.out.println("Channels: "+ statsList.get(2));
+                                System.out.println("Sample Rate: "+ statsList.get(3));
+                                System.out.print("Volume: " + SA_GetVolumeModifier(ptr));
+                                break;
+                            case "1":
+                                System.out.print("Connecting");
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                    System.out.println();
+                    break;
+                case "r":
+                    if(isRecording){
+                        SA_CloseWavRecord();
+                        System.out.println("Record Endded");
+                    }else{
+                        SA_InitWavRecord(ptr, "MyRecord.wav");
+                        System.out.println("Record Started");
+                    }
+                    isRecording = !isRecording;
                     break;
                 case "e":
                     exit = true;

@@ -38,3 +38,21 @@ JNIEXPORT void JNICALL Java_libShareAudio_SA_1Close(JNIEnv *env, jclass class, j
 JNIEXPORT void JNICALL Java_libShareAudio_SA_1SetVolumeModifier(JNIEnv *env, jclass class, jfloat volMod, jlong ptr){
   SA_SetVolumeModifier(volMod,(void *)ptr);
 }
+
+JNIEXPORT jstring JNICALL Java_libShareAudio_SA_1GetStats(JNIEnv *env, jclass class, jlong ptr){
+  const char * strData = SA_GetStats((void *)ptr);
+  return (*env)->NewStringUTF(env,strData);
+}
+
+JNIEXPORT jfloat JNICALL Java_libShareAudio_SA_1GetVolumeModifier(JNIEnv *env, jclass class, jlong ptr){
+  return SA_GetVolumeModifier((void*)ptr);
+}
+
+JNIEXPORT void JNICALL Java_libShareAudio_SA_1InitWavRecord(JNIEnv *env, jclass class, jlong ptr, jstring path){
+  const char * pathC = (*env)->GetStringUTFChars(env,path,NULL);
+  SA_InitWavRecord((void *)ptr,pathC);
+}
+
+JNIEXPORT void JNICALL Java_libShareAudio_SA_1CloseWavRecord(JNIEnv *env, jclass class){
+  SA_CloseWavRecord();
+}
