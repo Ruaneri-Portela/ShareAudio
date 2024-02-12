@@ -33,4 +33,4 @@
 
 #include "VERSION.h"
 
-#define DATASIZE 1037
+#define DATASIZE 1024//1037

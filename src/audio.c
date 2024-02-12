@@ -57,7 +57,7 @@ int SA_AudioServerCallback(
 			SA_WavWriteData(((saConnection*)userData)->wavFile, (float*)inputBuffer, framesPerBuffer * ((saConnection*)userData)->dh->channel, ((saConnection*)userData)->rounds);
 			((saConnection*)userData)->rounds++;
 		}
-		((saConnection*)userData)->audioDataFrame = SA_DataCreateDataFrame((float*)inputBuffer, userData, ((dataHandshake*)userData)->testMode);
+		((saConnection*)userData)->audioDataFrame = SA_DataCreateDataFrame((float*)inputBuffer, ((saConnection*)userData)->dh, ((dataHandshake*)userData)->testMode);
 	}
 	return 0;
 }
