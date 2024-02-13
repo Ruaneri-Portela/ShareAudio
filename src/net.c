@@ -381,7 +381,7 @@ static void SA_NetServer(void* parms)
 static unsigned short int SA_NetSetupClient(connectParam* parms)
 {
 	const char *ivVoid = calloc(1, 128);
-	parms->conn->key[0] != 0 ? SA_GenIV(parms->conn->dh->iv) : 0;
+	parms->conn->key[0] != 0 ? SA_GenIV(parms->conn->dh->iv) : (void)0;
 	parms->ctx->srvSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (parms->ctx->srvSocket == INVALID_SOCKET)
 	{
@@ -451,7 +451,7 @@ static unsigned short int SA_NetSetupClient(connectParam* parms)
 				}
 				else
 				{
-					if (strcmp(((dataHandshake*)recvData)->iv, ivVoid) == 0) {
+					if (strcmp((const char *)((dataHandshake*)recvData)->iv, ivVoid) == 0) {
 						SA_CloseCtx(parms->decryptCtx);
 						parms->decryptCtx = NULL;
 					}
@@ -467,7 +467,7 @@ static unsigned short int SA_NetSetupClient(connectParam* parms)
 						}
 						memcpy_s(parms->conn->dh, sizeof(dataHandshake), recvDecrypt, sizeof(dataHandshake));
 					}
-					else if (strcmp(((dataHandshake*)recvData)->iv, ivVoid) != 0){
+					else if (strcmp((const char *)((dataHandshake*)recvData)->iv, ivVoid) != 0){
 						SA_Log("Handshake failled, Wrong Password", LOG_NET, LOG_CLASS_WARNING);
 						return 0;
 					}

@@ -229,7 +229,7 @@ unsigned short int SA_DataDetectIsIp(const char* host, size_t asClient)
 
 void SA_DataCopyStr(char* target, const char* input, size_t sizeMax)
 {
-	size_t size = (sizeMax != NULL) ? sizeMax : strlen(input);
+	size_t size = (sizeMax != 0) ? sizeMax : strlen(input);
 	for (size_t i = 0; i <= size; i++) {
 		target[i] = input[i];
 	}

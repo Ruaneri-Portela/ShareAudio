@@ -39,3 +39,5 @@ void SA_InitWavRecord(saConnection* conn, const char* path);
 void SA_CloseWavRecord(saConnection* conn);
 
 void* SA_GetWavFilePtr(saConnection* conn);
+
+void SA_SetKey(saConnection* conn, const char* key);

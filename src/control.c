@@ -112,7 +112,7 @@ EXPORT float SA_GetVolumeModifier(saConnection* conn)
 
 EXPORT void SA_ListAllAudioDevices(saConnection* conn)
 {
-	conn == NULL ? SA_AudioInit() : 0;
+	conn == NULL ? SA_AudioInit() : (void)0;
 	audioDevices devicesData = SA_GetAllDevices();
 	printf_s("Found %d devices\n\n", devicesData.numDevices);
 	for (int i = 0;; i++)
@@ -134,7 +134,7 @@ EXPORT void SA_ListAllAudioDevices(saConnection* conn)
 		}
 	}
 	free(devicesData.devices);
-	conn == NULL ? SA_AudioClose() : 0;
+	conn == NULL ? SA_AudioClose() : (void)0;
 }
 
 EXPORT const char* SA_ListAllAudioDevicesStr(saConnection* conn)
@@ -148,7 +148,7 @@ EXPORT const char* SA_ListAllAudioDevicesStr(saConnection* conn)
 		temp[0] = '\0';
 		char* tempLocal;
 		char stringValue[20];
-		conn == NULL ? SA_AudioInit() : 0;
+		conn == NULL ? SA_AudioInit() : (void)0;
 		audioDevices devicesData = SA_GetAllDevices();
 		for (int i = 0;; i++)
 		{
@@ -175,7 +175,7 @@ EXPORT const char* SA_ListAllAudioDevicesStr(saConnection* conn)
 			}
 		}
 		free(devicesData.devices);
-		conn == NULL ? SA_AudioClose() : 0;
+		conn == NULL ? SA_AudioClose() : (void)0;
 	}
 	return temp;
 }
@@ -296,7 +296,7 @@ EXPORT int SA_SendMsg(const char* dataMsg, saConnection* conn)
 		{
 			SA_Log("Parsing Data Last", LOG_MAIN, LOG_CLASS_DEBUG);
 			conn->data[DATASIZE + 1] = 0x00;
-			SA_DataCopyStr(conn->data, dataMsg + (i * DATASIZE), NULL);
+			SA_DataCopyStr(conn->data, dataMsg + (i * DATASIZE), 0);
 		}
 		else
 		{
