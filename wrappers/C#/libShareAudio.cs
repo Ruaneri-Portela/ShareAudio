@@ -15,7 +15,7 @@ namespace libShareAudio
         [DllImport("libShareAudio.dll")]
         private static extern void SA_SetVolumeModifier(float VolumeModifier, IntPtr Context);
         [DllImport("libShareAudio.dll")]
-        private static extern IntPtr SA_Setup(int device, IntPtr host, int mode, int port, int testMode, int channel, float volMod, int waveSize, double sampleRate);
+        private static extern IntPtr SA_Setup(int device, IntPtr host, int port, int testMode, int channel, float volMod, int waveSize, double sampleRate);
         [DllImport("libShareAudio.dll")]
         private static extern IntPtr SA_Init(IntPtr conn);
         [DllImport("libShareAudio.dll")]
@@ -35,9 +35,11 @@ namespace libShareAudio
         [DllImport("libShareAudio.dll")]
         private static extern void SA_InitWavRecord(IntPtr conn, IntPtr path);
         [DllImport("libShareAudio.dll")]
-        private static extern void SA_CloseWavRecord();
+        private static extern void SA_CloseWavRecord(IntPtr conn);
         [DllImport("libShareAudio.dll")]
         private static extern IntPtr SA_GetStats(IntPtr conn);
+        [DllImport("libShareAudio.dll")]
+        private static extern IntPtr SA_GetWavFilePtr(IntPtr conn);
 
         public static List<List<string>> ListAllAudioDevices(IntPtr ctx)
         {
@@ -92,9 +94,9 @@ namespace libShareAudio
             SA_SetVolumeModifier(VolumeModifier / 100, Context);
         }
 
-        public static IntPtr Setup(int device = -1, string host = "localhost", int mode = 0, int port = 9950, int testMode = 0, int channel = 2, float volMod = -1, int waveSize = 2048, double sampleRate = -1)
+        public static IntPtr Setup(int device = -1, string host = "localhost", int port = 9950, int testMode = 0, int channel = 2, float volMod = -1, int waveSize = 2048, double sampleRate = -1)
         {
-            return SA_Setup(device, Marshal.StringToHGlobalAnsi(host), mode, port, testMode, channel, volMod, waveSize, sampleRate);
+            return SA_Setup(device, Marshal.StringToHGlobalAnsi(host), port, testMode, channel, volMod, waveSize, sampleRate);
         }
 
         public static void Init(IntPtr conn)
@@ -142,9 +144,9 @@ namespace libShareAudio
             SA_InitWavRecord(conn, Marshal.StringToHGlobalAnsi(path));
         }
 
-        public static void CloseWavRecord()
+        public static void CloseWavRecord(IntPtr conn)
         {
-            SA_CloseWavRecord();
+            SA_CloseWavRecord(conn);
         }
 
         public static List<string> GetStats(IntPtr conn)
@@ -166,6 +168,18 @@ namespace libShareAudio
                 StatsData.Add(StatsInfo);
             }
             return StatsData;
+        }
+
+        public static bool isRecording(IntPtr conn)
+        {
+            if (SA_GetWavFilePtr(conn) == IntPtr.Zero)
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
         }
 
     }

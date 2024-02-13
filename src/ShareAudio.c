@@ -106,6 +106,13 @@ int main(int argc, char* argv[])
 				sscanf_s(argv[i + 1], "%lf", &(conn->dh->sampleRate));
 				i++;
 			}
+			else if (strcmp(argv[i], "-k") == 0)
+			{
+				const char* key = malloc(1028);
+				strcpy_s(key, 1028, argv[i + 1]);
+				SA_SetKey(conn,key);
+				i++;
+			}
 			else
 			{
 				printf_s("Unknown option: %s\n", argv[i]);

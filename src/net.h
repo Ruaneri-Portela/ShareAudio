@@ -8,6 +8,10 @@ typedef struct netCtx
 typedef struct connectParam
 {
 	saConnection* conn;
+
+	EVP_CIPHER_CTX* encryptCtx;
+	EVP_CIPHER_CTX* decryptCtx;
+
 	size_t dataSize;
 	size_t delay;
 	netCtx* ctx;

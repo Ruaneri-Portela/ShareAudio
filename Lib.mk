@@ -2,7 +2,7 @@ CC := gcc
 CFLAGS := -Wall -Wextra -pedantic
 BUILD_DIR := build/
 SRC_DIR = src/
-LIBS := -lportaudio
+LIBS := -lportaudio -lcrypto
 DLLEXPORT =
 NAME = libShareAudio
 

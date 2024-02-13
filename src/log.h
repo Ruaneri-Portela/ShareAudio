@@ -2,6 +2,7 @@ enum logClassEnum
 {
 	LOG_NET,
 	LOG_AUDIO,
+	LOG_CRIPTO,
 	LOG_MAIN
 };
 enum logLevelEnum

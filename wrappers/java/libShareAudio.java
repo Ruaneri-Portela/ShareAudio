@@ -26,7 +26,7 @@ public class libShareAudio {
 
     private static native String SA_Version();
 
-    private static native long SA_Setup(int device, String host, int mode, int port, int testMode, int channel, float volMod, int waveSize, double sampleRate);
+    private static native long SA_Setup(int device, String host, int port, int testMode, int channel, float volMod, int waveSize, double sampleRate);
 
     private static native String SA_GetStats(long conn);
 
@@ -44,18 +44,17 @@ public class libShareAudio {
 
     private static native void SA_InitWavRecord(long conn, String path);
 
-    private static native void SA_CloseWavRecord();
+    private static native void SA_CloseWavRecord(long conn);
 
-    //private static native void* SA_GetWavFileP();
+    private static native long SA_GetWavFilePtr(long conn);
 
-    //private static native void SA_SetWavFileP(FILE* file);
     public static void main(String[] args) {
        System.out.println(SA_TestDLL()); 
        SA_SetLogCONSOLE(1);
        System.out.println(SA_Version());
        SA_ListAllAudioDevices(0);
        long ptr = 0;
-       ptr = SA_Setup(-1, "hirameki-server.lan", 2, 9950, 0, 2, -1, 2048, -1);
+       ptr = SA_Setup(-1, "hirameki-server.lan", 9950, 0, 2, -1, 2048, -1);
        SA_Init(ptr);
        SA_Client(ptr);
        Scanner scanner = new Scanner(System.in);
@@ -97,8 +96,8 @@ public class libShareAudio {
                     System.out.println();
                     break;
                 case "r":
-                    if(isRecording){
-                        SA_CloseWavRecord();
+                    if(SA_GetWavFilePtr(ptr) != 0){
+                        SA_CloseWavRecord(ptr);
                         System.out.println("Record Endded");
                     }else{
                         SA_InitWavRecord(ptr, "MyRecord.wav");

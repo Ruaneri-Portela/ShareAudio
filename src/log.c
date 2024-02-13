@@ -6,6 +6,7 @@ enum logClassEnum
 {
 	LOG_NET,
 	LOG_AUDIO,
+	LOG_CRIPTO,
 	LOG_MAIN
 };
 enum logLevelEnum
@@ -41,6 +42,8 @@ static const char* SA_LogEnumClass(logClass class)
 		return "NET";
 	case LOG_AUDIO:
 		return "AUDIO";
+	case LOG_CRIPTO:
+		return "CRIPTO";
 	case LOG_MAIN:
 		return "MAIN";
 	default:
@@ -105,17 +108,16 @@ EXPORT void SA_Log(const char* msg, logClass class, logLevel level)
 			break;
 		}
 		else {
-			fileLog == NULL ? fopen_s(&fileLog, fileLogName, "a") : 0;
+			fopen_s(&fileLog, fileLogName, "a");
 			if (fileLog != NULL)
 			{
 				fprintf(fileLog, "[%s][%s] %s\n", SA_LogEnumToLevel(level, 0), SA_LogEnumClass(class), msg);
+				fclose(fileLog);
 			}
 			else
 			{
 				printf_s("Error opening file %s\n", fileLogName);
 			}
-			fclose(fileLog);
-			fileLog = NULL;
 		}
 		break;
 	default:

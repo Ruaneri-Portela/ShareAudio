@@ -35,6 +35,7 @@ typedef struct dataHandshake
 	int testMode;
 	size_t sessionPacket;
 	size_t totalPacketSrv;
+	unsigned char iv[128];
 } dataHandshake;
 
 typedef struct saConnection
@@ -57,6 +58,7 @@ typedef struct saConnection
 	int port;
 	int mode;
 	int runCode;
+	unsigned char key[256];
 } saConnection;
 
 extern const unsigned char confirmConn[2];
@@ -81,6 +83,6 @@ char* SA_DataConcatString(const char* original, const char* toCat);
 
 unsigned short int SA_DataDetectIsIp(const char* host, size_t asServer);
 
-void SA_DataCopyStr(char* target, const char* input);
+void SA_DataCopyStr(char* target, const char* input, size_t sizeMax);
 
 void SA_DataRevcProcess(size_t* rounds, char** msgStream, char* msgLocal, char** msg);

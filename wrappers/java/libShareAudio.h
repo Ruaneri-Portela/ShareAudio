@@ -90,10 +90,10 @@ JNIEXPORT jstring JNICALL Java_libShareAudio_SA_1Version
 /*
  * Class:     libShareAudio
  * Method:    SA_Setup
- * Signature: (ILjava/lang/String;IIIIFID)J
+ * Signature: (ILjava/lang/String;IIIFID)J
  */
 JNIEXPORT jlong JNICALL Java_libShareAudio_SA_1Setup
-  (JNIEnv *, jclass, jint, jstring, jint, jint, jint, jint, jfloat, jint, jdouble);
+  (JNIEnv *, jclass, jint, jstring, jint, jint, jint, jfloat, jint, jdouble);
 
 /*
  * Class:     libShareAudio
@@ -162,10 +162,18 @@ JNIEXPORT void JNICALL Java_libShareAudio_SA_1InitWavRecord
 /*
  * Class:     libShareAudio
  * Method:    SA_CloseWavRecord
- * Signature: ()V
+ * Signature: (J)V
  */
 JNIEXPORT void JNICALL Java_libShareAudio_SA_1CloseWavRecord
-  (JNIEnv *, jclass);
+  (JNIEnv *, jclass, jlong);
+
+/*
+ * Class:     libShareAudio
+ * Method:    SA_GetWavFilePtr
+ * Signature: (J)J
+ */
+JNIEXPORT jlong JNICALL Java_libShareAudio_SA_1GetWavFilePtr
+  (JNIEnv *, jclass, jlong);
 
 #ifdef __cplusplus
 }

@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <portaudio.h>
+#include <openssl/evp.h>
 #include "wav.h"
 #include "data.h"
 #include "audio.h"

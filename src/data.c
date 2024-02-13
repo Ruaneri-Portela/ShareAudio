@@ -1,4 +1,5 @@
 #include <portaudio.h>
+#include <openssl/evp.h>
 #include <ctype.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -46,6 +47,7 @@ typedef struct dataHandshake
 	int testMode;
 	size_t sessionPacket;
 	size_t totalPacketSrv;
+	unsigned char iv[128];
 } dataHandshake;
 
 typedef struct saConnection
@@ -68,6 +70,7 @@ typedef struct saConnection
 	int port;
 	int mode;
 	int runCode;
+	unsigned char key[256];
 } saConnection;
 
 const unsigned char confirmConn[2] = { 0xFF, '\0' };
@@ -118,24 +121,25 @@ char* SA_DataCreateDataFrame(const float* data, dataHandshake* dhData, unsigned 
 	if (dataFrame != NULL)
 	{
 		memset(dataFrame, 0, memorySize);
+		dataHeader* header = (dataHeader*)dataFrame;
+		if (header != NULL)
+		{
+			*header = DATA;
+		}
+		else
+		{
+			free(dataFrame);
+			return NULL;
+		}
+		size_t* sizeWave = (size_t*)(header + 1);
+		*sizeWave = dhData->waveSize * dhData->channel;
+		float* waveFrame = (float*)(sizeWave + 1);
+		size_t* dataCount = (size_t*)(waveFrame + audioPadding);
+		*dataCount = 0;
+		testmode ? SA_DataCopyAudio(NULL, waveFrame, audioPadding, 1, 1) : SA_DataCopyAudio((float*)data, waveFrame, audioPadding, 1, 0);
+		return dataFrame;
 	}
-	dataHeader* header = (dataHeader*)dataFrame;
-	if (header != NULL)
-	{
-		*header = DATA;
-	}
-	else
-	{
-		free(dataFrame);
-		return NULL;
-	}
-	size_t* sizeWave = (size_t*)(header + 1);
-	*sizeWave = dhData->waveSize * dhData->channel;
-	float* waveFrame = (float*)(sizeWave + 1);
-	size_t* dataCount = (size_t*)(waveFrame + audioPadding);
-	*dataCount = 0;
-	testmode ? SA_DataCopyAudio(NULL, waveFrame, audioPadding, 1, 1) : SA_DataCopyAudio((float*)data, waveFrame, audioPadding, 1, 0);
-	return dataFrame;
+	return NULL;
 }
 
 float* SA_DataGetWaveData(const char* dataFrame)
@@ -164,8 +168,9 @@ char* SA_DataConcatString(const char* original, const char* toCat)
 	{
 		memcpy_s(newString, originalSize, original, originalSize);
 		memcpy_s(newString + originalSize, toCatSize + 1, toCat, toCatSize + 1);
+		return newString;
 	}
-	return newString;
+	return NULL;
 }
 
 unsigned short int SA_DataDetectIsIp(const char* host, size_t asClient)
@@ -222,13 +227,12 @@ unsigned short int SA_DataDetectIsIp(const char* host, size_t asClient)
 	return 0;
 }
 
-void SA_DataCopyStr(char* target, const char* input)
+void SA_DataCopyStr(char* target, const char* input, size_t sizeMax)
 {
-	size_t size = strlen(input);
-	for (size_t i = 0; i < size; i++) {
+	size_t size = (sizeMax != NULL) ? sizeMax : strlen(input);
+	for (size_t i = 0; i <= size; i++) {
 		target[i] = input[i];
 	}
-	target[size] = '\0';
 }
 
 void SA_DataRevcProcess(size_t* rounds, char** msgStream, char* msgLocal, char** msg) {

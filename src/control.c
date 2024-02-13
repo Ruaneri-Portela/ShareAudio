@@ -4,6 +4,7 @@
 #include <math.h>
 #include <stdint.h>
 #include <portaudio.h>
+#include <openssl/evp.h>
 
 #include "config.h"
 #include "wav.h"
@@ -68,6 +69,7 @@ EXPORT void SA_Init(saConnection* conn)
 EXPORT void SA_Server(saConnection* conn)
 {
 	SA_Log("Server", LOG_MAIN, LOG_CLASS_INFO);
+	conn->mode = 0;
 	conn->audio = SA_AudioOpenStream(conn->device, 1, conn);
 	SA_AudioStartStream(conn->audio);
 	SA_NetInit(conn);
@@ -80,6 +82,7 @@ EXPORT void SA_Server(saConnection* conn)
 EXPORT void SA_Client(saConnection* conn)
 {
 	SA_Log("Client", LOG_MAIN, LOG_CLASS_INFO);
+	conn->mode = 1;
 	SA_NetInit(conn);
 	if (conn->thread == NULL)
 	{
@@ -91,12 +94,8 @@ EXPORT void SA_Close(saConnection* conn)
 {
 	if (conn != NULL)
 	{
-		if (conn->audio != NULL)
-			SA_AudioCloseStream(conn->audio);
-		if (conn->thread != NULL)
-			SA_NetClose(conn->thread, conn);
-		conn->thread = NULL;
-		conn->audio = NULL;
+		conn->audio  != NULL ? SA_AudioCloseStream(conn->audio), conn->audio = NULL : 0;
+		conn->thread != NULL ? SA_NetClose(conn->thread, conn), conn->thread = NULL : 0;
 		free(conn);
 	}
 }
@@ -113,10 +112,7 @@ EXPORT float SA_GetVolumeModifier(saConnection* conn)
 
 EXPORT void SA_ListAllAudioDevices(saConnection* conn)
 {
-	if (conn == NULL)
-	{
-		SA_AudioInit();
-	}
+	conn == NULL ? SA_AudioInit() : 0;
 	audioDevices devicesData = SA_GetAllDevices();
 	printf_s("Found %d devices\n\n", devicesData.numDevices);
 	for (int i = 0;; i++)
@@ -138,10 +134,7 @@ EXPORT void SA_ListAllAudioDevices(saConnection* conn)
 		}
 	}
 	free(devicesData.devices);
-	if (conn == NULL)
-	{
-		SA_AudioClose();
-	}
+	conn == NULL ? SA_AudioClose() : 0;
 }
 
 EXPORT const char* SA_ListAllAudioDevicesStr(saConnection* conn)
@@ -155,10 +148,7 @@ EXPORT const char* SA_ListAllAudioDevicesStr(saConnection* conn)
 		temp[0] = '\0';
 		char* tempLocal;
 		char stringValue[20];
-		if (conn == NULL)
-		{
-			SA_AudioInit();
-		}
+		conn == NULL ? SA_AudioInit() : 0;
 		audioDevices devicesData = SA_GetAllDevices();
 		for (int i = 0;; i++)
 		{
@@ -185,10 +175,7 @@ EXPORT const char* SA_ListAllAudioDevicesStr(saConnection* conn)
 			}
 		}
 		free(devicesData.devices);
-		if (conn == NULL)
-		{
-			SA_AudioClose();
-		}
+		conn == NULL ? SA_AudioClose() : 0;
 	}
 	return temp;
 }
@@ -211,26 +198,23 @@ EXPORT const char* SA_Version()
 
 EXPORT saConnection* SA_Setup(int device, const char* host, int port, int testMode, int channel, float volMod, int waveSize, double sampleRate)
 {
-	saConnection* conn = malloc(sizeof(saConnection));
+	saConnection* conn = calloc(1, sizeof(saConnection));
 	if (conn == NULL)
 	{
 		SA_Log("Failed to allocate memory", LOG_MAIN, LOG_CLASS_ERROR);
 	}
 	else
 	{
-		memset(conn, 0, sizeof(saConnection));
-		memset(conn->data, 0, DATASIZE + 3);
 		conn->device = device;
 		conn->host = host;
 		conn->port = port;
-		conn->dh = malloc(sizeof(dataHandshake));
+		conn->dh = calloc(1,sizeof(dataHandshake));
 		if (conn->dh == NULL)
 		{
 			SA_Log("Failed to allocate memory", LOG_MAIN, LOG_CLASS_ERROR);
 		}
 		else
 		{
-			memset(conn->dh, 0, sizeof(dataHandshake));
 			conn->dh->testMode = testMode;
 			conn->dh->sampleRate = sampleRate;
 			conn->dh->waveSize = waveSize;
@@ -246,7 +230,6 @@ EXPORT saConnection* SA_Setup(int device, const char* host, int port, int testMo
 
 EXPORT const char* SA_GetStats(saConnection* conn)
 {
-	// UNSECURE CODE
 	char* stats = malloc(DATASIZE);
 	if (stats == NULL)
 	{
@@ -290,7 +273,6 @@ EXPORT void SA_SetLogCONSOLE(int debug)
 
 EXPORT int SA_TestDLL()
 {
-	test();
 	logOutput l = logOutputMethod;
 	logOutputMethod = LOG_OUTPUT_CONSOLE;
 	SA_SetLogCONSOLE(1);
@@ -314,13 +296,14 @@ EXPORT int SA_SendMsg(const char* dataMsg, saConnection* conn)
 		{
 			SA_Log("Parsing Data Last", LOG_MAIN, LOG_CLASS_DEBUG);
 			conn->data[DATASIZE + 1] = 0x00;
+			SA_DataCopyStr(conn->data, dataMsg + (i * DATASIZE), NULL);
 		}
 		else
 		{
 			SA_Log("Parsing Data", LOG_MAIN, LOG_CLASS_DEBUG);
-			conn->data[DATASIZE + 1] = 0x01;
+			conn->data[DATASIZE + 1] = 0x01; 
+			SA_DataCopyStr(conn->data, dataMsg + (i * DATASIZE), DATASIZE);
 		}
-		SA_DataCopyStr(conn->data, dataMsg + (i * DATASIZE));
 		conn->data[DATASIZE + 2] = 0x01;
 		SA_Log("Wait sender on network", LOG_MAIN, LOG_CLASS_DEBUG);
 		while (conn->data[DATASIZE + 2] != 0x00)
@@ -345,4 +328,9 @@ EXPORT void SA_CloseWavRecord(saConnection* conn) {
 
 EXPORT void* SA_GetWavFilePtr(saConnection* conn) {
 	return conn->wavFile;
+}
+
+EXPORT void SA_SetKey(saConnection* conn, const char *key)
+{
+		SA_SetupKey(key, conn->key);
 }
