@@ -1,3 +1,4 @@
+
 #include "config.h"
 
 #if defined(LINUX)
@@ -13,6 +14,7 @@
 #include <time.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "wav.h"
 #include "data.h"
