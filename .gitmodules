@@ -1,3 +1,6 @@
 [submodule "portaudio"]
 	path = portaudio
 	url = https://github.com/PortAudio/portaudio
+[submodule "openssl"]
+	path = openssl
+	url = https://github.com/openssl/openssl.git
