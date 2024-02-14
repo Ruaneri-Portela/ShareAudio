@@ -398,6 +398,7 @@ FodyWeavers.xsd
 *.sln.iml
 
 **.class
+**.jar
 **/.vscode
 **/include
 build/*
@@ -406,5 +407,6 @@ asio/*
 **/*.a
 **/*.dll
 **/.so
-**.wav
+**/.wav
 msvc/openssl
+

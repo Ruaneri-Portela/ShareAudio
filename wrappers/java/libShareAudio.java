@@ -1,122 +1,53 @@
-import java.util.Arrays;
-import java.util.List;
-import java.util.Scanner;
 public class libShareAudio {
-
     static {
         System.loadLibrary("libShareAudioJava");
     }
-    private static native void SA_Init(long conn);
+    public static native void SA_Init(long conn);
 
-    private static native void SA_Server(long conn);
+    public static native void SA_Server(long conn);
 
-    private static native void SA_Client(long  conn);
+    public static native void SA_Client(long  conn);
 
-    private static native void SA_Close(long  conn);
+    public static native void SA_Close(long  conn);
 
-    private static native void SA_SetVolumeModifier(float vol,long conn);
+    public static native void SA_SetVolumeModifier(float vol,long conn);
 
-    private static native float SA_GetVolumeModifier(long conn);
+    public static native float SA_GetVolumeModifier(long conn);
 
-    private static native void SA_ListAllAudioDevices(long conn);
+    public static native void SA_ListAllAudioDevices(long conn);
 
-    private static native String SA_ListAllAudioDevicesStr(long conn);
+    public static native String SA_ListAllAudioDevicesStr(long conn);
 
-    private static native void SA_Free(long data);
+    public static native void SA_Free(long data);
 
-    private static native String SA_Version();
+    public static native String SA_Version();
 
-    private static native long SA_Setup(int device, String host, int port, int testMode, int channel, float volMod, int waveSize, double sampleRate);
+    public static native long SA_Setup(int device, String host, int port, int testMode, int channel, float volMod, int waveSize, double sampleRate);
 
-    private static native String SA_GetStats(long conn);
+    public static native String SA_GetStats(long conn);
 
-    private static native  void SA_SetLogNULL();
+    public static native  void SA_SetLogNULL();
 
-    private static native void SA_SetLogFILE(String filename, int debug);
+    public static native void SA_SetLogFILE(String filename, int debug);
 
-    private static native void SA_SetLogCONSOLE(int debug);
+    public static native void SA_SetLogCONSOLE(int debug);
 
-    private static native int SA_TestDLL();
+    public static native int SA_TestDLL();
 
-    private static native String SA_ReadLastMsg();
+    public static native String SA_ReadLastMsg();
 
-    private static native int SA_SendMsg(String msg);
+    public static native int SA_SendMsg(String msg);
 
-    private static native void SA_InitWavRecord(long conn, String path);
+    public static native void SA_InitWavRecord(long conn, String path);
 
-    private static native void SA_CloseWavRecord(long conn);
+    public static native void SA_CloseWavRecord(long conn);
 
-    private static native long SA_GetWavFilePtr(long conn);
+    public static native long SA_GetWavFilePtr(long conn);
 
-    private static native void SA_SetKey(long conn, String key);
+    public static native void SA_SetKey(long conn, String key);
 
-    private static native void SA_SetMode(long conn, int mode);
+    public static native void SA_SetMode(long conn, int mode);
 
-    public static void main(String[] args) {
-       System.out.println(SA_TestDLL()); 
-       SA_SetLogCONSOLE(1);
-       System.out.println(SA_Version());
-       SA_ListAllAudioDevices(0);
-       long ptr = 0;
-       ptr = SA_Setup(-1, "hirameki-server.lan", 9950, 0, 2, -1, 2048, -1);
-       SA_SetMode(ptr, 1);
-       SA_Init(ptr);
-       SA_SetKey(ptr, "93248fjoidshf43");
-       SA_Client(ptr);
-       Scanner scanner = new Scanner(System.in);
-       Boolean exit = false;
-       Boolean isRecording = false;
-       while(!exit){
-            String userInput = scanner.nextLine();
-            switch (userInput) {
-                case "v":
-                    System.out.print("Volume:");
-                    userInput = scanner.nextLine();
-                    float volMod = Float.parseFloat(userInput);
-                    SA_SetVolumeModifier(volMod,ptr);
-                    break;
-                case "s":
-                    String stats = SA_GetStats(ptr);
-                    List<String> statsList = Arrays.asList(stats.split(","));
-                    if(statsList.size() == 9){
-                        switch (statsList.get(8)) 
-                        {
-                            case "2":
-                                System.out.println("Connected");
-                                System.out.println("Packets Sender by Server: "+ statsList.get(0));
-                                System.out.println("Packets Recived by Client: "+ statsList.get(1));
-                                int revc = Integer.parseInt(statsList.get(0));
-                                int sends = Integer.parseInt(statsList.get(1));
-                                System.out.println("Packets Lost: " + (revc - sends));
-                                System.out.println("Channels: "+ statsList.get(2));
-                                System.out.println("Sample Rate: "+ statsList.get(3));
-                                System.out.print("Volume: " + SA_GetVolumeModifier(ptr));
-                                break;
-                            case "1":
-                                System.out.print("Connecting");
-                                break;
-                            default:
-                                break;
-                        }
-                    }
-                    System.out.println();
-                    break;
-                case "r":
-                    if(SA_GetWavFilePtr(ptr) != 0){
-                        SA_CloseWavRecord(ptr);
-                        System.out.println("Record Endded");
-                    }else{
-                        SA_InitWavRecord(ptr, "MyRecord.wav");
-                        System.out.println("Record Started");
-                    }
-                    isRecording = !isRecording;
-                    break;
-                case "e":
-                    exit = true;
-                    break;
-            }
-       }
-       scanner.close();
-       SA_Close(ptr);
-    }
+    public long conn = 0;
+
 }

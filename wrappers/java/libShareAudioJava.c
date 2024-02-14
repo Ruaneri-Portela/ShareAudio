@@ -60,3 +60,7 @@ JNIEXPORT void JNICALL Java_libShareAudio_SA_1SetKey(JNIEnv *env, jclass class, 
 JNIEXPORT void JNICALL Java_libShareAudio_SA_1SetMode(JNIEnv *env, jclass class, jlong ptr, jint mode){
   SA_SetMode((void *)ptr,mode);
 }
+
+JNIEXPORT jstring JNICALL Java_libShareAudio_SA_1ListAllAudioDevicesStr(JNIEnv *env, jclass class, jlong ptr){
+  return (*env)->NewStringUTF(env,SA_ListAllAudioDevicesStr((void *)ptr));
+}
