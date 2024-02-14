@@ -399,10 +399,10 @@ FodyWeavers.xsd
 
 **.class
 **/.vscode
-include
+**/include
 build/*
 asio/*  
-ShareAudio.lnk
+*.lnk
 **/*.a
 **/*.dll
 **/.so
