@@ -175,6 +175,22 @@ JNIEXPORT void JNICALL Java_libShareAudio_SA_1CloseWavRecord
 JNIEXPORT jlong JNICALL Java_libShareAudio_SA_1GetWavFilePtr
   (JNIEnv *, jclass, jlong);
 
+/*
+ * Class:     libShareAudio
+ * Method:    SA_SetKey
+ * Signature: (JLjava/lang/String;)V
+ */
+JNIEXPORT void JNICALL Java_libShareAudio_SA_1SetKey
+  (JNIEnv *, jclass, jlong, jstring);
+
+/*
+ * Class:     libShareAudio
+ * Method:    SA_SetMode
+ * Signature: (JI)V
+ */
+JNIEXPORT void JNICALL Java_libShareAudio_SA_1SetMode
+  (JNIEnv *, jclass, jlong, jint);
+
 #ifdef __cplusplus
 }
 #endif

@@ -68,8 +68,8 @@ EXPORT void SA_Init(saConnection* conn)
 
 EXPORT void SA_Server(saConnection* conn)
 {
-	SA_Log("Server", LOG_MAIN, LOG_CLASS_INFO);
 	conn->mode = 0;
+	SA_Log("Server", LOG_MAIN, LOG_CLASS_INFO);
 	conn->audio = SA_AudioOpenStream(conn->device, 1, conn);
 	SA_AudioStartStream(conn->audio);
 	SA_NetInit(conn);
@@ -81,8 +81,8 @@ EXPORT void SA_Server(saConnection* conn)
 
 EXPORT void SA_Client(saConnection* conn)
 {
-	SA_Log("Client", LOG_MAIN, LOG_CLASS_INFO);
 	conn->mode = 1;
+	SA_Log("Client", LOG_MAIN, LOG_CLASS_INFO);
 	SA_NetInit(conn);
 	if (conn->thread == NULL)
 	{
@@ -192,6 +192,9 @@ EXPORT const char* SA_Version()
 	free(temp);
 	temp = SA_DataConcatString(temp2, ",");
 	temp2 = SA_DataConcatString(temp, Pa_GetVersionText());
+	free(temp);
+	temp = SA_DataConcatString(temp2, ",");
+	temp2 = SA_DataConcatString(temp, OpenSSL_version(OPENSSL_VERSION));
 	free(temp);
 	return temp2;
 }
@@ -333,4 +336,9 @@ EXPORT void* SA_GetWavFilePtr(saConnection* conn) {
 EXPORT void SA_SetKey(saConnection* conn, const char *key)
 {
 		SA_SetupKey(key, conn->key);
+}
+
+EXPORT void SA_SetMode(saConnection* conn, int mode)
+{
+	 conn->mode = mode;
 }

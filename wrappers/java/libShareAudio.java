@@ -48,6 +48,10 @@ public class libShareAudio {
 
     private static native long SA_GetWavFilePtr(long conn);
 
+    private static native void SA_SetKey(long conn, String key);
+
+    private static native void SA_SetMode(long conn, int mode);
+
     public static void main(String[] args) {
        System.out.println(SA_TestDLL()); 
        SA_SetLogCONSOLE(1);
@@ -55,7 +59,9 @@ public class libShareAudio {
        SA_ListAllAudioDevices(0);
        long ptr = 0;
        ptr = SA_Setup(-1, "hirameki-server.lan", 9950, 0, 2, -1, 2048, -1);
+       SA_SetMode(ptr, 1);
        SA_Init(ptr);
+       SA_SetKey(ptr, "93248fjoidshf43");
        SA_Client(ptr);
        Scanner scanner = new Scanner(System.in);
        Boolean exit = false;

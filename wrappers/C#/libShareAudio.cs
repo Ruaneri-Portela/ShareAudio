@@ -40,6 +40,8 @@ namespace libShareAudio
         private static extern IntPtr SA_GetStats(IntPtr conn);
         [DllImport("libShareAudio.dll")]
         private static extern IntPtr SA_GetWavFilePtr(IntPtr conn);
+        [DllImport("libShareAudio.dll")]
+        private static extern IntPtr SA_SetKey(IntPtr connn,IntPtr key);
 
         public static List<List<string>> ListAllAudioDevices(IntPtr ctx)
         {
@@ -172,6 +174,10 @@ namespace libShareAudio
 
         public static bool isRecording(IntPtr conn)
         {
+            if(conn == IntPtr.Zero)
+            {
+                return false;
+            }
             if (SA_GetWavFilePtr(conn) == IntPtr.Zero)
             {
                 return false;
@@ -180,6 +186,11 @@ namespace libShareAudio
             {
                 return true;
             }
+        }
+
+        public static void SetKey(IntPtr conn, string key)
+        {
+            SA_SetKey(conn, Marshal.StringToHGlobalAnsi(key));
         }
 
     }

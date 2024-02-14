@@ -41,3 +41,5 @@ void SA_CloseWavRecord(saConnection* conn);
 void* SA_GetWavFilePtr(saConnection* conn);
 
 void SA_SetKey(saConnection* conn, const char* key);
+
+void SA_SetMode(saConnection* conn, int mode);
