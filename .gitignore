@@ -404,9 +404,8 @@ FodyWeavers.xsd
 build/*
 asio/*  
 *.lnk
-**/*.a
-**/*.dll
-**/.so
-**/.wav
+***.a
+**.dll
+**.so
+**.wav
 msvc/openssl
-

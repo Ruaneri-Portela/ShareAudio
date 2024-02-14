@@ -1,6 +1,13 @@
 public class libShareAudio {
     static {
-        System.loadLibrary("libShareAudioJava");
+        String sistemaOperacional = System.getProperty("os.name").toLowerCase();
+        boolean isLinux = sistemaOperacional.contains("linux");
+        if (isLinux) {
+            String actualDirectory = System.getProperty("user.dir");
+            System.load(actualDirectory+"/libShareAudioJava.so");
+        } else {
+            System.loadLibrary("libShareAudioJava");
+        }
     }
     public static native void SA_Init(long conn);
 
@@ -49,5 +56,9 @@ public class libShareAudio {
     public static native void SA_SetMode(long conn, int mode);
 
     public long conn = 0;
+
+    public static void main(String[] args) {
+        SA_TestDLL();
+    }
 
 }
