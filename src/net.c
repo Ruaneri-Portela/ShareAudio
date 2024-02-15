@@ -46,8 +46,6 @@ typedef struct connectParam
 static WSADATA wsaData;
 static void SA_WinNetEnd(void* parms)
 {
-	free(((connectParam*)parms)->ctx);
-	free(parms);
 	if (WSACleanup() != 0)
 	{
 		SA_Log("WSA End failed!", LOG_NET, LOG_CLASS_WARNING);
@@ -56,6 +54,8 @@ static void SA_WinNetEnd(void* parms)
 	{
 		SA_Log("WSA End", LOG_NET, LOG_CLASS_INFO);
 	}
+	free(((connectParam*)parms)->ctx);
+	free(parms);
 }
 
 static void SA_WinNetOpen()
@@ -139,46 +139,6 @@ static void SA_NetResolveHost(connectParam* parm, ADDRESS_FAMILY family)
 		char* logMsg = SA_DataConcatString(msgPrefix, parm->conn->host);
 		SA_Log(logMsg, LOG_NET, LOG_CLASS_INFO);
 		free(logMsg);
-	}
-}
-
-static void SA_NetServerRecv(connectParam* parms) {
-	size_t failCount = 0;
-	size_t rounds = 0;
-	char msgLocal[DATASIZE + 3];
-	char* msgStream = NULL;
-	size_t sizeData = DATASIZE + 2;
-	if (parms->conn->runCode == 3) {
-		sizeData = SA_GetEncriptySize(sizeData);
-		parms->decryptCtx = SA_IniCtx();
-		SA_PrepareDecryptCtx(parms->decryptCtx, parms->conn->key, parms->conn->dh->iv);
-	}
-	while (1) {
-		if (recv(parms->ctx->clientSocket, msgLocal, (int)sizeData, MSG_WAITALL) == SOCKET_ERROR)
-		{
-			SA_Log("Revc failed!", LOG_NET, LOG_CLASS_DEBUG);
-			SA_Sleep(100);
-			if (failCount > 10) {
-				SA_Log("Revc failed!", LOG_NET, LOG_CLASS_WARNING);
-
-			}
-			failCount++;
-		}
-		else
-		{
-			if (parms->conn->runCode == 3) {
-				unsigned char* recvDecrypt = malloc(sizeData);
-				if(recvDecrypt == NULL) {
-					SA_Log("Failed to allocate memory", LOG_NET, LOG_CLASS_ERROR);
-				}
-				SA_DecryptData((unsigned char*)msgLocal, (int)sizeData, recvDecrypt, parms->decryptCtx);
-				memcpy_s(msgLocal, DATASIZE + 2, recvDecrypt, DATASIZE + 2);
-				free(recvDecrypt);
-			}
-			SA_DataRevcProcess(&rounds, &msgStream, msgLocal, &parms->conn->msg);
-			SA_Log("Data Revc", LOG_NET, LOG_CLASS_DEBUG);
-			failCount = 0;
-		}
 	}
 }
 
@@ -278,6 +238,53 @@ static unsigned short int SA_NetServerGetHandhake(connectParam* localParm)
 	return 0;
 }
 
+static void SA_NetServerRecv(connectParam* parms) {
+	size_t failCount = 0;
+	size_t rounds = 0;
+	char msgLocal[DATASIZE + 3];
+	char* msgStream = NULL;
+	size_t sizeData = DATASIZE + 2;
+	if (parms->conn->runCode == 3) {
+		sizeData = SA_GetEncriptySize(sizeData);
+		parms->decryptCtx = SA_IniCtx();
+		SA_PrepareDecryptCtx(parms->decryptCtx, parms->conn->key, parms->conn->dh->iv);
+	}
+	while (parms->conn->runCode != -1) {
+		int socket = recv(parms->ctx->clientSocket, msgLocal, (int)sizeData, MSG_WAITALL);
+		if (socket == SOCKET_ERROR)
+		{
+			SA_Log("Revc failed!", LOG_NET, LOG_CLASS_DEBUG);
+			SA_Sleep(100);
+			if (failCount > 10) {
+				SA_Log("Revc failed!", LOG_NET, LOG_CLASS_WARNING);
+
+			}
+			failCount++;
+		}
+		else
+		{
+			int processed = 1;
+			if (parms->conn->runCode == 3) {
+				unsigned char* recvDecrypt = malloc(sizeData);
+				if (recvDecrypt == NULL) {
+					SA_Log("Failed to allocate memory", LOG_NET, LOG_CLASS_ERROR);
+				}
+				processed = SA_DecryptData((unsigned char*)msgLocal, (int)sizeData, recvDecrypt, parms->decryptCtx);
+				memcpy_s(msgLocal, DATASIZE + 2, recvDecrypt, DATASIZE + 2);
+				free(recvDecrypt);
+			}
+			if (processed) {
+				SA_DataRevcProcess(&rounds, &msgStream, msgLocal, &parms->conn->msg);
+				SA_Log("Data Revc", LOG_NET, LOG_CLASS_DEBUG);
+				failCount = 0;
+			}
+			else {
+				SA_Sleep(500);
+			}
+		}
+	}
+}
+
 static void SA_NetServer(void* parms)
 {
 	connectParam* localParm = (connectParam*)parms;
@@ -291,9 +298,12 @@ static void SA_NetServer(void* parms)
 		int tolerance = 0;
 		time_t lastPacket = time(NULL);
 		time_t lastTry;
+		int exitSender = 0;
+		int isCrypt = localParm->conn->runCode == 3;
+
 		void* revcThread = SA_ThreadCreate(SA_NetServerRecv, parms);
 		localParm->conn->data[DATASIZE + 2] = 0x00;
-		int exitSender = 0;
+		
 		while (1)
 		{
 			int delayed = 1;
@@ -324,7 +334,7 @@ static void SA_NetServer(void* parms)
 				SA_DataPutOrderDataFrame((char*)localParm->conn->audioDataFrame, localParm->conn->dh->sessionPacket, localParm->conn->dh);
 				size_t sizeSend = localParm->conn->runCode == 3 ? SA_GetEncriptySize(localParm->dataSize) : localParm->dataSize;
 				char* sendData = (char*)localParm->conn->audioDataFrame;
-				if(localParm->conn->runCode == 3) {
+				if(isCrypt) {
 					unsigned char* sendEncrypt = malloc(sizeSend);
 					if(sendEncrypt == NULL) {
 						SA_Log("Failed to allocate memory", LOG_NET, LOG_CLASS_ERROR);
@@ -371,9 +381,12 @@ static void SA_NetServer(void* parms)
 			}
 		}
 		SA_ThreadClose(revcThread);
+		shutdown(localParm->ctx->srvSocket, SD_RECEIVE);
 		closesocket(localParm->ctx->clientSocket);
-		SA_CloseCtx(localParm->decryptCtx);
-		SA_CloseCtx(localParm->encryptCtx);
+		if (isCrypt) {
+			SA_CloseCtx(localParm->decryptCtx);
+			SA_CloseCtx(localParm->encryptCtx);
+		}
 		localParm->conn->dh->header = NULLHEADER;
 	}
 	closesocket(localParm->ctx->srvSocket);
@@ -510,7 +523,7 @@ static void SA_NetClientSend(connectParam* parms)
 		SA_PrepareEncryptCtx(parms->encryptCtx, parms->conn->key, parms->conn->dh->iv);
 	}
 	size_t count = 0;
-	while (1) {
+	while (parms->conn->runCode != -1) {
 		if (parms->conn->data[DATASIZE + 2] != 0x00) {
 			char* sendMsg = parms->conn->data;
 			if (parms->conn->runCode == 3) {
@@ -579,7 +592,8 @@ static void SA_NetClient(void* parms)
 		{
 			stream = SA_AudioOpenStream(localParm->conn->device, 0, (void*)localParm->conn);
 			SA_AudioStartStream(stream);
-			while (localParm->conn->runCode != -1)
+			int breakRevcLoop = 0;
+			while (localParm->conn->runCode != -1 && !breakRevcLoop)
 			{
 				if (recv(localParm->ctx->srvSocket, (char*)localData, (int)revcSize, MSG_WAITALL) == SOCKET_ERROR)
 				{
@@ -685,7 +699,7 @@ static void SA_NetClient(void* parms)
 						break;
 					case END:
 						SA_Log("Connection closed", LOG_NET, LOG_CLASS_INFO);
-						localParm->conn->runCode = -1;
+						breakRevcLoop = 1;
 						break;
 					case NULLDATA:
 						break;
@@ -696,6 +710,7 @@ static void SA_NetClient(void* parms)
 				}
 			}
 			SA_AudioCloseStream(stream);
+			shutdown(localParm->ctx->srvSocket, SD_BOTH);
 			closesocket(localParm->ctx->srvSocket);
 			SA_ThreadClose(sendThread);
 			SA_CloseCtx(localParm->decryptCtx);
@@ -738,7 +753,7 @@ void SA_NetInit(saConnection * conn)
 
 void SA_NetClose(void* thread, saConnection* conn)
 {
-	if (conn->runCode == 1 && conn->mode == 1) {
+	if (conn->runCode == 1 && conn->mode == 0) {
 		SA_ThreadClose(thread);
 		return;
 	}
