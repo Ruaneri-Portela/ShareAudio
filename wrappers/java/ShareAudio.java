@@ -73,7 +73,7 @@ public class ShareAudio {
                         } else {
                             break;
                         }
-                        if(ui.startButton.getText().equals("Connect to Server")) {
+                        if(ui.clientRadio.isSelected()) {
                             libShareAudio.SA_SetMode(lShareAudio.conn, 1);
                         }
                         else{
@@ -85,7 +85,7 @@ public class ShareAudio {
                             String password = new String(passwordChars);
                             libShareAudio.SA_SetKey(lShareAudio.conn, password);
                         }
-                        if (ui.startButton.getText().equals("Connect to Server")) {
+                        if (ui.clientRadio.isSelected()) {
                             libShareAudio.SA_Client(lShareAudio.conn);
                         } else {
                             libShareAudio.SA_Server(lShareAudio.conn);
