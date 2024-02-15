@@ -57,8 +57,4 @@ public class libShareAudio {
 
     public long conn = 0;
 
-    public static void main(String[] args) {
-        SA_TestDLL();
-    }
-
 }

@@ -73,16 +73,22 @@ public class ShareAudio {
                         } else {
                             break;
                         }
+                        if(ui.startButton.getText().equals("Connect to Server")) {
+                            libShareAudio.SA_SetMode(lShareAudio.conn, 1);
+                        }
+                        else{
+                            libShareAudio.SA_SetMode(lShareAudio.conn, 0);
+                        }
                         libShareAudio.SA_Init(lShareAudio.conn);
                         char[] passwordChars = ui.passwordField.getPassword();
                         if (passwordChars.length > 0) {
                             String password = new String(passwordChars);
                             libShareAudio.SA_SetKey(lShareAudio.conn, password);
                         }
-                        if (ui.startButton.getText().equals("Start Server")) {
-                            libShareAudio.SA_Server(lShareAudio.conn);
-                        } else {
+                        if (ui.startButton.getText().equals("Connect to Server")) {
                             libShareAudio.SA_Client(lShareAudio.conn);
+                        } else {
+                            libShareAudio.SA_Server(lShareAudio.conn);
                         }
                         break;
                     case "Stop":
