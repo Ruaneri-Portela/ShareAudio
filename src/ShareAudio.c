@@ -108,7 +108,7 @@ int main(int argc, char* argv[])
 			}
 			else if (strcmp(argv[i], "-k") == 0)
 			{
-				const char* key = malloc(1028);
+				char* key = malloc(1028);
 				strcpy_s(key, 1028, argv[i + 1]);
 				SA_SetKey(conn,key);
 				i++;
@@ -187,6 +187,15 @@ int main(int argc, char* argv[])
 				break;
 			case 'j':
 				printf("%s",SA_GetStats(conn));
+				break;
+			case 'h':
+				printf("Set Vol: ");
+				float volMod;
+				scanf_s("%f", &volMod);
+				SA_SetVolumeModifier(volMod,conn);
+				break;
+			case 'p':
+				printf("VolSet:%f\n",conn->dh->volMod);
 				break;
 			//
 			default:

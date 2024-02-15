@@ -73,10 +73,9 @@ public class ShareAudio {
                         } else {
                             break;
                         }
-                        if(ui.clientRadio.isSelected()) {
+                        if (ui.clientRadio.isSelected()) {
                             libShareAudio.SA_SetMode(lShareAudio.conn, 1);
-                        }
-                        else{
+                        } else {
                             libShareAudio.SA_SetMode(lShareAudio.conn, 0);
                         }
                         libShareAudio.SA_Init(lShareAudio.conn);
@@ -110,6 +109,11 @@ public class ShareAudio {
         ui.volumSlider.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException ex) {
+                    ex.printStackTrace();
+                }
                 if (lShareAudio.conn != 0) {
                     float vol = (float) ui.volumSlider.getValue() / 100;
                     libShareAudio.SA_SetVolumeModifier(vol, lShareAudio.conn);
@@ -194,6 +198,9 @@ public class ShareAudio {
                     ui.passwordField.setEnabled(false);
                 }
                 contextChangedC = false;
+                if (ui.volumSlider.getValue() != (int) (libShareAudio.SA_GetVolumeModifier(lShareAudio.conn) * 100)) {
+                    ui.volumSlider.setValue((int) (libShareAudio.SA_GetVolumeModifier(lShareAudio.conn) * 100));
+                }
             }
             if (recordAsStarted) {
                 Instant now = Instant.now();

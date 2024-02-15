@@ -6,6 +6,7 @@ typedef enum dataHeader
 	DATA = 0x03,
 	NULLDATA = 0x04,
 	DATAMSG = 0x05,
+	VOLUPDATE = 0x06,
 	AUTHCHANGE = 0xFD,
 	DISCONNECT = 0xFE,
 	END = 0xFF,

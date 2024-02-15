@@ -115,7 +115,7 @@ size_t SA_DataGetOrderDataFrame(char* dataFrame, dataHandshake* dhData)
 
 char* SA_DataCreateDataFrame(const float* data, dataHandshake* dhData, unsigned short int testmode)
 {
-	size_t memorySize = SA_DataGetDataFrameSize(dhData);
+	int memorySize = SA_DataGetDataFrameSize(dhData);
 	size_t audioPadding = dhData->waveSize * dhData->channel;
 	char* dataFrame = (char*)malloc(memorySize);
 	if (dataFrame != NULL)

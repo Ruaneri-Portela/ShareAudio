@@ -19,6 +19,7 @@
 #define SOCKET int
 #define INVALID_SOCKET -1
 #define SOCKET_ERROR -1
+#define SD_BOTH SHUT_RDWR
 #define SOCKADDR_IN struct sockaddr_in
 #define SOCKADDR struct sockaddr
 #define ADDRESS_FAMILY int

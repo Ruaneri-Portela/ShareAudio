@@ -2,7 +2,7 @@
 #include "libShareAudio.h"
 #include "../../src/ShareAudio.h" 
 JNIEXPORT jint JNICALL Java_libShareAudio_SA_1TestDLL (JNIEnv * env, jclass class){
-  return SA_TestDLL();
+  return (jint)SA_TestDLL();
 }
 
 JNIEXPORT void JNICALL Java_libShareAudio_SA_1ListAllAudioDevices(JNIEnv *env, jclass class, jlong ptr){
@@ -67,4 +67,8 @@ JNIEXPORT jstring JNICALL Java_libShareAudio_SA_1ListAllAudioDevicesStr(JNIEnv *
 
 JNIEXPORT void JNICALL Java_libShareAudio_SA_1Server(JNIEnv *env, jclass class, jlong ptr){
   SA_Server((void *)ptr);
+}
+
+JNIEXPORT jfloat JNICALL Java_libShareAudio_SA_1GetVolumeModifier(JNIEnv *env, jclass class, jlong ptr){
+  return (jfloat)SA_GetVolumeModifier((void *)ptr);
 }

@@ -269,13 +269,29 @@ static void SA_NetServerRecv(connectParam* parms) {
 				if (recvDecrypt == NULL) {
 					SA_Log("Failed to allocate memory", LOG_NET, LOG_CLASS_ERROR);
 				}
-				processed = SA_DecryptData((unsigned char*)msgLocal, (int)sizeData, recvDecrypt, parms->decryptCtx);
-				memcpy_s(msgLocal, DATASIZE + 2, recvDecrypt, DATASIZE + 2);
-				free(recvDecrypt);
+				else {
+					processed = SA_DecryptData((unsigned char*)msgLocal, (int)sizeData, recvDecrypt, parms->decryptCtx);
+					memcpy_s(msgLocal, DATASIZE + 2, recvDecrypt, DATASIZE + 2);
+					free(recvDecrypt);
+				}
 			}
 			if (processed) {
-				SA_DataRevcProcess(&rounds, &msgStream, msgLocal, &parms->conn->msg);
-				SA_Log("Data Revc", LOG_NET, LOG_CLASS_DEBUG);
+				switch (msgLocal[DATASIZE + 1]) {
+				case 0x01:
+					SA_DataRevcProcess(&rounds, &msgStream, msgLocal, &parms->conn->msg);
+					SA_Log("Data Revc", LOG_NET, LOG_CLASS_DEBUG);
+					break;
+				case 0x02:
+					switch(((dataHeader)msgLocal[0])) {
+					case VOLUPDATE:
+						SA_Log("Vol update", LOG_NET, LOG_CLASS_DEBUG);
+						parms->conn->dh->volMod = *((float*)(msgLocal + sizeof(dataHeader)));
+						break;
+					default:
+						break;
+					}
+					break;
+				}
 				failCount = 0;
 			}
 			else {
@@ -303,7 +319,7 @@ static void SA_NetServer(void* parms)
 
 		void* revcThread = SA_ThreadCreate(SA_NetServerRecv, parms);
 		localParm->conn->data[DATASIZE + 2] = 0x00;
-		
+		float volMod = localParm->conn->dh->volMod;
 		while (1)
 		{
 			int delayed = 1;
@@ -327,6 +343,15 @@ static void SA_NetServer(void* parms)
 				dataHeader* header = (dataHeader*)localParm->conn->audioDataFrame;
 				*header = DATAMSG;
 				memcpy_s((char*)(header + 1), DATASIZE + 2, localParm->conn->data, DATASIZE + 2);
+				delayed = 0;
+			}
+			if (localParm->conn->dh->volMod != volMod) {
+				localParm->conn->audioDataFrame = SA_DataCreateDataFrame(NULL, localParm->conn->dh, 1);
+				dataHeader* header = (dataHeader*)localParm->conn->audioDataFrame;
+				*header = VOLUPDATE;
+				float* volModUpdate = (float*)(header + 1);
+				*volModUpdate = localParm->conn->dh->volMod;
+				volMod = localParm->conn->dh->volMod;
 				delayed = 0;
 			}
 			if (localParm->conn->audioDataFrame != NULL)
@@ -381,7 +406,7 @@ static void SA_NetServer(void* parms)
 			}
 		}
 		SA_ThreadClose(revcThread);
-		shutdown(localParm->ctx->srvSocket, SD_RECEIVE);
+		shutdown(localParm->ctx->clientSocket, SD_BOTH);
 		closesocket(localParm->ctx->clientSocket);
 		if (isCrypt) {
 			SA_CloseCtx(localParm->decryptCtx);
@@ -620,6 +645,7 @@ static void SA_NetClient(void* parms)
 					err = 0;
 					localParm->conn->dh->totalPacketSrv = SA_DataGetOrderDataFrame(localData, localParm->conn->dh);
 					dataHeader* header = (dataHeader*)localData;
+					float* volMod = NULL; 
 					switch (header[0])
 					{
 					case DATA:
@@ -701,6 +727,10 @@ static void SA_NetClient(void* parms)
 						SA_Log("Connection closed", LOG_NET, LOG_CLASS_INFO);
 						breakRevcLoop = 1;
 						break;
+					case VOLUPDATE:
+						SA_Log("Vol update", LOG_NET, LOG_CLASS_DEBUG);
+						volMod = (float*)(((dataHeader*)localData) + 1);
+						localParm->conn->dh->volMod = *volMod;
 					case NULLDATA:
 						break;
 					default:

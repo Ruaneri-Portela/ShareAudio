@@ -103,6 +103,22 @@ EXPORT void SA_Close(saConnection* conn)
 EXPORT void SA_SetVolumeModifier(float vol, saConnection* conn)
 {
 	conn->dh->volMod = vol;
+	if (conn->mode == 1) {
+		int size = sizeof(dataHeader) + sizeof(float);
+		char *data = malloc(size);
+		if (data == NULL) {
+			SA_Log("Failed to allocate memory", LOG_MAIN, LOG_CLASS_ERROR);
+		}
+		else {
+			dataHeader *header = (dataHeader*)data;
+			*header = VOLUPDATE;
+			float *volData = (float *)(header+1);
+			*volData = vol;
+			memcpy_s(conn->data, DATASIZE, data, size);
+			conn->data[DATASIZE + 1] = 0x02;
+			conn->data[DATASIZE + 2] = 0x01;
+		}
+	}
 }
 
 EXPORT float SA_GetVolumeModifier(saConnection* conn)
@@ -308,6 +324,7 @@ EXPORT int SA_SendMsg(const char* dataMsg, saConnection* conn)
 			SA_DataCopyStr(conn->data, dataMsg + (i * DATASIZE), DATASIZE);
 		}
 		conn->data[DATASIZE + 2] = 0x01;
+		conn->data[DATASIZE + 1] = 0x01;
 		SA_Log("Wait sender on network", LOG_MAIN, LOG_CLASS_DEBUG);
 		while (conn->data[DATASIZE + 2] != 0x00)
 		{
@@ -335,7 +352,7 @@ EXPORT void* SA_GetWavFilePtr(saConnection* conn) {
 
 EXPORT void SA_SetKey(saConnection* conn, const char *key)
 {
-		SA_SetupKey(key, conn->key);
+	SA_SetupKey(key, conn->key);
 }
 
 EXPORT void SA_SetMode(saConnection* conn, int mode)
