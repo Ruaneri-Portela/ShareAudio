@@ -13,7 +13,7 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// Português (Brasil) resources
+// Portuguï¿½s (Brasil) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_PTB)
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
@@ -78,7 +78,7 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "CompanyName", "Ruaneri Ferreira Portela"
-            VALUE "FileDescription", "Share audio beteween devices over TCP/IP , Software writing in C"
+            VALUE "FileDescription", "Share Audio C"
             VALUE "FileVersion", "Alpha"
             VALUE "InternalName", "ShareAudio"
             VALUE "LegalCopyright", "Copyright (C) 2024 License over MIT"
@@ -93,7 +93,7 @@ BEGIN
     END
 END
 
-#endif    // Português (Brasil) resources
+#endif    // Portuguï¿½s (Brasil) resources
 /////////////////////////////////////////////////////////////////////////////
 
 
