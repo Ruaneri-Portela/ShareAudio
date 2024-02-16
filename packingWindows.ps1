@@ -8,6 +8,7 @@ Add-Content -Path ".\src\VERSION.h" -Value "#define VERSION `"$GIT_VERSION`""
 # Clean and make
 make clean
 make
+make java
 
 # Packing for MSVC
 $version = git describe --tags

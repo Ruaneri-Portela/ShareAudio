@@ -1,6 +1,8 @@
 # Copy x64/Release/*.exe and x64/Release/*.dll to destination
 Copy-Item -Path ".\x64\Release\*.exe" -Destination "Y:/" -Force
 Copy-Item -Path ".\x64\Release\*.dll" -Destination "Y:/" -Force
+Copy-Item -Path ".\build\*.jar" -Destination "Y:/" -Force
+Copy-Item -Path ".\build\libShareAudioJava.dll" -Destination "Y:/" -Force
 
 # Copy build/*.exe to /y/ShareAudio_GCC.exe
 New-Item -ItemType Directory -Force -Path "Y:/GCC/"

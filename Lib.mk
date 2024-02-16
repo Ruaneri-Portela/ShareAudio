@@ -4,8 +4,7 @@ BUILD_DIR := build/
 SRC_DIR = src/
 LIBS := -lportaudio -lcrypto
 DLLEXPORT =
-NAME = libShareAudio
-
+NAME := libShareAudio
 PORTAUDIO := ../portaudio/include/portaudio.h
 
 ifeq ($(wildcard $(PORTAUDIO)),)

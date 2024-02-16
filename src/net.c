@@ -257,7 +257,6 @@ static void SA_NetServerRecv(connectParam* parms) {
 			SA_Sleep(100);
 			if (failCount > 10) {
 				SA_Log("Revc failed!", LOG_NET, LOG_CLASS_WARNING);
-
 			}
 			failCount++;
 		}
