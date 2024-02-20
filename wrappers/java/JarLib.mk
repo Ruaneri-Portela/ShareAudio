@@ -5,7 +5,7 @@ SRC_DIR := ./
 LIBS := -lShareAudio
 NAME := libShareAudioJava
 
-INCLUDEJNI := include
+INCLUDEJNI := ./include
 
 ifeq ($(OS),Windows_NT)
     TARGET := $(BUILD_DIR)$(NAME).dll
@@ -13,10 +13,10 @@ else
     TARGET := $(BUILD_DIR)$(NAME).so
 endif
 
-SRCS := $(wildcard $(SRC_DIR)/*.c)
+SRCS := $(wildcard $(SRC_DIR)*.c)
 OBJS := $(addprefix $(BUILD_DIR), $(notdir $(SRCS:.c=.o)))
 
-SRCSJAVA := $(wildcard $(SRC_DIR)/*.java)
+SRCSJAVA := $(wildcard $(SRC_DIR)*.java)
 CLASSES := $(addprefix $(SRC_DIR), $(notdir $(SRCSJAVA:.java=.class)))
 JAR := $(BUILD_DIR)ShareAudio.jar
 
@@ -29,11 +29,11 @@ $(JAR):
 	jar cvfe $@ ShareAudio $(SRC_DIR)*.class
 	@echo Build complete for ShareAudio.jar
 
-$(BUILD_DIR)%.o: $(SRC_DIR)/%.c
-	$(CC) $(CFLAGS) -shared -fPIC -I./$(INCLUDEJNI) -c $< -o $@
+$(BUILD_DIR)%.o: $(SRC_DIR)%.c
+	$(CC) $(CFLAGS) -shared -fPIC -I$(INCLUDEJNI) -c $< -o $@
 
 $(TARGET): $(OBJS)
-	$(CC) $(CFLAGS) -shared -fPIC $^ -o $@ -L./$(BUILD_DIR) $(LIBS)
+	$(CC) $(CFLAGS) -shared -fPIC $^ -o $@ -L$(BUILD_DIR) $(LIBS)
 	@echo Build complete for $(NAME)
 
 clean:

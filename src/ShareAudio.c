@@ -191,7 +191,7 @@ int main(int argc, char* argv[])
 			case 'h':
 				printf("Set Vol: ");
 				float volMod;
-				scanf_s("%f", &volMod);
+				sscanf_s("%f", &volMod);
 				SA_SetVolumeModifier(volMod,conn);
 				break;
 			case 'p':
