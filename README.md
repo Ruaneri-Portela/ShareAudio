@@ -10,7 +10,7 @@ Your intention is to create something that can run as a service, which, after in
 
 - **Transmission Method:** The software employs a datagram over TCP/IP for audio transmission. It encapsulates RAW audio via the network, resulting in high-fidelity (HI-FI) quality audio. For example, a 32-bit depth audio at 96000 Hz 2.0 consumes around 6 Mbps, while a 48000 audio uses around 3 Mbps.
 
-- **Next Genereation Windows Plataform** As it is a new project, we already support Windows ARM64, making it software optimized for the new architecture for Windows PCs without the need for emulation or translation
+- **Next Genereation Plataforms** As it is a new project, we already support Windows ARM64, making it software optimized for the new architecture for Windows PCs without the need for emulation or translation, As it is open source, unlike other solutions, it can run on MIPS, RISV-V, ARMv7 and other lesser-known platforms
 
 - **Future Developments:**
   - Compression and Encryption: Future versions aim to implement compression and encryption between the audio-sharing pair.
