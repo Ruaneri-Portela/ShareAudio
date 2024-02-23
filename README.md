@@ -15,8 +15,8 @@ Your intention is to create something that can run as a service, which, after in
 - **Future Developments:**
   - Compression: Future versions aim to implement compression between the audio-sharing pair.
   - Platform Compatibility: The code is intended to be portable and compatible with any system that has PortAudio, including Linux, MacOS, BSD, and Haiku.
-  - Convert parts into libraries to allow integration with other codes and languages
-  - Modularization, using other audio backends besides portaudio, in the future there will be support for Google's Oboe to support Android
+  - Modularization: Using other audio backends besides portaudio, in the future there will be support for Google's Oboe to support Android. Convert parts into libraries to allow integration with other codes and languages
+  - Multi-depth audio: Allowing the use of audio in different sizes such as the most famous 16/24/32 bits, downplaing systems to allow devices with higher sampling to be reproduced on smaller ones
 
 ## Usage
 
