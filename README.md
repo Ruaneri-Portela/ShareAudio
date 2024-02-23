@@ -13,9 +13,10 @@ Your intention is to create something that can run as a service, which, after in
 - **Next Genereation Plataforms** As it is a new project, we already support Windows ARM64, making it software optimized for the new architecture for Windows PCs without the need for emulation or translation, As it is open source, unlike other solutions, it can run on MIPS, RISV-V, ARMv7 and other lesser-known platforms
 
 - **Future Developments:**
-  - Compression and Encryption: Future versions aim to implement compression and encryption between the audio-sharing pair.
+  - Compression: Future versions aim to implement compression between the audio-sharing pair.
   - Platform Compatibility: The code is intended to be portable and compatible with any system that has PortAudio, including Linux, MacOS, BSD, and Haiku.
   - Convert parts into libraries to allow integration with other codes and languages
+  - Modularization, using other audio backends besides portaudio, in the future there will be support for Google's Oboe to support Android
 
 ## Usage
 
