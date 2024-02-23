@@ -31,20 +31,23 @@ Your intention is to create something that can run as a service, which, after in
   ***Windows***
   - You can choice build system, as Makefile to MSYS2/MinGw environment or Visual Studio 2022
   - To build via MSVC, you must clone Portaudio's git and also download ASIO, the ASIO SDK must be placed in the asio folder in the project directory
-  - It is also possible to compile via VCPKG, you must dereference the project, and use global includes instead of the directory, it is not recommended for the following reason
+  - You must compile OpenSSL using the .bat in the git root, but remember to download NASM and Perl as described in the OpenSSL "How to compile" tutorial, they must be in the directories that will be exported to the path use what you have in the .bat as a reference
+  - You can do this for both OpenSSL and PortuAudio or for one exclusively, activate VCPKG in the project settings
+  - It is also possible to compile via VCPKG, you must dereference the project, and use global includes instead of the directory, , it is not recommended for the following reason
   - On Windows, only the most recent git compilation of Portaudio supports Audio Loopback, which means that the version via VCPKG and MSYS/MinGW will not be able to replicate the desktop audio
   - For the build using the MinGw toolchains, the project comes with the Makefile
   - For MinGw builds they will be placed inside the build directory, for MSVC look inside the respective directories for the architecture
 
   ***Linux***
-  - To build on Linux, you only need the development toolchain, the famous build-essential in the case of those based on Debian, or the similar meta package in your distro and libportaudio-dev
+  - To build on Linux, you only need the development toolchain, the famous build-essential in the case of those based on Debian, or the similar meta package in your distro and libportaudio-dev and openssl-dev
   - The executable will be placed in ./build
 
 ## Technical Details
 
 - **Audio Backend:** PortAudio
-- **Networking:** Unix Socket in Linux and Winsock2 on Windows, work over TCP/IP
+- **Networking:** Berkeley Socket in Linux and Winsock2 on Windows, work over TCP/IP
 - **Audio Quality:** HI-FI quality with transmission rates mentioned above
+- **Encryption:** Symmetric using AES CBC 256 bits deep using OpenSSL EVP
 
 ## Compatibility
 
