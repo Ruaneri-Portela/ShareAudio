@@ -190,9 +190,10 @@ int main(int argc, char* argv[])
 				break;
 			case 'h':
 				printf("Set Vol: ");
-				float volMod;
+				float *volMod = malloc(sizeof(float));
 				sscanf_s("%f", &volMod);
-				SA_SetVolumeModifier(volMod,conn);
+				SA_SetVolumeModifier(*volMod,conn);
+				free(volMod);
 				break;
 			case 'p':
 				printf("VolSet:%f\n",conn->dh->volMod);
